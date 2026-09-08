@@ -51,9 +51,9 @@ export function Section({
     <section
       className={cn(
         'rounded-xl border p-4 sm:p-5',
-        tone === 'default' && 'border-border bg-card',
-        tone === 'accent' && 'border-primary/30 bg-primary/[0.06]',
-        tone === 'danger' && 'border-destructive/35 bg-destructive/[0.06]',
+        tone === 'default' && 'border-border bg-card/80 backdrop-blur-[2px]',
+        tone === 'accent' && 'border-primary/35 bg-primary/[0.07] backdrop-blur-[2px]',
+        tone === 'danger' && 'border-destructive/40 bg-destructive/[0.07] backdrop-blur-[2px]',
         className,
       )}
     >
@@ -61,7 +61,7 @@ export function Section({
         <header className="mb-4 flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
             {title && (
-              <h3 className="flex items-center gap-2 text-sm font-semibold">
+              <h3 className="font-heading flex items-center gap-2 text-[15px] font-bold tracking-wide">
                 {Icon && (
                   <Icon
                     className={cn(
@@ -142,7 +142,7 @@ export function StatTile({
   className?: string;
 }) {
   return (
-    <div className={cn('border-border bg-card rounded-xl border p-4', className)}>
+    <div className={cn('border-border bg-card/80 rounded-lg border p-4', className)}>
       <div className="text-muted-foreground flex items-center gap-1.5 text-xs">
         {Icon && <Icon className="size-3.5" />}
         {label}

@@ -4,7 +4,9 @@ const KEY = 'my-task-planner/v1';
 
 export const DEFAULT_SETTINGS: Settings = {
   theme: 'dark',
+  daoName: 'Đạo hữu',
   soundEnabled: true,
+  ambientEnabled: true,
   dailyTarget: 5,
   dailyFocusTarget: 120,
   focusLength: 25,
@@ -18,6 +20,16 @@ export const emptyData = (): AppData => ({
   goals: [],
   sessions: [],
   settings: { ...DEFAULT_SETTINGS },
+  beasts: [],
+  stonesSpent: 0,
+  pills: { ha: 0, trung: 0, thuong: 0 },
+  tuViPenalty: 0,
+  gateRealm: 0,
+  failStreak: 0,
+  encounterXp: 0,
+  stonesBonus: 0,
+  ledger: [],
+  lastSeenAt: new Date().toISOString(),
 });
 
 export function loadData(): AppData {
@@ -31,6 +43,18 @@ export function loadData(): AppData {
       goals: parsed.goals ?? [],
       sessions: parsed.sessions ?? [],
       settings: { ...DEFAULT_SETTINGS, ...(parsed.settings ?? {}) },
+      root: parsed.root,
+      beasts: parsed.beasts ?? [],
+      activeBeastId: parsed.activeBeastId,
+      stonesSpent: parsed.stonesSpent ?? 0,
+      pills: { ha: 0, trung: 0, thuong: 0, ...(parsed.pills ?? {}) },
+      tuViPenalty: parsed.tuViPenalty ?? 0,
+      gateRealm: parsed.gateRealm ?? 0,
+      failStreak: parsed.failStreak ?? 0,
+      encounterXp: parsed.encounterXp ?? 0,
+      stonesBonus: parsed.stonesBonus ?? 0,
+      ledger: parsed.ledger ?? [],
+      lastSeenAt: parsed.lastSeenAt ?? new Date().toISOString(),
     };
   } catch {
     return emptyData();
@@ -68,6 +92,18 @@ export function readFile(file: File): Promise<AppData> {
           goals: parsed.goals ?? [],
           sessions: parsed.sessions ?? [],
           settings: { ...DEFAULT_SETTINGS, ...(parsed.settings ?? {}) },
+          root: parsed.root,
+          beasts: parsed.beasts ?? [],
+          activeBeastId: parsed.activeBeastId,
+          stonesSpent: parsed.stonesSpent ?? 0,
+          pills: { ha: 0, trung: 0, thuong: 0, ...(parsed.pills ?? {}) },
+          tuViPenalty: parsed.tuViPenalty ?? 0,
+          gateRealm: parsed.gateRealm ?? 0,
+          failStreak: parsed.failStreak ?? 0,
+          encounterXp: parsed.encounterXp ?? 0,
+          stonesBonus: parsed.stonesBonus ?? 0,
+          ledger: parsed.ledger ?? [],
+          lastSeenAt: parsed.lastSeenAt ?? new Date().toISOString(),
         });
       } catch (err) {
         reject(err);

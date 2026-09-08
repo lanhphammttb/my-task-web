@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { CornerDownLeft, Plus } from 'lucide-react';
 import type { Priority } from '../types';
 import { useApp } from '../store/AppStore';
+import { clampEstimate } from '../lib/validation';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -64,7 +65,7 @@ export default function QuickAdd({ date }: { date: string }) {
       date,
       priority: parsed.priority,
       startTime: parsed.startTime,
-      estimateMin: parsed.estimateMin ?? 30,
+      estimateMin: clampEstimate(parsed.estimateMin ?? 30),
       tags: parsed.tags,
     });
     notify(`Đã thêm: ${parsed.title}`);

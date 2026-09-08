@@ -68,5 +68,16 @@ export function seedData(): AppData {
       { id: uid(), date: at(-3), minutes: 25, startedAt: `${at(-3)}T16:00:00` },
     ],
     settings: { ...DEFAULT_SETTINGS },
+    // Không gán sẵn linh căn: để người dùng tự khai quang ở lần mở đầu tiên.
+    beasts: [],
+    stonesSpent: 0,
+    pills: { ha: 0, trung: 0, thuong: 0 },
+    tuViPenalty: 0,
+    gateRealm: 0,
+    failStreak: 0,
+    encounterXp: 0,
+    stonesBonus: 0,
+    ledger: [],
+    lastSeenAt: new Date().toISOString(),
   };
 }

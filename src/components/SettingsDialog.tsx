@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import {
-  Brush, Database, Download, Eraser, Keyboard, Sparkles, Target, Timer, Trash2, Upload, Volume2,
+  Brush, Database, Download, Eraser, Film, Keyboard, ShieldCheck, Sparkles, Timer, Trash2,
+  TriangleAlert, Upload, Volume2, Wind,
 } from 'lucide-react';
 import { exportFile, readFile } from '../lib/storage';
 import { useApp } from '../store/AppStore';
@@ -14,6 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
+import { cn } from '@/lib/utils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const SHORTCUTS: [string, string][] = [
@@ -25,7 +27,8 @@ const SHORTCUTS: [string, string][] = [
 ];
 
 export default function SettingsDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
-  const { data, updateSettings, replaceAll, loadSample, resetAll, clearDone, notify } = useApp();
+  const { data, audit, resealLedger, updateSettings, replaceAll, loadSample, resetAll, clearDone, notify } =
+    useApp();
   const fileRef = useRef<HTMLInputElement>(null);
   const s = data.settings;
 
@@ -45,20 +48,32 @@ export default function SettingsDialog({ open, onOpenChange }: { open: boolean; 
       <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>Cài đặt</DialogTitle>
-          <DialogDescription>Đặt mục tiêu vừa sức để chuỗi ngày không bị đứt oan.</DialogDescription>
+          <DialogDescription>Đặt nhật khoá vừa sức để chuỗi tu luyện không bị đứt oan.</DialogDescription>
         </DialogHeader>
 
         <Tabs defaultValue="goals" className="mt-2">
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="goals" className="gap-1.5"><Target className="size-3.5" /> Mục tiêu</TabsTrigger>
+            <TabsTrigger value="goals" className="gap-1.5"><Wind className="size-3.5" /> Tu luyện</TabsTrigger>
             <TabsTrigger value="look" className="gap-1.5"><Brush className="size-3.5" /> Giao diện</TabsTrigger>
             <TabsTrigger value="data" className="gap-1.5"><Database className="size-3.5" /> Dữ liệu</TabsTrigger>
           </TabsList>
 
           <TabsContent value="goals" className="space-y-4 pt-5">
+            <div className="grid gap-2">
+              <Label htmlFor="s-dao-name">Đạo hiệu</Label>
+              <Input
+                id="s-dao-name"
+                value={s.daoName}
+                maxLength={24}
+                onChange={(e) => updateSettings({ daoName: e.target.value })}
+                placeholder="Ví dụ: Thanh Vân Tử"
+              />
+              <p className="text-muted-foreground text-xs">Tên hiển thị trên thẻ cảnh giới ở Tiên Lộ.</p>
+            </div>
+            <Separator />
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="grid gap-2">
-                <Label htmlFor="s-daily">Nhiệm vụ mục tiêu / ngày</Label>
+                <Label htmlFor="s-daily">Nhật khoá: nhiệm vụ / ngày</Label>
                 <Input
                   id="s-daily"
                   type="number"
@@ -69,7 +84,7 @@ export default function SettingsDialog({ open, onOpenChange }: { open: boolean; 
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="s-focus-target">Phút tập trung / ngày</Label>
+                <Label htmlFor="s-focus-target">Phút nhập định / ngày</Label>
                 <Input
                   id="s-focus-target"
                   type="number"
@@ -82,11 +97,11 @@ export default function SettingsDialog({ open, onOpenChange }: { open: boolean; 
             </div>
             <Separator />
             <p className="text-muted-foreground flex items-center gap-2 text-xs font-medium">
-              <Timer className="size-3.5" /> Đồng hồ tập trung
+              <Timer className="size-3.5" /> Đồng hồ bế quan
             </p>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="grid gap-2">
-                <Label htmlFor="s-focus-len">Độ dài phiên (phút)</Label>
+                <Label htmlFor="s-focus-len">Độ dài phiên nhập định (phút)</Label>
                 <Input
                   id="s-focus-len"
                   type="number"
@@ -98,7 +113,7 @@ export default function SettingsDialog({ open, onOpenChange }: { open: boolean; 
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="s-break-len">Độ dài nghỉ (phút)</Label>
+                <Label htmlFor="s-break-len">Độ dài điều tức (phút)</Label>
                 <Input
                   id="s-break-len"
                   type="number"
@@ -144,13 +159,29 @@ export default function SettingsDialog({ open, onOpenChange }: { open: boolean; 
               <Volume2 className="text-muted-foreground size-4 shrink-0" />
               <span className="min-w-0 flex-1">
                 <span className="block text-sm font-medium">Âm thanh phản hồi</span>
-                <span className="text-muted-foreground text-xs">Tiếng ting khi xong việc, nhạc ngắn khi lên cấp</span>
+                <span className="text-muted-foreground text-xs">Tiếng ting khi xong việc, nhạc ngắn khi đột phá cảnh giới</span>
               </span>
               <input
                 type="checkbox"
                 className="accent-primary size-4 shrink-0"
                 checked={s.soundEnabled}
                 onChange={(e) => updateSettings({ soundEnabled: e.target.checked })}
+              />
+            </label>
+
+            <label className="border-border hover:bg-muted/50 flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-colors">
+              <Film className="text-muted-foreground size-4 shrink-0" />
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-medium">Video & nhạc nền khi bế quan</span>
+                <span className="text-muted-foreground text-xs">
+                  Phát video tu luyện kèm nhạc nền trong lúc nhập định; tắt để tiết kiệm pin
+                </span>
+              </span>
+              <input
+                type="checkbox"
+                className="accent-primary size-4 shrink-0"
+                checked={s.ambientEnabled}
+                onChange={(e) => updateSettings({ ambientEnabled: e.target.checked })}
               />
             </label>
 
@@ -172,6 +203,61 @@ export default function SettingsDialog({ open, onOpenChange }: { open: boolean; 
           </TabsContent>
 
           <TabsContent value="data" className="space-y-3 pt-5">
+            {/* --------------------------------------- toàn vẹn dữ liệu */}
+            <div
+              className={cn(
+                'rounded-lg border p-3',
+                audit.ok ? 'border-success/40 bg-success/[0.07]' : 'border-destructive/45 bg-destructive/[0.07]',
+              )}
+            >
+              <p className="flex items-center gap-2 text-sm font-semibold">
+                {audit.ok ? (
+                  <>
+                    <ShieldCheck className="text-success size-4" /> Sổ ghi liền mạch
+                  </>
+                ) : (
+                  <>
+                    <TriangleAlert className="text-destructive size-4" /> Sổ ghi có dấu hiệu bị sửa
+                  </>
+                )}
+              </p>
+              <p className="text-muted-foreground mt-1 text-xs">
+                Đã kiểm {audit.verified}/{data.ledger.length} bản ghi. Mỗi nhiệm vụ hoàn thành và mỗi
+                phiên bế quan đều được móc vào một chuỗi băm; sửa tay ở bất kỳ đâu sẽ làm đứt chuỗi.
+              </p>
+
+              {audit.findings.length > 0 && (
+                <ul className="mt-2.5 space-y-1.5">
+                  {audit.findings.map((f) => (
+                    <li
+                      key={f.code}
+                      className={cn(
+                        'rounded border px-2.5 py-1.5 text-[11.5px]',
+                        f.severity === 'error'
+                          ? 'border-destructive/35 bg-destructive/10 text-destructive'
+                          : 'border-warning/35 bg-warning/10 text-warning',
+                      )}
+                    >
+                      {f.message}
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              <p className="text-muted-foreground mt-2.5 text-[11px] leading-relaxed">
+                App chạy hoàn toàn trên máy bạn nên <strong>không thể chống gian lận tuyệt đối</strong> —
+                người quyết tâm vẫn có thể đọc mã nguồn rồi tự dựng chuỗi hợp lệ. Muốn chống thật thì
+                phải có server ký sổ ghi.
+              </p>
+
+              {!audit.ok && (
+                <Button variant="outline" size="sm" className="mt-2.5 gap-1.5" onClick={resealLedger}>
+                  <ShieldCheck className="size-3.5" /> Chấp nhận & ký lại sổ ghi
+                </Button>
+              )}
+            </div>
+
+            <Separator />
             <p className="text-muted-foreground text-xs">
               Dữ liệu nằm trong trình duyệt của bạn. Xuất tệp định kỳ để sao lưu hoặc chuyển sang máy khác.
             </p>

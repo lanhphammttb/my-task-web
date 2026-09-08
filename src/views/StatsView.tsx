@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react';
-import { BarChart3, CalendarRange, Crosshair, Flame, Tag, Target, TrendingUp, Trophy } from 'lucide-react';
+import { BarChart3, CalendarRange, Crosshair, Flame, Tag, Target, TrendingUp } from 'lucide-react';
 import type { Priority } from '../types';
 import { addDays, dateKey, format, formatDuration, parseKey } from '../lib/date';
-import { allTags, bestStreak, currentStreak, groupByGoal, levelOf, statsRange, totalXp } from '../lib/stats';
+import { allTags, bestStreak, currentStreak, groupByGoal, statsRange } from '../lib/stats';
+import { effectiveXp } from '../lib/economy';
+import { cultivationOf, realmShort } from '../lib/cultivation';
 import { PRIORITY_ORDER, PRIORITY_UI } from '../lib/ui';
 import { useApp } from '../store/AppStore';
 import ProgressRing from '../components/ProgressRing';
@@ -32,8 +34,8 @@ export default function StatsView() {
   const rate = inRange.length ? done / inRange.length : 0;
   const focusMin = series.reduce((s, d) => s + d.focusMin, 0);
   const maxDone = Math.max(1, ...series.map((d) => d.done));
-  const xp = totalXp(data.tasks, data.sessions);
-  const lv = levelOf(xp);
+  const xp = effectiveXp(data);
+  const cultivation = cultivationOf(xp);
 
   const byPriority = useMemo(
     () =>
@@ -107,12 +109,17 @@ export default function StatsView() {
           icon={Flame}
         />
         <StatTile
-          label="Thời gian tập trung"
+          label="Thời gian nhập định"
           value={formatDuration(focusMin)}
           hint={`~${formatDuration(Math.round(focusMin / days))}/ngày`}
           icon={Crosshair}
         />
-        <StatTile label="Cấp độ" value={`Lv ${lv.level}`} hint={`${xp} XP tích luỹ`} icon={Trophy} />
+        <StatTile
+          label="Cảnh giới"
+          value={realmShort(cultivation)}
+          hint={`${xp} tu vi tích luỹ`}
+          icon={cultivation.realm.icon}
+        />
       </div>
 
       {/* ------------------------------------------------- biểu đồ theo ngày */}

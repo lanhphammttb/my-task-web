@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Plus, Trash2, X } from 'lucide-react';
+import { Plus, Trash2, TriangleAlert, X } from 'lucide-react';
 import type { Priority, Recurrence, Subtask, Task } from '../types';
 import { todayKey } from '../lib/date';
 import { uid } from '../lib/storage';
+import { blocking, checkTaskDraft, clampEstimate } from '../lib/validation';
 import { PRIORITY_ORDER, PRIORITY_UI, RECURRENCE_UI } from '../lib/ui';
 import { useApp } from '../store/AppStore';
 import { Button } from '@/components/ui/button';
@@ -77,8 +78,18 @@ export default function TaskEditorDialog({ open, task, defaultDate, onOpenChange
     setSubInput('');
   };
 
+  /** Lỗi hiện ngay dưới form, không đợi bấm lưu mới báo. */
+  const issues = checkTaskDraft({
+    title: draft.title,
+    date: draft.date,
+    startTime: draft.startTime || undefined,
+    deadline: draft.deadline ? `${draft.deadline}:00` : undefined,
+    estimateMin: Number(draft.estimateMin) || 0,
+  });
+  const blockers = blocking(issues);
+
   const submit = () => {
-    if (!draft.title.trim()) return;
+    if (blockers.length > 0) return;
     const payload = {
       title: draft.title.trim(),
       note: draft.note.trim(),
@@ -86,7 +97,7 @@ export default function TaskEditorDialog({ open, task, defaultDate, onOpenChange
       startTime: draft.startTime || undefined,
       deadline: draft.deadline ? `${draft.deadline}:00` : undefined,
       priority: draft.priority,
-      estimateMin: Number(draft.estimateMin) || 0,
+      estimateMin: clampEstimate(Number(draft.estimateMin) || 0),
       goalId: draft.goalId === 'none' ? undefined : draft.goalId,
       tags: draft.tags.split(',').map((t) => t.trim()).filter(Boolean),
       recurrence: draft.recurrence,
@@ -264,6 +275,25 @@ export default function TaskEditorDialog({ open, task, defaultDate, onOpenChange
           </div>
         </div>
 
+        {issues.length > 0 && (
+          <ul className="mb-2 space-y-1.5">
+            {issues.map((v) => (
+              <li
+                key={v.code}
+                className={cn(
+                  'flex items-start gap-2 rounded-lg border px-3 py-2 text-xs',
+                  v.level === 'block'
+                    ? 'border-destructive/40 bg-destructive/10 text-destructive'
+                    : 'border-warning/40 bg-warning/10 text-warning',
+                )}
+              >
+                <TriangleAlert className="mt-0.5 size-3.5 shrink-0" />
+                {v.message}
+              </li>
+            ))}
+          </ul>
+        )}
+
         <DialogFooter className="sm:justify-between">
           {task ? (
             <Button
@@ -281,7 +311,7 @@ export default function TaskEditorDialog({ open, task, defaultDate, onOpenChange
           )}
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>Huỷ</Button>
-            <Button onClick={submit} disabled={!draft.title.trim()}>
+            <Button onClick={submit} disabled={blockers.length > 0}>
               {task ? 'Lưu thay đổi' : 'Thêm nhiệm vụ'}
             </Button>
           </div>

@@ -58,16 +58,19 @@ describe('Ứng dụng web', () => {
     expect(await screen.findByText('Tỷ lệ hoàn thành')).toBeDefined();
   });
 
-  it('mở được trang huy hiệu và hiện tiến độ thành tích', async () => {
+  it('mở được trang Tiên Lộ với bậc thang cảnh giới và kỳ ngộ', async () => {
     render(<App />);
     const nav = screen.getByRole('complementary');
 
-    fireEvent.click(within(nav).getByText('Huy hiệu'));
+    fireEvent.click(within(nav).getByText('Tiên Lộ'));
 
-    expect(await screen.findByRole('heading', { name: 'Huy hiệu & thành tích' })).toBeDefined();
-    // Dữ liệu mẫu đã có việc hoàn thành nên huy hiệu đầu tiên phải được mở.
-    expect(await screen.findByText('Khởi động')).toBeDefined();
-    expect(await screen.findByText('Bậc thầy tập trung')).toBeDefined();
+    expect(await screen.findByRole('heading', { name: 'Tiên Lộ' })).toBeDefined();
+    // Bậc thang phải liệt kê đủ từ cảnh giới đầu tới đích phi thăng.
+    expect((await screen.findAllByText('Luyện Khí')).length).toBeGreaterThan(0);
+    expect(await screen.findByText('Phi Thăng')).toBeDefined();
+    // Dữ liệu mẫu đã có việc hoàn thành nên kỳ ngộ đầu tiên phải được mở.
+    expect(await screen.findByText('Nhập Đạo')).toBeDefined();
+    expect(await screen.findByText('Toạ Vong Chi Cảnh')).toBeDefined();
   });
 
   it('tìm kiếm lọc đúng nhiệm vụ theo tên', () => {
@@ -78,5 +81,35 @@ describe('Ứng dụng web', () => {
     expect(screen.getByRole('heading', { name: /Kết quả tìm kiếm/ })).toBeDefined();
     expect(screen.getAllByText('Chạy bộ 5km').length).toBeGreaterThan(0);
     expect(screen.queryByText('Họp daily với team')).toBeNull();
+  });
+
+  it('không cho hoàn thành nhiệm vụ của ngày mai, không bung hiệu ứng', async () => {
+    render(<App />);
+
+    // Sang ngày mai rồi thử tick một nhiệm vụ ở đó.
+    fireEvent.click(screen.getByRole('button', { name: 'Ngày sau' }));
+    const boxes = await screen.findAllByLabelText('Đánh dấu hoàn thành');
+    fireEvent.click(boxes[0]);
+
+    const saved = JSON.parse(localStorage.getItem('my-task-planner/v1') ?? '{}');
+    const tomorrow = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10);
+    const done = saved.tasks.filter(
+      (t: { date: string; status: string }) => t.date === tomorrow && t.status === 'done',
+    );
+    expect(done).toHaveLength(0);
+    // Không có bản ghi nào được thêm vào sổ ghi cho hành động bị chặn.
+    expect(saved.ledger.every((e: { kind: string }) => e.kind === 'task' || e.kind === 'session')).toBe(true);
+  });
+
+  it('nhiệm vụ hôm nay vẫn hoàn thành được và được ghi vào sổ', async () => {
+    render(<App />);
+
+    const before = JSON.parse(localStorage.getItem('my-task-planner/v1') ?? '{}');
+    const beforeLedger = before.ledger.length;
+
+    fireEvent.click(screen.getAllByLabelText('Đánh dấu hoàn thành')[0]);
+
+    const after = JSON.parse(localStorage.getItem('my-task-planner/v1') ?? '{}');
+    expect(after.ledger.length).toBe(beforeLedger + 1);
   });
 });

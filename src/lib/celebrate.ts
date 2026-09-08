@@ -62,7 +62,7 @@ export function soundComplete() {
   tone(1320, 0.055, 0.22, 0.1);
 }
 
-/** Chuỗi nốt đi lên khi lên cấp. */
+/** Chuỗi nốt đi lên khi đột phá. */
 export function soundLevelUp() {
   [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => tone(f, i * 0.09, 0.42, 0.15));
 }
@@ -97,7 +97,21 @@ export function burstAt(el: HTMLElement | null) {
   });
 }
 
-/** Bung lớn giữa màn hình - dùng cho mốc lớn như lên cấp. */
+/** Bung vừa phải - dùng cho đột phá lên một tầng mới. */
+export function burstTier() {
+  fire({
+    particleCount: 45,
+    spread: 72,
+    startVelocity: 30,
+    scalar: 0.85,
+    ticks: 160,
+    disableForReducedMotion: true,
+    colors: BRAND_COLORS,
+    origin: { x: 0.5, y: 0.55 },
+  });
+}
+
+/** Bung lớn giữa màn hình - dùng cho mốc lớn như đột phá cảnh giới. */
 export function burstBig() {
   const common = { disableForReducedMotion: true, colors: BRAND_COLORS, ticks: 220 };
   fire({ ...common, particleCount: 90, spread: 90, startVelocity: 42, origin: { x: 0.5, y: 0.62 } });
@@ -126,4 +140,9 @@ export function burstRain(durationMs = 1600) {
     requestAnimationFrame(tick);
   };
   tick();
+}
+
+/** Nốt ngân dài, dùng cho khoảnh khắc phi thăng. */
+export function soundAscend() {
+  [523.25, 659.25, 783.99, 1046.5, 1318.5].forEach((f, i) => tone(f, i * 0.12, 0.9, 0.13));
 }

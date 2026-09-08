@@ -9,6 +9,7 @@ import { PRIORITY_UI } from '../lib/ui';
 import { soundComplete } from '../lib/celebrate';
 import { useApp } from '../store/AppStore';
 import ProgressRing from '../components/ProgressRing';
+import MeditationScene from '../components/MeditationScene';
 import { EmptyState, Meter, MetaChip, Section } from '../components/primitives';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -76,10 +77,10 @@ export default function FocusView({ taskId, onPickTask }: { taskId?: string; onP
 
   useEffect(() => {
     document.title = running
-      ? `${clockLabel(seconds)} · ${isWork ? 'Tập trung' : 'Nghỉ'}`
-      : 'Kế Hoạch - Quản lý nhiệm vụ';
+      ? `${clockLabel(seconds)} · ${isWork ? 'Nhập định' : 'Điều tức'}`
+      : 'Đạo Trình · Kế hoạch & tu luyện';
     return () => {
-      document.title = 'Kế Hoạch - Quản lý nhiệm vụ';
+      document.title = 'Đạo Trình · Kế hoạch & tu luyện';
     };
   }, [seconds, running, isWork]);
 
@@ -92,42 +93,54 @@ export default function FocusView({ taskId, onPickTask }: { taskId?: string; onP
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-4">
       <div>
-        <h2 className="text-lg font-bold tracking-tight">Chế độ tập trung</h2>
+        <h2 className="text-lg font-bold tracking-tight">Bế quan tu luyện</h2>
         <p className="text-muted-foreground text-xs">
-          Làm một việc duy nhất trong {focusLength} phút. Không chuyển tab, không điện thoại.
+          Nhập định {focusLength} phút với đúng một việc. Không chuyển tab, không điện thoại — mỗi
+          phút bế quan đều đổi thành tu vi.
         </p>
       </div>
 
       {/* ------------------------------------------------------ đồng hồ */}
       <section
         className={cn(
-          'rounded-2xl border p-6 sm:p-8',
+          'relative overflow-hidden rounded-2xl border p-6 sm:p-8',
           isWork
             ? 'border-primary/30 bg-gradient-to-br from-primary/14 to-card'
             : 'border-success/35 bg-gradient-to-br from-success/14 to-card',
         )}
       >
-        <div className="flex flex-col items-center gap-7 sm:flex-row sm:items-center sm:gap-9">
-          <div className="flex flex-col items-center gap-3">
+        <div className="relative flex flex-col items-center gap-7 sm:flex-row sm:items-center sm:gap-9">
+          {/* Đồng hồ ôm quanh đạo nhân đang ngồi thiền trong động phủ */}
+          <div className="border-border relative h-[264px] w-full max-w-[300px] shrink-0 overflow-hidden rounded-xl border sm:w-[300px]">
+            <MeditationScene
+              running={running}
+              resting={!isWork}
+              ambient={data.settings.ambientEnabled}
+              className="absolute inset-0"
+            />
+            <div className="absolute inset-0 grid place-items-center pt-6">
+              <ProgressRing
+                size={224}
+                stroke={14}
+                value={1 - seconds / totalSeconds}
+                label={clockLabel(seconds)}
+                labelClassName="text-[40px] leading-none drop-shadow-lg"
+                centerClassName="-translate-y-[62px]"
+                caption={isWork ? 'phiên bế quan' : 'điều tức'}
+                color={isWork ? undefined : 'var(--success)'}
+                glowOnFull={false}
+              />
+            </div>
             <span
               className={cn(
-                'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10.5px] font-bold tracking-[0.14em] uppercase',
-                isWork ? 'bg-primary/15 text-primary' : 'bg-success/15 text-success',
+                'absolute top-0 left-1/2 -translate-x-1/2 rounded-full px-2.5 py-1 text-[10.5px] font-bold tracking-[0.14em] uppercase',
+                'inline-flex items-center gap-1.5 backdrop-blur',
+                isWork ? 'bg-primary/20 text-primary' : 'bg-success/20 text-success',
               )}
             >
               {isWork ? <Crosshair className="size-3" /> : <Coffee className="size-3" />}
-              {isWork ? 'Đang tập trung' : 'Đang nghỉ'}
+              {isWork ? 'Đang nhập định' : 'Đang điều tức'}
             </span>
-            <ProgressRing
-              size={228}
-              stroke={15}
-              value={1 - seconds / totalSeconds}
-              label={clockLabel(seconds)}
-              labelClassName="text-[42px] leading-none"
-              caption={isWork ? 'phiên làm việc' : 'thời gian nghỉ'}
-              color={isWork ? undefined : 'var(--success)'}
-              glowOnFull={false}
-            />
           </div>
 
           <div className="w-full min-w-0 flex-1 space-y-4">
@@ -190,7 +203,7 @@ export default function FocusView({ taskId, onPickTask }: { taskId?: string; onP
       </section>
 
       {/* ------------------------------------------------ tiến độ hôm nay */}
-      <Section icon={Crosshair} title="Tiến độ tập trung hôm nay">
+      <Section icon={Crosshair} title="Nhập định hôm nay">
         <div className="grid grid-cols-3 gap-3">
           {[
             { value: String(rounds), label: 'phiên lượt này' },
@@ -212,12 +225,12 @@ export default function FocusView({ taskId, onPickTask }: { taskId?: string; onP
       </Section>
 
       {/* ---------------------------------------------------- chọn nhanh */}
-      <Section icon={ListChecks} title="Chọn nhanh việc để tập trung" subtitle="Ưu tiên cao nằm trên cùng">
+      <Section icon={ListChecks} title="Chọn việc để bế quan" subtitle="Ưu tiên cao nằm trên cùng">
         {candidates.length === 0 ? (
           <EmptyState
             icon={PartyPopper}
             title="Không còn nhiệm vụ nào đang chờ"
-            hint="Tuyệt vời! Hãy nghỉ ngơi hoặc lên kế hoạch cho ngày mai."
+            hint="Đạo tâm thanh tịnh. Nghỉ ngơi hoặc lên kế hoạch cho ngày mai."
           />
         ) : (
           <div className="grid gap-2 sm:grid-cols-2">

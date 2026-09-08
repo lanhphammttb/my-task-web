@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { Moon, Plus, Search, SearchX, Settings, Sun, X } from 'lucide-react';
 import type { Task, ViewKey } from './types';
@@ -7,7 +7,12 @@ import { sortTasks } from './lib/stats';
 import { AppProvider, useApp } from './store/AppStore';
 import AppSidebar, { MobileNav, NAV } from './components/AppSidebar';
 import CelebrationLayer from './components/CelebrationLayer';
+import InkBackdrop from './components/InkBackdrop';
+import { REALMS, cultivationOf } from './lib/cultivation';
+import { effectiveXp } from './lib/economy';
 import SettingsDialog from './components/SettingsDialog';
+import TribulationDialog from './components/TribulationDialog';
+import EncounterDialog from './components/EncounterDialog';
 import TaskCard from './components/TaskCard';
 import TaskEditorDialog from './components/TaskEditorDialog';
 import { EmptyState, Section } from './components/primitives';
@@ -19,16 +24,21 @@ import WeekView from './views/WeekView';
 import MonthView from './views/MonthView';
 import GoalsView from './views/GoalsView';
 import FocusView from './views/FocusView';
+import CaveView from './views/CaveView';
 import AwardsView from './views/AwardsView';
 import StatsView from './views/StatsView';
+
+// three.js khá nặng nên nền 3D được nạp trễ; nền tranh 2D vẫn nằm phía dưới.
+const Scene3DBackdrop = lazy(() => import('./components/Scene3DBackdrop'));
 
 const VIEW_TITLE: Record<ViewKey, string> = {
   today: 'Kế hoạch trong ngày',
   week: 'Kế hoạch tuần',
   month: 'Kế hoạch tháng',
   goals: 'Mục tiêu dài hạn',
-  focus: 'Tập trung sâu',
-  awards: 'Huy hiệu & thành tích',
+  focus: 'Bế quan tu luyện',
+  cave: 'Động Phủ',
+  awards: 'Tiên Lộ',
   stats: 'Thống kê hiệu suất',
 };
 
@@ -39,6 +49,7 @@ function Shell() {
   const [editorTask, setEditorTask] = useState<Task | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [tribulationOpen, setTribulationOpen] = useState(false);
   const [focusTaskId, setFocusTaskId] = useState<string | undefined>();
   const [query, setQuery] = useState('');
 
@@ -105,17 +116,32 @@ function Shell() {
   }, [query, data.tasks]);
 
   const isDark = data.settings.theme === 'dark';
+  const realmColor = REALMS[cultivationOf(effectiveXp(data)).realmIndex].color;
   const searching = query.trim().length > 0;
 
   return (
     // h-full + min-h-0 ở mọi cấp là điều kiện để vùng nội dung cuộn được.
     <div className="flex h-full min-h-0">
-      <AppSidebar view={view} onChange={setView} onSettings={() => setSettingsOpen(true)} />
+      <InkBackdrop />
+      {/* Lớp 3D nằm trên nền tranh 2D, tô theo màu cảnh giới đang tu */}
+      <Suspense fallback={null}>
+        <Scene3DBackdrop
+          color={realmColor}
+          light={!isDark}
+          className="pointer-events-none fixed inset-0 -z-10"
+        />
+      </Suspense>
+      <AppSidebar
+        view={view}
+        onChange={setView}
+        onSettings={() => setSettingsOpen(true)}
+        onTribulation={() => setTribulationOpen(true)}
+      />
 
       <main className="flex min-h-0 min-w-0 flex-1 flex-col">
         {/* Trên màn hình hẹp: tiêu đề + nút ở hàng đầu, ô tìm kiếm chiếm trọn hàng dưới. */}
-        <header className="border-border bg-background/85 flex shrink-0 flex-wrap items-center gap-2 border-b px-4 py-3 backdrop-blur sm:gap-3 sm:px-6">
-          <h1 className="order-1 mr-auto truncate text-base font-bold tracking-tight">{VIEW_TITLE[view]}</h1>
+        <header className="border-border bg-background/70 flex shrink-0 flex-wrap items-center gap-2 border-b px-4 py-3 backdrop-blur sm:gap-3 sm:px-6">
+          <h1 className="font-heading order-1 mr-auto truncate text-lg font-bold tracking-tight">{VIEW_TITLE[view]}</h1>
 
           <div className="order-3 w-full sm:order-2 sm:w-auto">
             <div className="border-border bg-card focus-within:border-primary focus-within:ring-primary/20 flex items-center gap-2 rounded-full border px-3 transition-colors focus-within:ring-2">
@@ -215,7 +241,8 @@ function Shell() {
                 )}
                 {view === 'goals' && <GoalsView onEdit={openEdit} onFocus={startFocus} />}
                 {view === 'focus' && <FocusView taskId={focusTaskId} onPickTask={setFocusTaskId} />}
-                {view === 'awards' && <AwardsView />}
+                {view === 'cave' && <CaveView />}
+                {view === 'awards' && <AwardsView onTribulation={() => setTribulationOpen(true)} />}
                 {view === 'stats' && <StatsView />}
               </motion.div>
             </AnimatePresence>
@@ -225,6 +252,8 @@ function Shell() {
 
       <TaskEditorDialog open={editorOpen} task={editorTask} defaultDate={date} onOpenChange={setEditorOpen} />
       <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
+      <TribulationDialog open={tribulationOpen} onOpenChange={setTribulationOpen} />
+      <EncounterDialog />
       <CelebrationLayer />
       <Toaster position="bottom-right" theme={isDark ? 'dark' : 'light'} richColors />
     </div>

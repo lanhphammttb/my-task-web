@@ -2,14 +2,28 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/geist";
+@import "@fontsource/noto-serif/vietnamese-500.css";
+@import "@fontsource/noto-serif/vietnamese-600.css";
+@import "@fontsource/noto-serif/vietnamese-700.css";
+@import "@fontsource/noto-serif/latin-500.css";
+@import "@fontsource/noto-serif/latin-600.css";
+@import "@fontsource/noto-serif/latin-700.css";
+@import "@fontsource/montserrat/vietnamese-600.css";
+@import "@fontsource/montserrat/vietnamese-700.css";
+@import "@fontsource/montserrat/vietnamese-900.css";
+@import "@fontsource/montserrat/latin-600.css";
+@import "@fontsource/montserrat/latin-700.css";
+@import "@fontsource/montserrat/latin-900.css";
 
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-heading: var(--font-sans);
+  /* Chữ thân bài dùng sans cho dễ đọc, tiêu đề dùng serif cho chất cổ điển. */
   --font-sans: 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-heading: 'Noto Serif', 'Times New Roman', serif;
+  /* Tiêu đề HUD/nút kiểu game: in hoa, giãn chữ, đậm. */
+  --font-title: 'Montserrat', 'Geist Variable', ui-sans-serif, sans-serif;
 
-  /* Token nền tảng của shadcn */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -37,9 +51,14 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  /* Token riêng của ứng dụng */
+  /* Token riêng - bảng màu mực · ngọc · kim · chu sa */
   --color-brand: var(--brand);
   --color-brand-2: var(--brand-2);
+  --color-jade: var(--jade);
+  --color-gold: var(--gold);
+  --color-gold-bright: var(--gold-bright);
+  --color-gold-deep: var(--gold-deep);
+  --color-cinnabar: var(--cinnabar);
   --color-success: var(--success);
   --color-warning: var(--warning);
   --color-surface: var(--surface);
@@ -59,94 +78,132 @@
   --animate-check-pop: check-pop 0.42s cubic-bezier(0.34, 1.56, 0.64, 1);
   --animate-xp-float: xp-float 1.1s cubic-bezier(0.22, 1, 0.36, 1) forwards;
   --animate-glow: glow 2.4s ease-in-out infinite;
-  --animate-flame: flame 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
   --animate-rise: rise 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
   --animate-shimmer: shimmer 2.2s linear infinite;
   --animate-trophy: trophy 0.9s cubic-bezier(0.34, 1.56, 0.64, 1);
+  --animate-qi: qi-spin 24s linear infinite;
+  --animate-drift: drift 42s linear infinite;
+  --animate-slow-zoom: slow-zoom 40s ease-in-out infinite alternate;
+  --animate-float: float-soft 3.4s ease-in-out infinite;
+  --animate-fog: fog-slide 90s linear infinite;
+  --animate-swipe: shimmer-swipe 3.4s ease-in-out infinite;
+  --animate-pulse-dot: pulse-dot 1.6s ease-in-out infinite;
 }
 
-/* ------------------------------------------------------------------ sáng */
+/* ------------------------------------------- Tuyên Chỉ (giấy) - chế độ sáng */
 :root {
-  --radius: 0.75rem;
+  --radius: 0.5rem;
 
-  --background: oklch(0.975 0.004 265);
-  --foreground: oklch(0.21 0.02 265);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.21 0.02 265);
-  --surface: oklch(0.985 0.004 265);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.21 0.02 265);
-  --primary: oklch(0.53 0.21 274);
-  --primary-foreground: oklch(0.99 0 0);
-  --secondary: oklch(0.955 0.008 265);
-  --secondary-foreground: oklch(0.28 0.02 265);
-  --muted: oklch(0.955 0.008 265);
-  --muted-foreground: oklch(0.505 0.02 265);
-  --accent: oklch(0.94 0.02 275);
-  --accent-foreground: oklch(0.3 0.06 275);
-  --destructive: oklch(0.58 0.22 18);
-  --border: oklch(0.9 0.01 265);
-  --input: oklch(0.9 0.01 265);
-  --ring: oklch(0.53 0.21 274);
+  --background: #efe4cd;
+  --foreground: #241a10;
+  --card: #fbf4e4;
+  --card-foreground: #241a10;
+  --surface: #f5ecd8;
+  --popover: #fdf8ec;
+  --popover-foreground: #241a10;
+  --primary: #8a6b28;
+  --primary-foreground: #fdf8ec;
+  --secondary: #e7dabf;
+  --secondary-foreground: #33261a;
+  --muted: #e5d7ba;
+  --muted-foreground: #6d5c40;
+  --accent: #e2d0a6;
+  --accent-foreground: #4a3714;
+  --destructive: #b23a22;
+  --border: rgb(138 107 40 / 26%);
+  --input: rgb(138 107 40 / 34%);
+  --ring: #8a6b28;
 
-  --brand: oklch(0.53 0.21 274);
-  --brand-2: oklch(0.58 0.23 305);
-  --success: oklch(0.56 0.15 160);
-  --warning: oklch(0.68 0.16 62);
-  --p-urgent: oklch(0.58 0.22 18);
-  --p-high: oklch(0.66 0.17 52);
-  --p-medium: oklch(0.6 0.13 232);
-  --p-low: oklch(0.58 0.02 265);
+  --brand: #8a6b28;
+  --brand-2: #3f7f72;
+  --jade: #2f7d6f;
+  --gold: #8a6b28;
+  --gold-bright: #a8781c;
+  --gold-deep: #5d4715;
+  --gold-glow: rgb(168 120 28 / 30%);
+  --cinnabar: #b23a22;
+  --success: #2f7d5a;
+  --warning: #96690f;
+  --p-urgent: #b23a22;
+  --p-high: #96690f;
+  --p-medium: #21707f;
+  --p-low: #6b6156;
 
-  --sidebar: oklch(0.99 0.004 265);
-  --sidebar-foreground: oklch(0.21 0.02 265);
-  --sidebar-primary: oklch(0.53 0.21 274);
-  --sidebar-primary-foreground: oklch(0.99 0 0);
-  --sidebar-accent: oklch(0.94 0.02 275);
-  --sidebar-accent-foreground: oklch(0.3 0.06 275);
-  --sidebar-border: oklch(0.9 0.01 265);
-  --sidebar-ring: oklch(0.53 0.21 274);
+  --ink-line: rgb(120 92 38 / 24%);
+  --seal: #a8321f;
+
+  /* Panel kính: sáng thì là giấy mờ, tối thì là kính đen. */
+  --glass-bg: rgb(251 244 228 / 88%);
+  --glass-border: rgb(138 107 40 / 34%);
+  --glass-shadow: 0 12px 34px rgb(70 50 16 / 22%), inset 0 0 24px rgb(138 107 40 / 6%);
+  --scene-dim: 0.34;
+  --scene-blend: rgb(239 228 205 / 55%);
+
+  --sidebar: #f2e7d2;
+  --sidebar-foreground: #241a10;
+  --sidebar-primary: #8a6b28;
+  --sidebar-primary-foreground: #fdf8ec;
+  --sidebar-accent: #e2d0a6;
+  --sidebar-accent-foreground: #4a3714;
+  --sidebar-border: rgb(138 107 40 / 26%);
+  --sidebar-ring: #8a6b28;
 }
 
-/* -------------------------------------------------------------------- tối */
+/* ------------------------------- Huyền Thiên (đêm vàng kim) - chế độ tối */
+/* Lấy đúng bảng màu của Tiên Ma Giới: đen nâu + vàng kim. */
 .dark {
-  --background: oklch(0.155 0.014 268);
-  --foreground: oklch(0.965 0.006 265);
-  --card: oklch(0.205 0.017 268);
-  --card-foreground: oklch(0.965 0.006 265);
-  --surface: oklch(0.245 0.018 268);
-  --popover: oklch(0.225 0.017 268);
-  --popover-foreground: oklch(0.965 0.006 265);
-  --primary: oklch(0.63 0.2 274);
-  --primary-foreground: oklch(0.99 0 0);
-  --secondary: oklch(0.275 0.018 268);
-  --secondary-foreground: oklch(0.965 0.006 265);
-  --muted: oklch(0.275 0.018 268);
-  --muted-foreground: oklch(0.71 0.022 265);
-  --accent: oklch(0.32 0.05 274);
-  --accent-foreground: oklch(0.965 0.006 265);
-  --destructive: oklch(0.68 0.2 18);
-  --border: oklch(1 0 0 / 11%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.63 0.2 274);
+  --background: #0d0a08;
+  --foreground: #ece2cd;
+  --card: #17110b;
+  --card-foreground: #ece2cd;
+  --surface: #211810;
+  --popover: #140e09;
+  --popover-foreground: #ece2cd;
+  --primary: #c4a661;
+  --primary-foreground: #17110b;
+  --secondary: #251b12;
+  --secondary-foreground: #ece2cd;
+  --muted: #241a11;
+  --muted-foreground: #a2916f;
+  --accent: #35271a;
+  --accent-foreground: #f4d03f;
+  --destructive: #c9482f;
+  --border: rgb(196 166 97 / 24%);
+  --input: rgb(196 166 97 / 32%);
+  --ring: #c4a661;
 
-  --brand: oklch(0.63 0.2 274);
-  --brand-2: oklch(0.68 0.21 305);
-  --success: oklch(0.72 0.16 162);
-  --warning: oklch(0.8 0.15 78);
-  --p-urgent: oklch(0.68 0.2 18);
-  --p-high: oklch(0.78 0.15 58);
-  --p-medium: oklch(0.75 0.12 232);
-  --p-low: oklch(0.68 0.02 265);
+  --brand: #c4a661;
+  --brand-2: #f4d03f;
+  --jade: #3fa796;
+  --gold: #c4a661;
+  --gold-bright: #f4d03f;
+  --gold-deep: #8e7e6a;
+  --gold-glow: rgb(244 208 63 / 40%);
+  --cinnabar: #c9482f;
+  --success: #4fb08a;
+  --warning: #e0a83c;
+  --p-urgent: #e0603f;
+  --p-high: #e0a83c;
+  --p-medium: #4fb8c9;
+  --p-low: #9a8f7c;
 
-  --sidebar: oklch(0.185 0.016 268);
-  --sidebar-foreground: oklch(0.965 0.006 265);
-  --sidebar-primary: oklch(0.63 0.2 274);
-  --sidebar-primary-foreground: oklch(0.99 0 0);
-  --sidebar-accent: oklch(0.32 0.05 274);
-  --sidebar-accent-foreground: oklch(0.965 0.006 265);
-  --sidebar-border: oklch(1 0 0 / 11%);
-  --sidebar-ring: oklch(0.63 0.2 274);
+  --ink-line: rgb(196 166 97 / 18%);
+  --seal: #a8321f;
+
+  --glass-bg: rgb(6 4 3 / 66%);
+  --glass-border: rgb(196 166 97 / 30%);
+  --glass-shadow: 0 10px 34px rgb(0 0 0 / 78%), inset 0 0 24px rgb(196 166 97 / 6%);
+  --scene-dim: 0.42;
+  --scene-blend: rgb(13 10 8 / 62%);
+
+  --sidebar: #120d08;
+  --sidebar-foreground: #ece2cd;
+  --sidebar-primary: #c4a661;
+  --sidebar-primary-foreground: #17110b;
+  --sidebar-accent: #35271a;
+  --sidebar-accent-foreground: #f4d03f;
+  --sidebar-border: rgb(196 166 97 / 24%);
+  --sidebar-ring: #c4a661;
 }
 
 @layer base {
@@ -156,7 +213,7 @@
 
   html {
     @apply font-sans;
-    /* Chặn scroll ở cấp document - việc cuộn do vùng nội dung đảm nhiệm. */
+    /* Chặn cuộn ở cấp document - việc cuộn do vùng nội dung đảm nhiệm. */
     height: 100%;
     overflow: hidden;
   }
@@ -172,26 +229,33 @@
     height: 100%;
   }
 
-  /* Số liệu dùng chữ số cùng bề rộng để đồng hồ không nhảy loạn. */
+  /* Tiêu đề dùng serif để lấy chất thư pháp - cổ mà vẫn dễ đọc tiếng Việt. */
+  h1, h2, h3 {
+    font-family: var(--font-heading);
+    letter-spacing: -0.005em;
+  }
+
   .tabular {
     font-variant-numeric: tabular-nums;
+  }
+
+  .font-heading {
+    font-family: var(--font-heading);
   }
 }
 
 @layer components {
-  /* Nền chuyển sắc thương hiệu, dùng cho logo, huy hiệu và nút nổi bật. */
   .bg-brand-gradient {
-    background-image: linear-gradient(135deg, var(--brand), var(--brand-2));
+    background-image: linear-gradient(135deg, var(--jade), var(--gold));
   }
 
   .text-brand-gradient {
-    background-image: linear-gradient(135deg, var(--brand), var(--brand-2));
+    background-image: linear-gradient(135deg, var(--jade), var(--gold));
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
   }
 
-  /* Vệt sáng chạy ngang, dùng cho thanh XP khi gần lên cấp. */
   .shimmer::after {
     content: '';
     position: absolute;
@@ -203,6 +267,73 @@
       transparent 80%
     );
     animation: var(--animate-shimmer);
+  }
+
+  /* --------------------------------------------------------- vân mây, sương */
+  /* Những đường lượn mảnh mô phỏng mây khói trong tranh thuỷ mặc. */
+  .mist-layer {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='90' viewBox='0 0 200 90'%3E%3Cg fill='none' stroke='%23ffffff' stroke-width='1' stroke-linecap='round'%3E%3Cpath d='M0 20 q25 -13 50 0 t50 0 t50 0 t50 0'/%3E%3Cpath d='M0 50 q25 -13 50 0 t50 0 t50 0 t50 0'/%3E%3Cpath d='M0 80 q25 -13 50 0 t50 0 t50 0 t50 0'/%3E%3C/g%3E%3C/svg%3E");
+    background-repeat: repeat;
+    background-size: 200px 90px;
+  }
+
+  /* Hạt giấy - phá bớt độ phẳng của nền phẳng lì. */
+  .paper-grain {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+  }
+
+  /* ------------------------------------------------------------- ấn triện */
+  /* Con dấu chu sa - dùng cho tên cảnh giới, gợi ngay chất Á Đông. */
+  .seal {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-heading);
+    font-weight: 700;
+    color: #fff;
+    background: var(--seal);
+    border-radius: 4px;
+    box-shadow: inset 0 0 0 1.5px color-mix(in oklab, white 42%, transparent);
+    text-shadow: 0 1px 1px rgb(0 0 0 / 25%);
+  }
+
+  /* ------------------------------------------------- bốn góc kiểu khung ngọc */
+  .corner-marks {
+    position: relative;
+  }
+
+  .corner-marks::before,
+  .corner-marks::after {
+    content: '';
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    pointer-events: none;
+    border-color: var(--gold);
+    opacity: 0.55;
+  }
+
+  .corner-marks::before {
+    top: 5px;
+    left: 5px;
+    border-top: 1.5px solid;
+    border-left: 1.5px solid;
+    border-top-left-radius: 3px;
+  }
+
+  .corner-marks::after {
+    right: 5px;
+    bottom: 5px;
+    border-right: 1.5px solid;
+    border-bottom: 1.5px solid;
+    border-bottom-right-radius: 3px;
+  }
+
+  /* Đường kẻ vàng mảnh, dùng làm gạch phân cách trang trí. */
+  .rule-gold {
+    height: 1px;
+    background-image: linear-gradient(90deg, transparent, var(--gold), transparent);
+    opacity: 0.4;
   }
 }
 
@@ -220,15 +351,8 @@
 }
 
 @keyframes glow {
-  0%, 100% { filter: drop-shadow(0 0 3px color-mix(in oklab, var(--success) 55%, transparent)); }
-  50% { filter: drop-shadow(0 0 12px color-mix(in oklab, var(--success) 85%, transparent)); }
-}
-
-@keyframes flame {
-  0% { transform: scale(1) rotate(0deg); }
-  35% { transform: scale(1.45) rotate(-8deg); }
-  70% { transform: scale(0.95) rotate(5deg); }
-  100% { transform: scale(1) rotate(0deg); }
+  0%, 100% { filter: drop-shadow(0 0 3px color-mix(in oklab, var(--gold) 55%, transparent)); }
+  50% { filter: drop-shadow(0 0 12px color-mix(in oklab, var(--gold) 85%, transparent)); }
 }
 
 @keyframes rise {
@@ -247,7 +371,18 @@
   100% { opacity: 1; transform: scale(1) rotate(0deg); }
 }
 
-/* Tôn trọng người dùng đã tắt hiệu ứng chuyển động trong hệ điều hành. */
+/* Vòng linh khí xoay chậm quanh vòng tiến độ. */
+@keyframes qi-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Mây trôi ngang rất chậm ở lớp nền. */
+@keyframes drift {
+  from { background-position: 0 0; }
+  to { background-position: 200px 0; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -256,4 +391,199 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* Vòng linh khí lan ra từ chỗ ngồi thiền. */
+@keyframes qi-wave {
+  0% { transform: scale(0.35); opacity: 0; }
+  20% { opacity: 0.55; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+
+/* Khói hương uốn éo. */
+@keyframes smoke {
+  0%, 100% { transform: translateX(0) scaleY(1); opacity: 0.32; }
+  50% { transform: translateX(4px) scaleY(1.08); opacity: 0.5; }
+}
+
+/* Hạt linh khí bay lên rồi tan. */
+@keyframes mote {
+  0% { transform: translateY(0); opacity: 0; }
+  15% { opacity: 0.7; }
+  100% { transform: translateY(-96px); opacity: 0; }
+}
+
+/* ==========================================================================
+   Bộ tiện ích giao diện game - lấy theo hệ thiết kế của Tiên Ma Giới
+   (glass-panel / gold-border / glow-text / btn-game / HubIcon)
+   ========================================================================== */
+@layer components {
+  .font-title {
+    font-family: var(--font-title);
+  }
+
+  /* Panel kính viền vàng: khung nền của mọi bảng trong hub. */
+  .glass-panel {
+    position: relative;
+    background: var(--glass-bg);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+  }
+
+  /* Vân sọc mảnh cho mặt kính đỡ phẳng. */
+  .glass-panel::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.06;
+    background-image: repeating-linear-gradient(
+      45deg,
+      color-mix(in oklab, var(--gold) 60%, transparent) 0 1px,
+      transparent 1px 5px
+    );
+  }
+
+  .gold-border {
+    border: 1px solid var(--gold);
+    box-shadow: 0 0 10px var(--gold-glow);
+  }
+
+  .glow-text {
+    color: var(--gold-bright);
+    font-family: var(--font-title);
+    text-shadow: 0 0 8px var(--gold-glow), 0 0 14px rgb(0 0 0 / 70%);
+  }
+
+  /* Nút kiểu game: gradient nâu, viền vàng, chữ in hoa giãn. */
+  .btn-game {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    font-family: var(--font-title);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--gold-bright);
+    background-image: linear-gradient(180deg, color-mix(in oklab, var(--gold) 34%, var(--surface)), var(--card));
+    border: 1px solid var(--gold);
+    border-radius: 0.375rem;
+    box-shadow: 0 4px 12px rgb(0 0 0 / 45%);
+    transition: transform 0.18s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.18s, border-color 0.18s;
+  }
+
+  .btn-game:hover:not(:disabled) {
+    transform: translateY(-2px);
+    border-color: var(--gold-bright);
+    box-shadow: 0 8px 22px var(--gold-glow);
+  }
+
+  .btn-game:active:not(:disabled) {
+    transform: translateY(1px) scale(0.98);
+  }
+
+  .btn-game:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  /* Đốm sáng nhấp nháy - báo có việc cần xử lý. */
+  .pulse-dot {
+    animation: var(--animate-pulse-dot);
+  }
+
+  /* Vệt sáng quét chéo qua icon khi hover. */
+  .swipe-light {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .swipe-light::after {
+    content: '';
+    position: absolute;
+    inset: -50%;
+    background-image: linear-gradient(
+      45deg,
+      transparent 40%,
+      rgb(255 255 255 / 28%) 50%,
+      transparent 60%
+    );
+    transform: translate(-100%, -100%) rotate(45deg);
+    animation: var(--animate-swipe);
+    pointer-events: none;
+  }
+
+  /* Bụi sao lấm tấm rải trên nền cảnh. */
+  .stardust {
+    background-image:
+      radial-gradient(1px 1px at 12% 22%, rgb(255 244 214 / 70%) 0, transparent 100%),
+      radial-gradient(1px 1px at 38% 68%, rgb(255 244 214 / 55%) 0, transparent 100%),
+      radial-gradient(1.5px 1.5px at 63% 18%, rgb(255 244 214 / 60%) 0, transparent 100%),
+      radial-gradient(1px 1px at 82% 52%, rgb(255 244 214 / 50%) 0, transparent 100%),
+      radial-gradient(1px 1px at 27% 88%, rgb(255 244 214 / 45%) 0, transparent 100%),
+      radial-gradient(1.5px 1.5px at 91% 79%, rgb(255 244 214 / 55%) 0, transparent 100%);
+    background-size: 420px 420px;
+  }
+
+  /* Dải sương mù trôi ngang đáy cảnh. */
+  .fog-band {
+    background-image: linear-gradient(
+      90deg,
+      transparent,
+      color-mix(in oklab, var(--gold) 12%, transparent),
+      transparent,
+      color-mix(in oklab, var(--gold) 8%, transparent),
+      transparent
+    );
+    background-size: 200% 100%;
+    animation: var(--animate-fog);
+  }
+
+  /* Thanh máu/tu vi kiểu game: nền lõm, ruột gradient vàng. */
+  .hud-bar {
+    position: relative;
+    overflow: hidden;
+    border-radius: 999px;
+    background: rgb(0 0 0 / 45%);
+    box-shadow: inset 0 1px 3px rgb(0 0 0 / 60%), 0 0 0 1px var(--glass-border);
+  }
+
+  .hud-bar > span {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    background-image: linear-gradient(90deg, var(--gold-deep), var(--gold), var(--gold-bright));
+    box-shadow: 0 0 8px var(--gold-glow);
+    transition: width 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+}
+
+/* Nền cảnh phóng rất chậm, tạo cảm giác camera sống. */
+@keyframes slow-zoom {
+  from { transform: scale(1.06) translate3d(0, 0, 0); }
+  to { transform: scale(1.16) translate3d(-1.2%, -1.4%, 0); }
+}
+
+@keyframes float-soft {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+@keyframes fog-slide {
+  from { background-position: 0 0; }
+  to { background-position: 200% 0; }
+}
+
+@keyframes shimmer-swipe {
+  0% { transform: translate(-110%, -110%) rotate(45deg); }
+  55%, 100% { transform: translate(110%, 110%) rotate(45deg); }
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 0 0 var(--gold-glow); }
+  50% { opacity: 0.7; transform: scale(1.25); box-shadow: 0 0 0 6px transparent; }
 }

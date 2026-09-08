@@ -36,7 +36,7 @@ export function perfectDays(tasks: Task[]): string[] {
 export const ACHIEVEMENTS: Achievement[] = [
   {
     id: 'first-step',
-    title: 'Khởi động',
+    title: 'Nhập Đạo',
     description: 'Hoàn thành nhiệm vụ đầu tiên',
     icon: Rocket,
     target: 1,
@@ -45,7 +45,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   },
   {
     id: 'ten-tasks',
-    title: 'Bắt nhịp',
+    title: 'Sơ Khai Linh Trí',
     description: 'Hoàn thành 10 nhiệm vụ',
     icon: BadgeCheck,
     target: 10,
@@ -54,7 +54,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   },
   {
     id: 'fifty-tasks',
-    title: 'Vào guồng',
+    title: 'Đạo Tâm Kiên Định',
     description: 'Hoàn thành 50 nhiệm vụ',
     icon: Medal,
     target: 50,
@@ -63,7 +63,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   },
   {
     id: 'hundred-tasks',
-    title: 'Trăm chiến trăm thắng',
+    title: 'Bách Chiến Bách Thắng',
     description: 'Hoàn thành 100 nhiệm vụ',
     icon: Trophy,
     target: 100,
@@ -72,7 +72,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   },
   {
     id: 'streak-3',
-    title: 'Ba ngày liền',
+    title: 'Tam Nhật Bất Đoạn',
     description: 'Giữ chuỗi 3 ngày liên tiếp',
     icon: Flame,
     target: 3,
@@ -81,7 +81,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   },
   {
     id: 'streak-7',
-    title: 'Tuần không gián đoạn',
+    title: 'Thất Nhật Vô Gián',
     description: 'Giữ chuỗi 7 ngày liên tiếp',
     icon: CalendarCheck,
     target: 7,
@@ -90,7 +90,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   },
   {
     id: 'streak-30',
-    title: 'Thép đã tôi',
+    title: 'Đạo Tâm Như Thép',
     description: 'Giữ chuỗi 30 ngày liên tiếp',
     icon: Crown,
     target: 30,
@@ -99,8 +99,8 @@ export const ACHIEVEMENTS: Achievement[] = [
   },
   {
     id: 'focus-60',
-    title: 'Giờ vàng đầu tiên',
-    description: 'Tập trung tổng 60 phút',
+    title: 'Nhất Khắc Nhập Định',
+    description: 'Nhập định tổng 60 phút',
     icon: Timer,
     target: 60,
     tone: 'success',
@@ -108,8 +108,8 @@ export const ACHIEVEMENTS: Achievement[] = [
   },
   {
     id: 'focus-600',
-    title: 'Mười giờ chuyên sâu',
-    description: 'Tập trung tổng 600 phút',
+    title: 'Thập Thời Bế Quan',
+    description: 'Nhập định tổng 600 phút',
     icon: Hourglass,
     target: 600,
     tone: 'success',
@@ -117,8 +117,8 @@ export const ACHIEVEMENTS: Achievement[] = [
   },
   {
     id: 'focus-3000',
-    title: 'Bậc thầy tập trung',
-    description: 'Tập trung tổng 50 giờ',
+    title: 'Toạ Vong Chi Cảnh',
+    description: 'Nhập định tổng 50 giờ',
     icon: Gem,
     target: 3000,
     tone: 'success',
@@ -126,7 +126,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   },
   {
     id: 'deadline-hunter',
-    title: 'Thợ săn deadline',
+    title: 'Thần Tốc Trảm Kiếp',
     description: 'Xong 10 nhiệm vụ trước hạn chót',
     icon: ShieldCheck,
     target: 10,
@@ -136,7 +136,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   },
   {
     id: 'bomb-squad',
-    title: 'Đội gỡ bom',
+    title: 'Trảm Tâm Ma',
     description: 'Xong 10 nhiệm vụ mức Khẩn cấp',
     icon: Bomb,
     target: 10,
@@ -145,7 +145,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   },
   {
     id: 'perfect-day',
-    title: 'Ngày trọn vẹn',
+    title: 'Nhật Khoá Viên Mãn',
     description: 'Dọn sạch danh sách trong một ngày',
     icon: Sparkles,
     target: 1,
@@ -154,7 +154,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   },
   {
     id: 'perfect-week',
-    title: 'Bảy ngày trọn vẹn',
+    title: 'Thất Nhật Viên Mãn',
     description: 'Có 7 ngày dọn sạch danh sách',
     icon: Award,
     target: 7,
@@ -163,7 +163,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   },
   {
     id: 'goal-crusher',
-    title: 'Cán mốc',
+    title: 'Đại Nguyện Thành',
     description: 'Hoàn thành 100% một mục tiêu',
     icon: Target,
     target: 1,
@@ -176,7 +176,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   },
   {
     id: 'early-bird',
-    title: 'Chim dậy sớm',
+    title: 'Kê Minh Tức Khởi',
     description: 'Xong 5 nhiệm vụ trước 9 giờ sáng',
     icon: Sunrise,
     target: 5,

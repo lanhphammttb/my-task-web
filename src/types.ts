@@ -1,9 +1,14 @@
 /** Kiểu dữ liệu dùng chung cho toàn bộ ứng dụng. */
 
+import type { OwnedBeast } from './lib/beasts';
+import type { LedgerEntry } from './lib/integrity';
+import type { PillGrade } from './lib/pills';
+import type { SpiritRoot } from './lib/spirit';
+
 export type Priority = 'low' | 'medium' | 'high' | 'urgent';
 export type Status = 'todo' | 'doing' | 'done';
 export type Recurrence = 'none' | 'daily' | 'weekdays' | 'weekly' | 'monthly';
-export type ViewKey = 'today' | 'week' | 'month' | 'goals' | 'focus' | 'awards' | 'stats';
+export type ViewKey = 'today' | 'week' | 'month' | 'goals' | 'focus' | 'cave' | 'awards' | 'stats';
 
 export interface Subtask {
   id: string;
@@ -56,8 +61,12 @@ export interface FocusSession {
 
 export interface Settings {
   theme: 'dark' | 'light';
+  /** Đạo hiệu người tu - hiển thị trên thẻ cảnh giới */
+  daoName: string;
   /** Bật tiếng phản hồi khi hoàn thành nhiệm vụ, lên cấp, mở huy hiệu */
   soundEnabled: boolean;
+  /** Bật nhạc nền và video khi đang bế quan */
+  ambientEnabled: boolean;
   /** Số nhiệm vụ mục tiêu mỗi ngày - dùng để tính vòng tiến độ */
   dailyTarget: number;
   /** Số phút tập trung mục tiêu mỗi ngày */
@@ -74,6 +83,33 @@ export interface AppData {
   goals: Goal[];
   sessions: FocusSession[];
   settings: Settings;
+  /** Linh căn - khai quang một lần khi nhập môn */
+  root?: SpiritRoot;
+  /** Linh thú đã thu phục */
+  beasts: OwnedBeast[];
+  /** Linh thú đang mang theo, thiên phú của nó mới có tác dụng */
+  activeBeastId?: string;
+  /** Linh thạch đã tiêu (số dư = kiếm được - đã tiêu) */
+  stonesSpent: number;
+  /** Đan dược đang có, theo phẩm cấp */
+  pills: Record<PillGrade, number>;
+  /**
+   * Tu vi bị tổn thất do độ kiếp thất bại. Tách riêng khỏi tu vi gốc để hồ sơ
+   * công việc thật không bao giờ bị sửa - chỉ có phần "hao tổn" cộng dồn ở đây.
+   */
+  tuViPenalty: number;
+  /** Cảnh giới cao nhất đã được phép bước vào; muốn lên nữa phải độ kiếp */
+  gateRealm: number;
+  /** Số lần độ kiếp thất bại liên tiếp - mỗi lần cộng thêm cơ hội cho lần sau */
+  failStreak: number;
+  /** Tu vi có được (hoặc mất) từ kỳ ngộ - tách khỏi tu vi do công việc */
+  encounterXp: number;
+  /** Linh thạch thưởng từ kỳ ngộ */
+  stonesBonus: number;
+  /** Sổ ghi chuỗi băm cho mọi nguồn tu vi - dùng để phát hiện sửa dữ liệu */
+  ledger: LedgerEntry[];
+  /** Lần cuối mở app, để phát hiện đồng hồ bị đẩy lùi */
+  lastSeenAt: string;
 }
 
 export const PRIORITY_META: Record<Priority, { label: string; color: string; weight: number }> = {
@@ -97,4 +133,17 @@ export const RECURRENCE_META: Record<Recurrence, { label: string }> = {
   monthly: { label: 'Hằng tháng' },
 };
 
-export const GOAL_COLORS = ['#6366f1', '#8b5cf6', '#ec4899', '#f43f5e', '#f59e0b', '#10b981', '#06b6d4', '#3b82f6'];
+/**
+ * Bảng màu lấy từ màu truyền thống Á Đông: thanh ngọc, kim, chu sa, tùng lục,
+ * đại lam, tử đàn, giả thạch, thiên thanh. Hợp tông với giao diện thuỷ mặc.
+ */
+export const GOAL_COLORS = [
+  '#3fa796', // thanh ngọc
+  '#d4a24c', // kim
+  '#c9482f', // chu sa
+  '#4f7a52', // tùng lục
+  '#4a6b8a', // đại lam
+  '#8a6aa3', // tử đàn
+  '#a3603a', // giả thạch
+  '#5aa9c9', // thiên thanh
+];

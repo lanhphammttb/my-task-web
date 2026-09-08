@@ -42,16 +42,21 @@ export default function TaskCard({ task, onEdit, onFocus, showDate }: Props) {
   const subDone = task.subtasks.filter((s) => s.done).length;
   const done = task.status === 'done';
 
-  /** Tick xong: confetti tại đúng ô tick + chip "+XP" bay lên + tiếng ting. */
+  /**
+   * Tick xong: confetti tại đúng ô tick + chip "+XP" bay lên + tiếng ting.
+   * Chỉ ăn mừng khi store thật sự chấp nhận - nếu bị chặn (ví dụ nhiệm vụ của
+   * ngày mai) thì không hiệu ứng, không âm thanh.
+   */
   const handleToggle = () => {
-    if (!done) {
-      burstAt(checkRef.current);
-      soundComplete();
-      const gain = 10 * { urgent: 4, high: 3, medium: 2, low: 1 }[task.priority];
-      setXpBurst(gain);
-      window.setTimeout(() => setXpBurst(0), 1150);
-    }
-    toggleDone(task.id);
+    const wasDone = done;
+    const applied = toggleDone(task.id);
+    if (!applied || wasDone) return;
+
+    burstAt(checkRef.current);
+    soundComplete();
+    const gain = 10 * { urgent: 4, high: 3, medium: 2, low: 1 }[task.priority];
+    setXpBurst(gain);
+    window.setTimeout(() => setXpBurst(0), 1150);
   };
 
   return (
@@ -63,7 +68,7 @@ export default function TaskCard({ task, onEdit, onFocus, showDate }: Props) {
       transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
       className={cn(
         'group relative flex gap-3 overflow-hidden rounded-xl border pr-3 pl-0 transition-colors',
-        'border-border bg-card hover:border-border/80 hover:bg-surface/60',
+        'border-border bg-card/85 hover:border-gold/40 hover:bg-surface/70',
         done && 'opacity-60',
         late && 'border-destructive/35 bg-destructive/[0.05]',
       )}

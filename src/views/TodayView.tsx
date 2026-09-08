@@ -1,20 +1,27 @@
 import { useMemo } from 'react';
 import { AnimatePresence } from 'motion/react';
 import {
-  AlertTriangle, CalendarCheck2, CalendarPlus, ChevronLeft, ChevronRight, Crosshair,
-  Flag, Hourglass, Lightbulb, ListChecks, PartyPopper, Play, Quote, Target, Trophy,
+  AlertTriangle, CalendarCheck2, CalendarPlus, Check, ChevronLeft, ChevronRight, Crosshair,
+  Flag, Gem, Hourglass, Lightbulb, ListChecks, PartyPopper, Play, Quote, ScrollText, Target, Trophy,
+  Wand2,
 } from 'lucide-react';
 import type { Task } from '../types';
 import {
   addDays, countdown, dateKey, formatDuration, longDate, parseKey, relativeDay, todayKey,
 } from '../lib/date';
 import { dayStats, sortTasks, tasksOn } from '../lib/stats';
-import { nudge, quoteOfDay } from '../lib/motivation';
+import { nudge } from '../lib/motivation';
+import { aphorismOfDay } from '../lib/elders';
+import { questStates } from '../lib/quests';
+import { ROOT_GRADES } from '../lib/spirit';
+import { cultivationOf } from '../lib/cultivation';
+import { effectiveXp } from '../lib/economy';
 import { useApp } from '../store/AppStore';
 import ProgressRing from '../components/ProgressRing';
+import RealmScene from '../components/RealmScene';
 import QuickAdd from '../components/QuickAdd';
 import TaskCard from '../components/TaskCard';
-import { EmptyState, Meter, Section } from '../components/primitives';
+import { EmptyState, Meter, MetaChip, Section } from '../components/primitives';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -26,7 +33,7 @@ interface Props {
 }
 
 export default function TodayView({ date, onDateChange, onEdit, onFocus }: Props) {
-  const { data, pushOverdueToToday } = useApp();
+  const { data, pushOverdueToToday, awaken } = useApp();
   const isToday = date === todayKey();
 
   const list = useMemo(() => sortTasks(tasksOn(data.tasks, date)), [data.tasks, date]);
@@ -42,9 +49,11 @@ export default function TodayView({ date, onDateChange, onEdit, onFocus }: Props
   const pending = [...doing, ...todo];
   const remainMin = pending.reduce((s, t) => s + t.estimateMin, 0);
   const top3 = pending.slice(0, 3);
-  const quote = quoteOfDay();
+  const aphorism = aphorismOfDay();
+  const quests = useMemo(() => questStates(data, date), [data, date]);
   const { dailyTarget, dailyFocusTarget } = data.settings;
   const perfect = stats.total > 0 && stats.done === stats.total;
+  const realmIndex = cultivationOf(effectiveXp(data)).realmIndex;
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-4">
@@ -79,16 +88,44 @@ export default function TodayView({ date, onDateChange, onEdit, onFocus }: Props
         </Button>
       </div>
 
+      {/* -------------------------------------- mời khai quang nếu chưa có linh căn */}
+      {!data.root && (
+        <Section tone="accent" icon={Wand2} title="Chưa khai quang linh căn">
+          <div className="flex flex-wrap items-center gap-4">
+            <p className="text-muted-foreground min-w-56 flex-1 text-xs leading-relaxed">
+              Người tu nào cũng phải khai quang một lần để biết mình mang hệ gì. Linh căn quyết định
+              tốc độ hấp thu tu vi và các thiên phú đi theo suốt đường tu.
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {ROOT_GRADES.map((g) => (
+                <MetaChip key={g.name} style={{ color: g.tone, borderColor: `${g.tone}55` }}>
+                  {Math.round(g.chance * 100)}% {g.name}
+                </MetaChip>
+              ))}
+            </div>
+            <Button className="gap-2" onClick={() => awaken()}>
+              <Wand2 className="size-4" /> Khai quang
+            </Button>
+          </div>
+        </Section>
+      )}
+
       {/* ------------------------------------------------------- tổng quan */}
       <section
         className={cn(
-          'rounded-2xl border p-5',
+          'relative overflow-hidden rounded-2xl border p-5',
           perfect
             ? 'border-success/40 bg-gradient-to-br from-success/12 to-card'
             : 'border-primary/25 bg-gradient-to-br from-primary/12 to-card',
         )}
       >
-        <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
+        {/* Tranh cảnh giới làm nền mờ để màn hình chính cũng có hình */}
+        <div className="pointer-events-none absolute inset-0">
+          <RealmScene realmIndex={realmIndex} variant="thumb" tint={0.35} />
+          <div className="from-card/92 via-card/70 to-card/25 absolute inset-0 bg-gradient-to-r" />
+        </div>
+
+        <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center">
           <ProgressRing
             value={stats.total ? stats.done / stats.total : 0}
             size={126}
@@ -100,7 +137,7 @@ export default function TodayView({ date, onDateChange, onEdit, onFocus }: Props
             {perfect ? (
               <p className="text-success flex items-start gap-2 text-sm font-semibold">
                 <PartyPopper className="mt-0.5 size-4 shrink-0" />
-                Ngày trọn vẹn! Bạn đã dọn sạch danh sách. Nghỉ ngơi là phần thưởng xứng đáng.
+Nhật khoá viên mãn! Danh sách đã sạch, đạo tâm vững thêm một phần.
               </p>
             ) : (
               <p className="flex items-start gap-2 text-sm font-semibold">
@@ -112,7 +149,7 @@ export default function TodayView({ date, onDateChange, onEdit, onFocus }: Props
             <div className="grid gap-3 sm:grid-cols-3">
               <div>
                 <div className="text-muted-foreground flex items-center gap-1.5 text-[11px]">
-                  <Target className="size-3" /> Mục tiêu ngày
+                  <Target className="size-3" /> Nhật khoá
                 </div>
                 <div className="tabular mt-0.5 mb-1.5 text-sm font-semibold">
                   {stats.done}/{dailyTarget}
@@ -121,7 +158,7 @@ export default function TodayView({ date, onDateChange, onEdit, onFocus }: Props
               </div>
               <div>
                 <div className="text-muted-foreground flex items-center gap-1.5 text-[11px]">
-                  <Crosshair className="size-3" /> Giờ tập trung
+                  <Crosshair className="size-3" /> Nhập định
                 </div>
                 <div className="tabular mt-0.5 mb-1.5 text-sm font-semibold">
                   {formatDuration(stats.focusMin)} / {formatDuration(dailyFocusTarget)}
@@ -140,10 +177,13 @@ export default function TodayView({ date, onDateChange, onEdit, onFocus }: Props
               </div>
             </div>
 
-            <blockquote className="border-primary bg-card/70 text-muted-foreground rounded-r-lg border-l-2 px-3 py-2 text-xs">
-              <Quote className="mr-1 mb-0.5 inline size-3" />
-              <span className="italic">{quote.text}</span>
-              <cite className="mt-0.5 block text-[11px] not-italic opacity-75">— {quote.author}</cite>
+            <blockquote className="border-gold/60 bg-card/70 text-muted-foreground rounded-r-lg border-l-2 px-3 py-2 text-xs">
+              <Quote className="text-gold mr-1 mb-0.5 inline size-3" />
+              <span className="italic">{aphorism.text}</span>
+              <cite className="mt-1 block text-[11px] not-italic">
+                <span className="text-gold/90 font-medium">— {aphorism.elder}</span>
+                <span className="opacity-70"> · {aphorism.title}</span>
+              </cite>
             </blockquote>
           </div>
         </div>
@@ -151,13 +191,56 @@ export default function TodayView({ date, onDateChange, onEdit, onFocus }: Props
 
       <QuickAdd date={date} />
 
+      {/* ------------------------------------------------ nhật khoá tông môn */}
+      <Section
+        icon={ScrollText}
+        title="Nhật khoá tông môn"
+        subtitle="Ba việc phụ đổi lấy linh thạch, đổi mới mỗi ngày"
+        action={
+          <span className="text-muted-foreground inline-flex items-center gap-1 text-xs">
+            <Gem className="text-gold size-3.5" />
+            {quests.filter((q) => q.done).length}/{quests.length} hoàn thành
+          </span>
+        }
+      >
+        <ul className="grid gap-2 sm:grid-cols-3">
+          {quests.map((q) => (
+            <li
+              key={q.id}
+              className={cn(
+                'rounded-lg border p-3 transition-colors',
+                q.done ? 'border-success/40 bg-success/[0.08]' : 'border-border bg-surface/50',
+              )}
+            >
+              <div className="flex items-start gap-2">
+                <span
+                  className={cn(
+                    'mt-0.5 grid size-4 shrink-0 place-items-center rounded-full border',
+                    q.done ? 'border-success bg-success text-white' : 'border-muted-foreground/40',
+                  )}
+                >
+                  {q.done && <Check className="size-2.5" strokeWidth={4} />}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className={cn('block text-xs font-medium', q.done && 'text-success')}>{q.label}</span>
+                  <span className="text-muted-foreground tabular text-[11px]">
+                    {q.current}/{q.target} · thưởng {q.reward} linh thạch
+                  </span>
+                </span>
+              </div>
+              {!q.done && <Meter value={q.ratio} height={4} className="mt-2" />}
+            </li>
+          ))}
+        </ul>
+      </Section>
+
       {/* --------------------------------------------------------- quá hạn */}
       {isToday && overdue.length > 0 && (
         <Section
           tone="danger"
           icon={AlertTriangle}
-          title={`Quá hạn (${overdue.length})`}
-          subtitle="Xử lý dứt điểm trước khi nhận việc mới"
+          title={`Tâm ma quấy nhiễu (${overdue.length})`}
+          subtitle="Nhiệm vụ quá hạn - trảm sạch trước khi đạo tâm lung lay"
           action={
             <Button variant="outline" size="sm" onClick={pushOverdueToToday}>
               Dời tất cả sang hôm nay
@@ -180,7 +263,7 @@ export default function TodayView({ date, onDateChange, onEdit, onFocus }: Props
           tone="accent"
           icon={Trophy}
           title="3 việc quan trọng nhất"
-          subtitle="Xong 3 việc này là ngày hôm nay đã thắng"
+          subtitle="Trảm xong 3 việc này là nhật khoá hôm nay coi như thắng"
         >
           <ol className="space-y-2">
             {top3.map((t, i) => {

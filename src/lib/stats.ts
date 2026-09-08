@@ -57,26 +57,13 @@ export function bestStreak(tasks: Task[]): number {
   return best;
 }
 
-/** Điểm kinh nghiệm: ưu tiên càng cao thưởng càng nhiều, cộng thêm thời gian tập trung. */
+/** Tu vi tích luỹ: ưu tiên càng cao thưởng càng nhiều, cộng thêm thời gian nhập định. */
 export function totalXp(tasks: Task[], sessions: FocusSession[]) {
   const fromTasks = tasks
     .filter((t) => t.status === 'done')
     .reduce((sum, t) => sum + 10 * PRIORITY_META[t.priority].weight, 0);
   const fromFocus = Math.floor(sessions.reduce((s, x) => s + x.minutes, 0) / 5);
   return fromTasks + fromFocus;
-}
-
-/** Cấp độ tăng dần theo bậc thang 100, 250, 450, 700... */
-export function levelOf(xp: number) {
-  let level = 1;
-  let need = 100;
-  let acc = 0;
-  while (xp >= acc + need) {
-    acc += need;
-    level += 1;
-    need += 50 * level;
-  }
-  return { level, into: xp - acc, need, ratio: need ? (xp - acc) / need : 0 };
 }
 
 export function statsRange(tasks: Task[], sessions: FocusSession[], from: Date, days: number): DayStats[] {

@@ -1,7 +1,7 @@
-# Kế Hoạch — Web (React + TypeScript)
+# Đạo Trình — Web (React + TypeScript + shadcn/ui)
 
-Ứng dụng web lập kế hoạch theo ngày / tuần / tháng, thiết kế để **thúc đẩy hoàn thành**
-nhiệm vụ đúng deadline chứ không chỉ để ghi chép.
+Ứng dụng web lập kế hoạch theo ngày / tuần / tháng, gắn với **hệ thống tu tiên** để việc hoàn
+thành nhiệm vụ trở thành tiến trình từ Luyện Khí lên Phi Thăng.
 
 ## Chạy dự án
 
@@ -12,29 +12,62 @@ npm run dev        # http://localhost:5173
 
 | Lệnh | Việc nó làm |
 |---|---|
-| `npm run dev` | Chạy server phát triển với hot reload |
+| `npm run dev` | Server phát triển, hot reload |
 | `npm run build` | Kiểm tra TypeScript rồi build vào `dist/` |
 | `npm run preview` | Xem thử bản build production |
-| `npm test` | Chạy toàn bộ test (Vitest + jsdom) |
+| `npm test` | Chạy 29 test (Vitest + jsdom) |
 | `npm run test:watch` | Test ở chế độ theo dõi |
 | `npm run lint` | Chạy oxlint |
 
 Không cần backend, không cần biến môi trường. Dữ liệu nằm trong `localStorage` của trình duyệt.
 
+## Công nghệ giao diện
+
+| Thành phần | Lựa chọn |
+|---|---|
+| CSS | Tailwind CSS v4 (`@tailwindcss/vite`) |
+| Bộ component | shadcn/ui (style `radix-nova`, base Radix UI) |
+| Biểu tượng | lucide-react — **không dùng emoji làm icon** |
+| Chữ tiêu đề | Noto Serif (`@fontsource/noto-serif`, subset tiếng Việt) |
+| Hoạt ảnh | `motion` (Framer Motion) + keyframes CSS |
+| Hiệu ứng ăn mừng | `canvas-confetti` + WebAudio (không cần tệp âm thanh) |
+| Chữ | Geist Variable |
+
+Theme dùng token của shadcn (`--background`, `--card`, `--primary`…) cộng thêm token riêng của app
+(`--jade`, `--gold`, `--cinnabar`, `--seal`, `--ink-line`, `--p-urgent`…). Đổi sáng/tối bằng class
+`dark` trên `<html>` — thẻ `<html>` đặt sẵn `class="dark"` để không loé sáng trước khi React chạy.
+
+Hoa văn nằm trong `@layer components` của [`src/index.css`](src/index.css): `.mist-layer` (mây khói),
+`.paper-grain` (hạt giấy), `.seal` (ấn triện chu sa), `.corner-marks` (khung ngọc), `.rule-gold`
+(đường kẻ vàng). Nền mây núi do [`InkBackdrop`](src/components/InkBackdrop.tsx) vẽ bằng SVG nội tuyến.
+
 ## Các màn hình
 
 | Màn hình | Nội dung |
 |---|---|
-| **Hôm nay** | Vòng tiến độ, 3 chỉ số ngày, lời nhắc theo tiến độ, khu vực quá hạn, "3 việc quan trọng nhất", danh sách việc chia theo trạng thái |
-| **Tuần** | 7 cột kế hoạch, **kéo thả** thẻ giữa các ngày, thêm việc trực tiếp trong cột, thanh tiến độ mỗi ngày |
-| **Tháng** | Lịch tháng với chấm màu theo mức ưu tiên, thanh hoàn thành mỗi ngày, bảng chi tiết ngày đang chọn |
-| **Mục tiêu** | Thẻ mục tiêu với tiến độ %, ngày đích và đếm ngược, danh sách nhiệm vụ thuộc mục tiêu |
-| **Tập trung** | Pomodoro có thể gắn vào một nhiệm vụ; hết phiên tự ghi nhận số phút và chuyển sang nghỉ |
-| **Thống kê** | Tỷ lệ hoàn thành, chuỗi ngày, biểu đồ cột theo ngày, phân tích theo ưu tiên / thứ / mục tiêu / nhãn |
+| **Hôm nay** | Vòng tiến độ nhật khoá, 3 chỉ số ngày, lời nhắc theo tiến độ, khu **tâm ma** (việc quá hạn), "3 việc quan trọng nhất", danh sách chia theo trạng thái |
+| **Tuần** | 7 cột kế hoạch, **kéo thả** thẻ giữa các ngày, thêm việc ngay trong cột |
+| **Tháng** | Lịch tháng với chấm màu theo ưu tiên, thanh hoàn thành mỗi ngày, bảng chi tiết ngày đang chọn |
+| **Mục tiêu** | Thẻ mục tiêu với tiến độ %, ngày đích và đếm ngược |
+| **Bế quan** | Pomodoro gắn vào một nhiệm vụ; hết phiên tự ghi nhận số phút thành tu vi |
+| **Tiên Lộ** | Thẻ cảnh giới, bậc thang 10 cảnh giới, tiến độ phi thăng, 16 kỳ ngộ |
+| **Thống kê** | Tỷ lệ hoàn thành, chuỗi ngày, biểu đồ cột, phân tích theo ưu tiên / thứ / mục tiêu / nhãn |
+
+## Hệ thống tu tiên
+
+Xem bảng cảnh giới đầy đủ ở [README gốc](../README.md). Phần logic nằm gọn trong
+[`src/lib/cultivation.ts`](src/lib/cultivation.ts):
+
+```ts
+cultivationOf(xp)   // -> { realm, tier, into, need, ratio, toNext, atPeak, ascended, nextLabel }
+realmLadder(xp)     // -> trạng thái done/current/locked của cả 10 cảnh giới
+ascensionRatio(xp)  // -> tiến độ toàn đạo lộ, 0..1
+```
+
+Tu vi được tính trong `src/lib/stats.ts`: `10 × trọng số ưu tiên` cho mỗi nhiệm vụ xong
+(Khẩn cấp ×4, Cao ×3, Trung bình ×2, Thấp ×1) cộng `1 tu vi / 5 phút` nhập định.
 
 ## Cú pháp thêm nhanh
-
-Nhập một dòng vào ô "Thêm nhanh nhiệm vụ":
 
 ```
 Viết báo cáo quý 3 !cao @09:00 ~90 #công-việc #gấp
@@ -47,47 +80,57 @@ Viết báo cáo quý 3 !cao @09:00 ~90 #công-việc #gấp
 | `~90` | Thời lượng dự kiến (phút) | `~90p`, `~90m` đều được |
 | `#nhãn` | Gắn nhãn | lặp lại được nhiều lần |
 
-Phần còn lại của câu trở thành tên nhiệm vụ. Ký tự `!` không khớp từ khoá nào sẽ được giữ nguyên.
+Ký tự `!` không khớp từ khoá nào sẽ được giữ nguyên trong tên nhiệm vụ.
 
 ## Phím tắt
 
 | Phím | Hành động |
 |---|---|
-| `N` | Mở hộp thoại nhiệm vụ mới |
-| `1`–`6` | Chuyển giữa 6 màn hình |
+| `N` | Nhiệm vụ mới |
+| `1`–`7` | Chuyển giữa 7 màn hình |
 | `/` | Nhảy vào ô tìm kiếm |
-| `T` | Về ngày hôm nay |
-| `Esc` | Đóng hộp thoại đang mở |
+| `T` | Về hôm nay |
+| `Esc` | Đóng hộp thoại |
 
 ## Cấu trúc mã nguồn
 
 ```
 src/
-├─ types.ts                 Kiểu dữ liệu + metadata ưu tiên/trạng thái/chu kỳ lặp
-├─ store/AppStore.tsx       Context + toàn bộ hành động, tự lưu xuống localStorage
+├─ types.ts                  Kiểu dữ liệu + metadata ưu tiên/trạng thái/chu kỳ lặp
+├─ store/AppStore.tsx        Context + hành động + phát hiện mốc ăn mừng, tự lưu localStorage
 ├─ lib/
-│  ├─ date.ts               Định dạng ngày tiếng Việt, lưới tuần/tháng, đếm ngược
-│  ├─ stats.ts              Thống kê ngày, chuỗi ngày, XP/cấp độ, sắp xếp nhiệm vụ
-│  ├─ storage.ts            Đọc/ghi localStorage, xuất/nhập tệp JSON
-│  ├─ motivation.ts         Câu nói theo ngày + lời nhắc theo tiến độ
-│  └─ seed.ts               Dữ liệu mẫu cho lần chạy đầu
-├─ components/              ProgressRing, TaskItem, TaskEditor, QuickAdd, Modal, Sidebar, SettingsModal
-├─ views/                   TodayView, WeekView, MonthView, GoalsView, FocusView, StatsView
-├─ index.css                Toàn bộ CSS, có token cho hai chế độ sáng/tối
-└─ __tests__/               Test logic thuần + test tích hợp giao diện
+│  ├─ cultivation.ts         Bậc thang cảnh giới, tính cảnh giới/tầng từ tu vi
+│  ├─ achievements.ts        16 kỳ ngộ và cách đo tiến độ
+│  ├─ celebrate.ts           Confetti + âm thanh WebAudio
+│  ├─ stats.ts               Thống kê ngày, chuỗi ngày, tu vi, sắp xếp nhiệm vụ
+│  ├─ date.ts                Định dạng ngày tiếng Việt, lưới tuần/tháng, đếm ngược
+│  ├─ ui.ts                  Bảng màu/icon cho ưu tiên, trạng thái, chu kỳ lặp
+│  ├─ storage.ts             Đọc/ghi localStorage, xuất/nhập tệp JSON
+│  ├─ motivation.ts          Câu nói theo ngày + lời nhắc theo tiến độ
+│  └─ seed.ts                Dữ liệu mẫu cho lần chạy đầu
+├─ components/
+│  ├─ ui/                    Component shadcn (do CLI sinh, có thể sửa tự do)
+│  ├─ AppSidebar.tsx         Điều hướng + thẻ cảnh giới + chuỗi tu luyện
+│  ├─ InkBackdrop.tsx       Nền thuỷ mặc: quầng linh khí, mây khói, núi non
+│  ├─ RealmSeal.tsx         Ấn triện chu sa khắc tên cảnh giới
+│  ├─ TaskCard.tsx           Thẻ nhiệm vụ: tick có confetti, chip +tu vi, mở rộng chi tiết
+│  ├─ CelebrationLayer.tsx   Lớp phủ đột phá / độ kiếp / phi thăng / kỳ ngộ
+│  ├─ TaskEditorDialog.tsx · SettingsDialog.tsx · QuickAdd.tsx · ProgressRing.tsx · primitives.tsx
+├─ views/                    TodayView, WeekView, MonthView, GoalsView, FocusView, AwardsView, StatsView
+├─ index.css                 Theme Tailwind v4 + token + keyframes
+├─ test-setup.ts             Polyfill cho jsdom (Storage, ResizeObserver, canvas 2d)
+└─ __tests__/                Test logic thuần + test tích hợp giao diện
 ```
 
 ## Ghi chú kỹ thuật
 
-- **Không thư viện UI ngoài.** Toàn bộ giao diện, biểu đồ và vòng tiến độ viết bằng CSS/SVG thuần;
-  phụ thuộc runtime duy nhất ngoài React là `date-fns`.
-- **Nhiệm vụ lặp lại** không sinh trước hàng loạt. Khi bạn hoàn thành một lần, lần kế tiếp mới
-  được tạo — tránh làm phình dữ liệu và tránh danh sách tương lai đầy việc chưa cần nghĩ tới.
-- **Chuỗi ngày** vẫn được giữ nếu hôm nay chưa xong việc (vì ngày chưa kết thúc); chỉ đứt khi
-  cả một ngày trọn vẹn không hoàn thành gì.
-- **`src/test-setup.ts`** cấp một `Storage` trong bộ nhớ cho test, vì Node 25 gắn sẵn một
-  `localStorage` thử nghiệm rỗng che mất bản của jsdom.
-- Dữ liệu chỉ nằm trong trình duyệt. Xoá dữ liệu site là mất sạch — dùng
-  Cài đặt → "Xuất tệp JSON" để sao lưu định kỳ.
-# my-task-web
-# my-task-web
+- **Vùng cuộn duy nhất** nằm ở `main > div.overflow-y-auto`; `html`/`body` bị khoá cuộn.
+  Mọi khối cha trên đường đó đều có `min-h-0` — thiếu nó là flexbox sẽ tràn và mất scroll.
+- **Nhiệm vụ lặp lại** không sinh trước hàng loạt. Xong lần này mới tạo lần kế tiếp.
+- **Chuỗi ngày** vẫn giữ nếu hôm nay chưa xong việc (ngày chưa kết thúc); chỉ đứt khi trọn một
+  ngày không hoàn thành gì.
+- **Confetti fail-safe**: mọi lời gọi đi qua `fire()` có try/catch, môi trường không vẽ được canvas
+  vẫn tick xong nhiệm vụ bình thường.
+- **`src/test-setup.ts`** cấp `Storage` trong bộ nhớ (Node 25 gắn sẵn một `localStorage` rỗng che
+  mất bản của jsdom), cùng `ResizeObserver`, `matchMedia` và context canvas 2d cho Radix + confetti.
+- Dữ liệu chỉ nằm trong trình duyệt — dùng Cài đặt → "Xuất tệp JSON" để sao lưu định kỳ.

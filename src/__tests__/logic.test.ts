@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { parseQuick } from '../components/QuickAdd';
 import { countdown, dateKey, formatDuration, monthGrid, weekDays } from '../lib/date';
-import { bestStreak, currentStreak, isOverdue, levelOf, sortTasks, totalXp } from '../lib/stats';
+import { bestStreak, currentStreak, isOverdue, sortTasks, totalXp } from '../lib/stats';
+import { ascensionRatio, cultivationOf, realmLabel, realmLadder, TOTAL_TO_ASCEND } from '../lib/cultivation';
 import type { FocusSession, Priority, Status, Task } from '../types';
 import { addDays } from '../lib/date';
 
@@ -104,12 +105,60 @@ describe('điểm và cấp độ', () => {
     expect(totalXp(tasks, sessions)).toBe(60);
   });
 
-  it('lên cấp theo bậc thang', () => {
-    expect(levelOf(0).level).toBe(1);
-    expect(levelOf(99).level).toBe(1);
-    expect(levelOf(100).level).toBe(2);
-    expect(levelOf(100).into).toBe(0);
-    expect(levelOf(350).level).toBe(3);
+});
+
+describe('hệ thống tu tiên', () => {
+  it('người mới bắt đầu ở Luyện Khí tầng 1', () => {
+    const c = cultivationOf(0);
+    expect(c.realm.name).toBe('Luyện Khí');
+    expect(c.tier).toBe(1);
+    expect(c.into).toBe(0);
+    expect(c.ascended).toBe(false);
+    expect(realmLabel(c)).toBe('Luyện Khí tầng 1');
+  });
+
+  it('đủ tu vi thì lên tầng kế trong cùng cảnh giới', () => {
+    expect(cultivationOf(49).tier).toBe(1);
+    expect(cultivationOf(50).tier).toBe(2);
+    expect(cultivationOf(50).into).toBe(0);
+    expect(cultivationOf(75).into).toBe(25);
+    expect(cultivationOf(75).toNext).toBe(25);
+  });
+
+  it('tầng 9 được đánh dấu là sắp độ kiếp', () => {
+    const peak = cultivationOf(449);
+    expect(peak.tier).toBe(9);
+    expect(peak.atPeak).toBe(true);
+    expect(peak.nextLabel).toBe('Trúc Cơ');
+  });
+
+  it('vượt ngưỡng thì sang cảnh giới mới', () => {
+    const next = cultivationOf(450);
+    expect(next.realm.name).toBe('Trúc Cơ');
+    expect(next.realmIndex).toBe(1);
+    expect(next.tier).toBe(1);
+  });
+
+  it('đủ tu vi toàn đạo lộ thì phi thăng', () => {
+    const done = cultivationOf(TOTAL_TO_ASCEND);
+    expect(done.ascended).toBe(true);
+    expect(done.realm.name).toBe('Phi Thăng');
+    expect(realmLabel(done)).toBe('Phi Thăng');
+    expect(ascensionRatio(TOTAL_TO_ASCEND)).toBe(1);
+  });
+
+  it('tu vi âm hoặc lẻ vẫn cho ra cảnh giới hợp lệ', () => {
+    expect(cultivationOf(-500).realm.name).toBe('Luyện Khí');
+    expect(cultivationOf(-500).tier).toBe(1);
+    expect(cultivationOf(12.7).tier).toBe(1);
+  });
+
+  it('bậc thang đánh dấu đúng cảnh giới đã qua, đang ở và chưa tới', () => {
+    const ladder = realmLadder(500); // Trúc Cơ tầng 1
+    expect(ladder[0].status).toBe('done');
+    expect(ladder[1].status).toBe('current');
+    expect(ladder[2].status).toBe('locked');
+    expect(ladder.at(-1)?.realm.name).toBe('Phi Thăng');
   });
 });
 
