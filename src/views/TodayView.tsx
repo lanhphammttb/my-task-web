@@ -193,6 +193,7 @@ Nhật khoá viên mãn! Danh sách đã sạch, đạo tâm vững thêm một 
 
       {/* ------------------------------------------------ nhật khoá tông môn */}
       <Section
+        id="quests"
         icon={ScrollText}
         title="Nhật khoá tông môn"
         subtitle="Ba việc phụ đổi lấy linh thạch, đổi mới mỗi ngày"

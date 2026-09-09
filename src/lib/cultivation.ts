@@ -18,16 +18,16 @@ export interface Realm {
 }
 
 export const REALMS: Realm[] = [
-  { name: 'Luyện Khí', tiers: 9, perTier: 50, color: '#22d3ee', icon: Wind, note: 'Dẫn khí nhập thể, đặt bước đầu lên đạo lộ.' },
-  { name: 'Trúc Cơ', tiers: 9, perTier: 120, color: '#34d399', icon: Mountain, note: 'Xây nền móng vững, thói quen thành tự nhiên.' },
-  { name: 'Kim Đan', tiers: 9, perTier: 260, color: '#fbbf24', icon: Sun, note: 'Ngưng khí thành đan, kỷ luật đã kết tinh.' },
-  { name: 'Nguyên Anh', tiers: 9, perTier: 500, color: '#a78bfa', icon: Sparkle, note: 'Nguyên thần hiện hình, làm chủ được nhịp của mình.' },
-  { name: 'Hóa Thần', tiers: 9, perTier: 900, color: '#e879f9', icon: Eye, note: 'Thần thức bao trùm, nhìn thấu việc lớn việc nhỏ.' },
-  { name: 'Luyện Hư', tiers: 9, perTier: 1500, color: '#38bdf8', icon: Cloudy, note: 'Luyện hư hợp đạo, làm nhiều mà không thấy nặng.' },
-  { name: 'Hợp Thể', tiers: 9, perTier: 2400, color: '#fb7185', icon: Combine, note: 'Thân đạo hợp nhất, việc và người là một.' },
-  { name: 'Đại Thừa', tiers: 9, perTier: 3800, color: '#fb923c', icon: Crown, note: 'Đứng trên đỉnh nhân gian, chỉ còn một kiếp nạn.' },
-  { name: 'Độ Kiếp', tiers: 9, perTier: 6000, color: '#f43f5e', icon: Zap, note: 'Thiên kiếp giáng lâm. Vượt qua là thành tiên.' },
-  { name: 'Phi Thăng', tiers: 1, perTier: 0, color: '#fcd34d', icon: Feather, note: 'Phá vỡ hư không, đạp mây mà đi. Đạo lộ viên mãn.' },
+  { name: 'Luyện Khí', tiers: 9, perTier: 50, color: '#7fb7a8', icon: Wind, note: 'Dẫn khí nhập thể, đặt bước đầu lên đạo lộ.' },
+  { name: 'Trúc Cơ', tiers: 9, perTier: 120, color: '#4f9d6b', icon: Mountain, note: 'Xây nền móng vững, thói quen thành tự nhiên.' },
+  { name: 'Kim Đan', tiers: 9, perTier: 260, color: '#e0a83c', icon: Sun, note: 'Ngưng khí thành đan, kỷ luật đã kết tinh.' },
+  { name: 'Nguyên Anh', tiers: 9, perTier: 500, color: '#9b7fd4', icon: Sparkle, note: 'Nguyên thần hiện hình, làm chủ được nhịp của mình.' },
+  { name: 'Hóa Thần', tiers: 9, perTier: 900, color: '#c96fb0', icon: Eye, note: 'Thần thức bao trùm, nhìn thấu việc lớn việc nhỏ.' },
+  { name: 'Luyện Hư', tiers: 9, perTier: 1500, color: '#5aa9c9', icon: Cloudy, note: 'Luyện hư hợp đạo, làm nhiều mà không thấy nặng.' },
+  { name: 'Hợp Thể', tiers: 9, perTier: 2400, color: '#d4646f', icon: Combine, note: 'Thân đạo hợp nhất, việc và người là một.' },
+  { name: 'Đại Thừa', tiers: 9, perTier: 3800, color: '#e08a3c', icon: Crown, note: 'Đứng trên đỉnh nhân gian, chỉ còn một kiếp nạn.' },
+  { name: 'Độ Kiếp', tiers: 9, perTier: 6000, color: '#cf3f2f', icon: Zap, note: 'Thiên kiếp giáng lâm. Vượt qua là thành tiên.' },
+  { name: 'Phi Thăng', tiers: 1, perTier: 0, color: '#f4d03f', icon: Feather, note: 'Phá vỡ hư không, đạp mây mà đi. Đạo lộ viên mãn.' },
 ];
 
 /** Chỉ số cảnh giới cuối cùng - đích đến, không còn tu vi để tích. */

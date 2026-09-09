@@ -46,10 +46,13 @@ export default function TaskEditorDialog({ open, task, defaultDate, onOpenChange
   const { addTask, updateTask, removeTask, data } = useApp();
   const [draft, setDraft] = useState<Draft>(blank(defaultDate ?? todayKey()));
   const [subInput, setSubInput] = useState('');
+  /** Đã bấm lưu ít nhất một lần - trước đó không báo lỗi "chưa có tên". */
+  const [tried, setTried] = useState(false);
 
   useEffect(() => {
     if (!open) return;
     setSubInput('');
+    setTried(false);
     setDraft(
       task
         ? {
@@ -78,17 +81,24 @@ export default function TaskEditorDialog({ open, task, defaultDate, onOpenChange
     setSubInput('');
   };
 
-  /** Lỗi hiện ngay dưới form, không đợi bấm lưu mới báo. */
-  const issues = checkTaskDraft({
+  const allIssues = checkTaskDraft({
     title: draft.title,
     date: draft.date,
     startTime: draft.startTime || undefined,
     deadline: draft.deadline ? `${draft.deadline}:00` : undefined,
     estimateMin: Number(draft.estimateMin) || 0,
   });
-  const blockers = blocking(issues);
+  const blockers = blocking(allIssues);
+
+  /**
+   * Lỗi hiện ngay dưới form để sửa liền, nhưng không mắng "chưa có tên" lúc
+   * vừa mở form trống - chỉ báo khi người dùng đã gõ hoặc đã bấm lưu.
+   */
+  const issues =
+    tried || draft.title.trim() ? allIssues : allIssues.filter((v) => v.code !== 'empty-title');
 
   const submit = () => {
+    setTried(true);
     if (blockers.length > 0) return;
     const payload = {
       title: draft.title.trim(),

@@ -111,35 +111,53 @@ export default function FocusView({ taskId, onPickTask }: { taskId?: string; onP
       >
         <div className="relative flex flex-col items-center gap-7 sm:flex-row sm:items-center sm:gap-9">
           {/* Đồng hồ ôm quanh đạo nhân đang ngồi thiền trong động phủ */}
-          <div className="border-border relative h-[264px] w-full max-w-[300px] shrink-0 overflow-hidden rounded-xl border sm:w-[300px]">
+          <div className="border-border relative aspect-[4/3] w-full shrink-0 overflow-hidden rounded-xl border sm:aspect-auto sm:h-[288px] sm:w-[340px]">
             <MeditationScene
               running={running}
               resting={!isWork}
               ambient={data.settings.ambientEnabled}
               className="absolute inset-0"
             />
-            <div className="absolute inset-0 grid place-items-center pt-6">
-              <ProgressRing
-                size={224}
-                stroke={14}
-                value={1 - seconds / totalSeconds}
-                label={clockLabel(seconds)}
-                labelClassName="text-[40px] leading-none drop-shadow-lg"
-                centerClassName="-translate-y-[62px]"
-                caption={isWork ? 'phiên bế quan' : 'điều tức'}
-                color={isWork ? undefined : 'var(--success)'}
-                glowOnFull={false}
-              />
+            {/* Làm dịu toàn cảnh một chút để vòng và chữ số luôn nổi lên trên */}
+            <div className="pointer-events-none absolute inset-0 bg-black/25" />
+
+            <div className="absolute inset-0 grid place-items-center">
+              <div className="relative grid place-items-center">
+                {/* Đĩa tối chỉ nằm sau chữ số, không phủ kín người đang ngồi thiền */}
+                <span className="pointer-events-none absolute size-[124px] rounded-full bg-black/55 blur-lg" />
+                <ProgressRing
+                  size={208}
+                  stroke={9}
+                  value={1 - seconds / totalSeconds}
+                  label={clockLabel(seconds)}
+                  labelClassName="glow-text text-[38px] leading-none"
+                  caption={isWork ? 'phiên bế quan' : 'điều tức'}
+                  color={isWork ? 'var(--gold-bright)' : 'var(--success)'}
+                  track="rgb(0 0 0 / 45%)"
+                  qi={running}
+                  glowOnFull={false}
+                  className="relative"
+                />
+              </div>
             </div>
+
             <span
               className={cn(
-                'absolute top-0 left-1/2 -translate-x-1/2 rounded-full px-2.5 py-1 text-[10.5px] font-bold tracking-[0.14em] uppercase',
-                'inline-flex items-center gap-1.5 backdrop-blur',
-                isWork ? 'bg-primary/20 text-primary' : 'bg-success/20 text-success',
+                'glass-panel absolute top-2.5 left-1/2 -translate-x-1/2 rounded-full px-3 py-1',
+                'inline-flex items-center gap-1.5 text-[10.5px] font-bold tracking-[0.14em] whitespace-nowrap uppercase',
+                isWork ? 'text-gold-bright' : 'text-success',
+                !running && 'opacity-80',
               )}
             >
               {isWork ? <Crosshair className="size-3" /> : <Coffee className="size-3" />}
-              {isWork ? 'Đang nhập định' : 'Đang điều tức'}
+              {/* Đồng hồ chưa chạy mà đề "đang nhập định" là nói sai trạng thái. */}
+              {running
+                ? isWork
+                  ? 'Đang nhập định'
+                  : 'Đang điều tức'
+                : isWork
+                  ? 'Sẵn sàng nhập định'
+                  : 'Sẵn sàng điều tức'}
             </span>
           </div>
 

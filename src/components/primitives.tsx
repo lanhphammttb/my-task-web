@@ -31,6 +31,7 @@ export function MetaChip({
 
 /** Khối nội dung có tiêu đề - khung chuẩn cho mọi mục trong app. */
 export function Section({
+  id,
   title,
   subtitle,
   icon: Icon,
@@ -39,6 +40,8 @@ export function Section({
   className,
   tone = 'default',
 }: {
+  /** Neo để hub cuộn thẳng tới mục này khi mở từ icon bên rìa. */
+  id?: string;
   title?: string;
   subtitle?: string;
   icon?: LucideIcon;
@@ -49,8 +52,9 @@ export function Section({
 }) {
   return (
     <section
+      id={id}
       className={cn(
-        'rounded-xl border p-4 sm:p-5',
+        'scroll-mt-4 rounded-xl border p-4 sm:p-5',
         tone === 'default' && 'border-border bg-card/80 backdrop-blur-[2px]',
         tone === 'accent' && 'border-primary/35 bg-primary/[0.07] backdrop-blur-[2px]',
         tone === 'danger' && 'border-destructive/40 bg-destructive/[0.07] backdrop-blur-[2px]',

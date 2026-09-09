@@ -18,8 +18,8 @@ export interface RarityMeta {
 export const RARITIES: Record<BeastRarity, RarityMeta> = {
   pham: { label: 'Phàm phẩm', color: '#9aa3ad', chance: 0.48, rings: 1 },
   linh: { label: 'Linh phẩm', color: '#5aa9c9', chance: 0.3, rings: 1 },
-  bao: { label: 'Bảo phẩm', color: '#a78bfa', chance: 0.15, rings: 2 },
-  thanh: { label: 'Thánh phẩm', color: '#fcd34d', chance: 0.06, rings: 2 },
+  bao: { label: 'Bảo phẩm', color: '#9b7fd4', chance: 0.15, rings: 2 },
+  thanh: { label: 'Thánh phẩm', color: '#f4d03f', chance: 0.06, rings: 2 },
   thoai: { label: 'Thần thoại', color: '#f97362', chance: 0.01, rings: 3 },
 };
 

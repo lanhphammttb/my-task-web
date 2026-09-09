@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import type { ReactNode } from 'react';
 import { toast } from 'sonner';
 import type { AppData, FocusSession, Goal, Settings, Status, Task } from '../types';
+import { GOAL_COLORS } from '../types';
 import { addDays, dateKey, parseKey, todayKey } from '../lib/date';
 import { loadData, saveData, uid } from '../lib/storage';
 import { seedData } from '../lib/seed';
@@ -396,7 +397,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         id: uid(),
         title: input.title.trim(),
         description: input.description ?? '',
-        color: input.color ?? '#6366f1',
+        color: input.color ?? GOAL_COLORS[0],
         targetDate: input.targetDate,
         archived: false,
         createdAt: new Date().toISOString(),

@@ -45,7 +45,8 @@ function tone(freq: number, startAfter: number, duration: number, peak = 0.16) {
   osc.stop(t0 + duration + 0.02);
 }
 
-const BRAND_COLORS = ['#6366f1', '#8b5cf6', '#a855f7', '#22d3ee', '#34d399', '#fbbf24'];
+// Giấy vàng, kim quang, ngọc bích, chu sa - đúng tông tu tiên, không phải màu tiệc sinh nhật.
+const BRAND_COLORS = ['#f4d03f', '#c4a661', '#e0a83c', '#ece2cd', '#3fa796', '#a8321f'];
 
 /** Bắn confetti an toàn - bỏ qua nếu môi trường không vẽ được canvas. */
 function fire(options: confetti.Options) {

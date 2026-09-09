@@ -7,9 +7,9 @@ const iso = (offset: number, time: string) => `${at(offset)}T${time}:00`;
 
 /** Dữ liệu mẫu cho lần chạy đầu tiên, để người dùng thấy ngay app hoạt động ra sao. */
 export function seedData(): AppData {
-  const goalWork = { id: uid(), title: 'Bàn giao dự án Q3', description: 'Hoàn tất và nghiệm thu trước cuối quý.', color: '#6366f1', targetDate: at(21), archived: false, createdAt: new Date().toISOString() };
-  const goalHealth = { id: uid(), title: 'Sức khỏe & thể lực', description: 'Tập luyện đều 4 buổi/tuần.', color: '#10b981', targetDate: at(60), archived: false, createdAt: new Date().toISOString() };
-  const goalLearn = { id: uid(), title: 'Học tiếng Anh giao tiếp', description: 'Đủ tự tin họp bằng tiếng Anh.', color: '#f59e0b', targetDate: at(90), archived: false, createdAt: new Date().toISOString() };
+  const goalWork = { id: uid(), title: 'Bàn giao dự án Q3', description: 'Hoàn tất và nghiệm thu trước cuối quý.', color: '#4a6b8a', targetDate: at(21), archived: false, createdAt: new Date().toISOString() };
+  const goalHealth = { id: uid(), title: 'Sức khỏe & thể lực', description: 'Tập luyện đều 4 buổi/tuần.', color: '#3fa796', targetDate: at(60), archived: false, createdAt: new Date().toISOString() };
+  const goalLearn = { id: uid(), title: 'Học tiếng Anh giao tiếp', description: 'Đủ tự tin họp bằng tiếng Anh.', color: '#d4a24c', targetDate: at(90), archived: false, createdAt: new Date().toISOString() };
 
   const make = (t: Partial<Task> & { title: string; date: string }): Task => ({
     id: uid(),

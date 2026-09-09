@@ -9,6 +9,8 @@ export type PillGrade = 'ha' | 'trung' | 'thuong';
 export interface Pill {
   grade: PillGrade;
   name: string;
+  /** Tên ngắn để hiện trên thẻ, tránh lặp lại chữ "Độ Kiếp Đan". */
+  short: string;
   /** Cơ hội độ kiếp thành công, 0..1 */
   chance: number;
   /** Giá bằng linh thạch */
@@ -21,6 +23,7 @@ export const PILLS: Record<PillGrade, Pill> = {
   ha: {
     grade: 'ha',
     name: 'Độ Kiếp Đan (Hạ)',
+    short: 'Hạ phẩm',
     chance: 0.1,
     cost: 40,
     image: '/art/pill/ha.png',
@@ -29,6 +32,7 @@ export const PILLS: Record<PillGrade, Pill> = {
   trung: {
     grade: 'trung',
     name: 'Độ Kiếp Đan (Trung)',
+    short: 'Trung phẩm',
     chance: 0.25,
     cost: 120,
     image: '/art/pill/trung.png',
@@ -37,6 +41,7 @@ export const PILLS: Record<PillGrade, Pill> = {
   thuong: {
     grade: 'thuong',
     name: 'Độ Kiếp Đan (Thượng)',
+    short: 'Thượng phẩm',
     chance: 0.5,
     cost: 300,
     image: '/art/pill/thuong.png',

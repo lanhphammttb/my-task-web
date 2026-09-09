@@ -16,6 +16,8 @@ interface Props {
   glowOnFull?: boolean;
   /** Vòng linh khí nét đứt xoay chậm bên ngoài, dùng cho thẻ cảnh giới. */
   qi?: boolean;
+  /** Màu rãnh nền. Đặt màu trong suốt khi vòng nằm đè lên ảnh/video. */
+  track?: string;
 }
 
 /**
@@ -34,6 +36,7 @@ export default function ProgressRing({
   centerClassName,
   glowOnFull = true,
   qi = false,
+  track,
 }: Props) {
   const clamped = Math.max(0, Math.min(1, Number.isFinite(value) ? value : 0));
   const r = (size - stroke) / 2;
@@ -74,7 +77,15 @@ export default function ProgressRing({
             <stop offset="100%" stopColor="var(--gold)" />
           </linearGradient>
         </defs>
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" strokeWidth={stroke} className="stroke-muted" />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          fill="none"
+          strokeWidth={stroke}
+          stroke={track}
+          className={track ? undefined : 'stroke-muted'}
+        />
         <circle
           cx={size / 2}
           cy={size / 2}

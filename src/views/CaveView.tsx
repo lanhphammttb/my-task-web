@@ -12,6 +12,7 @@ import { PILLS, PILL_ORDER } from '../lib/pills';
 import { stoneBreakdown, xpBreakdown } from '../lib/economy';
 import { useApp } from '../store/AppStore';
 import BeastEmblem from '../components/BeastEmblem';
+import ElementSeal from '../components/ElementSeal';
 import { EmptyState, Meter, MetaChip, Section } from '../components/primitives';
 import { Button } from '@/components/ui/button';
 import {
@@ -52,7 +53,7 @@ export default function CaveView() {
       </div>
 
       {/* ------------------------------------------------------ túi linh thạch */}
-      <Section icon={Gem} title="Túi linh thạch" tone="accent">
+      <Section id="cave-stone" icon={Gem} title="Túi linh thạch" tone="accent">
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex items-center gap-3">
             <img src="/art/icon/stone.png" alt="" className="size-14 object-contain drop-shadow-lg" />
@@ -84,6 +85,7 @@ export default function CaveView() {
 
       {/* ----------------------------------------------------------- linh căn */}
       <Section
+        id="cave-root"
         icon={Sparkles}
         title="Linh căn"
         subtitle={root ? 'Thiên phú đang phát huy tác dụng' : 'Chưa khai quang'}
@@ -121,7 +123,7 @@ export default function CaveView() {
             <div className="grid gap-2 sm:grid-cols-5">
               {ROOT_GRADES.map((g) => (
                 <div key={g.name} className="border-border bg-surface/60 rounded-lg border p-2.5 text-center">
-                  <div className="tabular text-sm font-bold" style={{ color: g.tone }}>
+                  <div className="tone tabular text-sm font-bold" style={{ color: g.tone }}>
                     {Math.round(g.chance * 100)}%
                   </div>
                   <div className="text-[11px] font-medium">{g.name}</div>
@@ -137,7 +139,7 @@ export default function CaveView() {
           <div className="space-y-4">
             <div className="flex flex-wrap items-center gap-3">
               <span
-                className="font-heading rounded-md px-3 py-1.5 text-sm font-bold"
+                className="font-heading tone rounded-md px-3 py-1.5 text-sm font-bold"
                 style={{ background: `${grade!.tone}22`, color: grade!.tone }}
               >
                 {grade!.name}
@@ -147,14 +149,7 @@ export default function CaveView() {
               </span>
               <div className="flex gap-2">
                 {root.elements.map((e) => (
-                  <span
-                    key={e}
-                    className="relative grid size-11 place-items-center overflow-hidden rounded-md border"
-                    style={{ borderColor: `${ELEMENTS[e].color}66` }}
-                    title={`Hệ ${ELEMENTS[e].label}`}
-                  >
-                    <img src={`/art/element/${e}.png`} alt="" className="h-full w-full object-cover" />
-                  </span>
+                  <ElementSeal key={e} element={e} size={44} />
                 ))}
               </div>
             </div>
@@ -167,13 +162,9 @@ export default function CaveView() {
                   key={e}
                   className="border-border bg-surface/60 flex items-start gap-2.5 rounded-lg border p-2.5"
                 >
-                  <img
-                    src={`/art/element/${e}.png`}
-                    alt=""
-                    className="size-9 shrink-0 rounded object-cover"
-                  />
+                  <ElementSeal element={e} size={36} />
                   <div>
-                    <strong className="block text-xs font-semibold" style={{ color: ELEMENTS[e].color }}>
+                    <strong className="tone block text-xs font-semibold" style={{ color: ELEMENTS[e].color }}>
                       {ELEMENTS[e].perk}
                     </strong>
                     <span className="text-muted-foreground text-[11px]">{ELEMENTS[e].perkNote}</span>
@@ -197,6 +188,7 @@ export default function CaveView() {
 
       {/* ---------------------------------------------------------- đan đường */}
       <Section
+        id="cave-pill"
         icon={Wand2}
         title="Đan Đường"
         subtitle="Độ Kiếp Đan - thứ duy nhất chống nổi thiên lôi khi vượt cảnh giới"
@@ -210,9 +202,7 @@ export default function CaveView() {
                 <div className="flex items-center gap-3">
                   <img src={pill.image} alt="" className="size-14 shrink-0 object-contain" />
                   <div className="min-w-0">
-                    <strong className="block text-xs font-semibold">
-                      {pill.name.replace('Độ Kiếp Đan ', '')}
-                    </strong>
+                    <strong className="text-gold block text-xs font-semibold">{pill.short}</strong>
                     <span className="text-success tabular block text-[11px] font-bold">
                       {Math.round(pill.chance * 100)}% thành công
                     </span>
@@ -239,6 +229,7 @@ export default function CaveView() {
 
       {/* ---------------------------------------------------------- linh thú */}
       <Section
+        id="cave-beast"
         icon={PawPrint}
         title="Linh thú"
         subtitle={`Đã thu phục ${owned.length}/${BEASTS.length}`}
@@ -254,10 +245,10 @@ export default function CaveView() {
             <div className="min-w-0 flex-1 space-y-2">
               <div className="flex flex-wrap items-center gap-2">
                 <strong className="font-heading text-base font-bold">{activeSpecies.name}</strong>
-                <MetaChip style={{ color: RARITIES[activeSpecies.rarity].color }}>
+                <MetaChip className="tone" style={{ color: RARITIES[activeSpecies.rarity].color }}>
                   {RARITIES[activeSpecies.rarity].label}
                 </MetaChip>
-                <MetaChip style={{ color: ELEMENTS[activeSpecies.element].color }}>
+                <MetaChip className="tone" style={{ color: ELEMENTS[activeSpecies.element].color }}>
                   Hệ {ELEMENTS[activeSpecies.element].label}
                 </MetaChip>
                 <MetaChip icon={Star}>Cấp {beastLevel(active.fed)}/{MAX_BEAST_LEVEL}</MetaChip>
@@ -306,7 +297,7 @@ export default function CaveView() {
             return (
               <div key={r}>
                 <h4 className="mb-2 flex items-center gap-2 text-[11px] font-bold tracking-wider uppercase">
-                  <span style={{ color: RARITIES[r].color }}>{RARITIES[r].label}</span>
+                  <span className="tone" style={{ color: RARITIES[r].color }}>{RARITIES[r].label}</span>
                   <span className="text-muted-foreground font-normal normal-case">
                     tỷ lệ {Math.round(RARITIES[r].chance * 100)}%
                   </span>

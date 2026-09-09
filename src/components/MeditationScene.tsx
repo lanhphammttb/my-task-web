@@ -41,7 +41,7 @@ export default function MeditationScene({ running, resting = false, ambient = tr
           muted
           loop
           playsInline
-          className="h-full w-full object-cover"
+          className="h-full w-full object-cover object-[center_28%]"
         />
       ) : (
         <img
@@ -53,7 +53,7 @@ export default function MeditationScene({ running, resting = false, ambient = tr
 
       {/* Nhuộm tông theo trạng thái: nhập định xanh ngọc, điều tức xanh lá */}
       <div className="absolute inset-0 mix-blend-overlay" style={{ background: c, opacity: 0.16 }} />
-      <div className="from-card/90 absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t to-transparent" />
+      <div className="from-card/75 absolute inset-x-0 bottom-0 h-1/4 bg-gradient-to-t to-transparent" />
 
       {/* Vòng linh khí và hạt sáng chỉ chạy khi đồng hồ đang đếm */}
       {running && (

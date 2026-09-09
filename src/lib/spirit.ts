@@ -70,7 +70,7 @@ export const ROOT_GRADES: RootGrade[] = [
     name: 'Thiên Linh Căn',
     multiplier: 1.25,
     chance: 0.03,
-    tone: '#fcd34d',
+    tone: '#f4d03f',
     note: 'Đơn hệ thuần khiết, vạn người khó gặp một. Hấp thu linh khí nhanh nhất.',
   },
   {
@@ -78,7 +78,7 @@ export const ROOT_GRADES: RootGrade[] = [
     name: 'Song Linh Căn',
     multiplier: 1.15,
     chance: 0.12,
-    tone: '#c084fc',
+    tone: '#9b7fd4',
     note: 'Hai hệ tương hoà, đường tu rộng mà vẫn nhanh.',
   },
   {

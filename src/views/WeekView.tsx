@@ -162,8 +162,12 @@ export default function WeekView({ anchor, onAnchorChange, onEdit, onOpenDay }: 
                         <Circle className="text-muted-foreground size-3.5" />
                       )}
                     </button>
+                    {/* Khoảng trắng phải viết rõ: JSX nuốt mất khoảng trắng xuống dòng,
+                        khiến "14:00Review" thành một từ dài rồi bị cắt giữa chữ. */}
                     <span className="min-w-0 break-words">
-                      {t.startTime && <span className="text-muted-foreground tabular mr-1">{t.startTime}</span>}
+                      {t.startTime && (
+                        <span className="text-muted-foreground tabular mr-1">{t.startTime}</span>
+                      )}{' '}
                       {t.title}
                     </span>
                   </div>

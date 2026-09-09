@@ -1,5 +1,5 @@
 import { Suspense, lazy, useEffect, useState } from 'react';
-import { AlertTriangle, Check, Sparkles, Zap } from 'lucide-react';
+import { AlertTriangle, Check, FlaskConical, Sparkles, Zap } from 'lucide-react';
 import { PILLS, PILL_ORDER, tribulationChance } from '../lib/pills';
 import type { PillGrade } from '../lib/pills';
 import { progressOf, tribulationLoss } from '../lib/economy';
@@ -18,9 +18,12 @@ const STRIKE_MS = 2800;
 export default function TribulationDialog({
   open,
   onOpenChange,
+  onGoToPills,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
+  /** Mở thẳng Đan Đường khi trong tay chưa có viên đan nào. */
+  onGoToPills?: () => void;
 }) {
   const { data, attemptTribulation } = useApp();
   const [grade, setGrade] = useState<PillGrade | null>(null);
@@ -92,6 +95,19 @@ export default function TribulationDialog({
                 Ghé Đan Đường trong Động Phủ mua Độ Kiếp Đan. Không có đan thì không thể chống nổi
                 thiên lôi.
               </p>
+              {onGoToPills && (
+                <Button
+                  size="sm"
+                  className="mt-3 w-full gap-2"
+                  onClick={() => {
+                    onOpenChange(false);
+                    onGoToPills();
+                  }}
+                >
+                  <FlaskConical className="size-4" />
+                  Tới Đan Đường mua đan
+                </Button>
+              )}
             </div>
           ) : (
             <>
@@ -112,7 +128,7 @@ export default function TribulationDialog({
                       <img src={pill.image} alt="" className="size-10 shrink-0 object-contain" />
                       <span className="min-w-0">
                         <span className="flex items-center gap-1 text-xs font-semibold">
-                          {pill.name.replace('Độ Kiếp Đan ', '')}
+                          {pill.short}
                           {active && <Check className="text-primary size-3" strokeWidth={3} />}
                         </span>
                         <span className="text-muted-foreground tabular block text-[11px]">

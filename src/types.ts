@@ -113,9 +113,9 @@ export interface AppData {
 }
 
 export const PRIORITY_META: Record<Priority, { label: string; color: string; weight: number }> = {
-  urgent: { label: 'Khẩn cấp', color: '#f43f5e', weight: 4 },
-  high: { label: 'Cao', color: '#fb923c', weight: 3 },
-  medium: { label: 'Trung bình', color: '#38bdf8', weight: 2 },
+  urgent: { label: 'Khẩn cấp', color: '#cf3f2f', weight: 4 },
+  high: { label: 'Cao', color: '#e0a83c', weight: 3 },
+  medium: { label: 'Trung bình', color: '#5aa9c9', weight: 2 },
   low: { label: 'Thấp', color: '#94a3b8', weight: 1 },
 };
 

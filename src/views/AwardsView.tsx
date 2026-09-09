@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Check, Flame, Lock, Route, Sparkles, Trophy, Zap } from 'lucide-react';
 import { formatDuration } from '../lib/date';
 import { bestStreak, currentStreak } from '../lib/stats';
@@ -275,6 +275,8 @@ function RealmRow({ row }: { row: RealmProgress }) {
 function AwardCard({ award }: { award: AchievementState }) {
   const tone = TONE_UI[award.tone];
   const Icon = award.icon;
+  // Có huy hiệu vẽ riêng trong public/art/award thì dùng, không thì dùng icon nét.
+  const [hasArt, setHasArt] = useState(true);
 
   return (
     <article
@@ -284,13 +286,35 @@ function AwardCard({ award }: { award: AchievementState }) {
       )}
     >
       <div className="flex items-start gap-3">
+        {/* Huy hiệu vẽ riêng đã có vành vàng nên không cần ô màu phía sau; chỉ khi
+            phải dùng icon nét thay thế mới cần nền. Huy hiệu chưa mở hiện dạng xám
+            mờ kèm ổ khoá nhỏ — thấy trước cái mình đang nhắm tới thì mới có động lực. */}
         <div
           className={cn(
-            'grid size-10 shrink-0 place-items-center rounded-xl',
-            award.unlocked ? cn(tone.bg, tone.text) : 'bg-muted text-muted-foreground/50',
+            'relative grid size-11 shrink-0 place-items-center rounded-xl',
+            hasArt ? null : award.unlocked ? cn(tone.bg, tone.text) : 'bg-muted text-muted-foreground/50',
           )}
         >
-          {award.unlocked ? <Icon className="size-5" strokeWidth={2.25} /> : <Lock className="size-4" />}
+          {hasArt ? (
+            <>
+              <img
+                src={`/art/award/${award.id}.png`}
+                alt=""
+                onError={() => setHasArt(false)}
+                className={cn(
+                  'size-11 object-contain transition-all duration-300',
+                  !award.unlocked && 'opacity-30 grayscale',
+                )}
+              />
+              {!award.unlocked && (
+                <Lock className="text-muted-foreground absolute size-4 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]" />
+              )}
+            </>
+          ) : award.unlocked ? (
+            <Icon className="size-5" strokeWidth={2.25} />
+          ) : (
+            <Lock className="size-4" />
+          )}
         </div>
         <div className="min-w-0 flex-1">
           <strong className={cn('block text-sm font-semibold', !award.unlocked && 'text-muted-foreground')}>

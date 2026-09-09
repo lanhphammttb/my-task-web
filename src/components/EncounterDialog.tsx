@@ -4,6 +4,7 @@ import type { Outcome } from '../lib/encounters';
 import { PILLS } from '../lib/pills';
 import { useApp } from '../store/AppStore';
 import { Button } from '@/components/ui/button';
+import ArtImage from './ArtImage';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 
@@ -35,7 +36,13 @@ export default function EncounterDialog() {
     <Dialog open={!!encounter} onOpenChange={(v) => !v && close()}>
       <DialogContent className="overflow-hidden p-0 sm:max-w-[560px]">
         <div className="relative h-40">
-          <img src="/art/scene/bicanh.jpg" alt="" className="h-full w-full object-cover" />
+          {/* Mỗi kỳ ngộ có thể có tranh riêng trong public/art/encounter/ */}
+          <ArtImage
+            src={`/art/encounter/${encounter?.id ?? 'hang-dong'}.jpg`}
+            fallback="/art/page/bicanh.jpg"
+            alt=""
+            className="h-full w-full object-cover"
+          />
           <div className="from-card absolute inset-0 bg-gradient-to-t via-transparent to-transparent" />
           <span className="bg-warning/20 text-warning absolute top-3 left-4 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10.5px] font-bold tracking-[0.16em] uppercase backdrop-blur">
             <ScrollText className="size-3" /> Kỳ ngộ

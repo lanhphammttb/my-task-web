@@ -1,4 +1,6 @@
 import { REALMS } from '../lib/cultivation';
+import ArtImage from './ArtImage';
+import { REALM_SLUG } from './hub/HubScene';
 import { cn } from '@/lib/utils';
 
 /**
@@ -6,19 +8,7 @@ import { cn } from '@/lib/utils';
  * của cảnh giới để cả mười bậc nhìn vào là thấy khác nhau ngay.
  */
 
-/** Cảnh nào cho cảnh giới nào. Tám tấm dùng cho mười bậc nên có hai chỗ lặp. */
-const REALM_SCENE = [
-  'sect', // Luyện Khí - trong tông môn
-  'beast', // Trúc Cơ - thung lũng thác nước
-  'bicanh', // Kim Đan - rừng linh quang
-  'uminh', // Nguyên Anh - u minh giới
-  'bicanh', // Hoá Thần
-  'main', // Luyện Hư - tiên cung trên mây
-  'main', // Hợp Thể
-  'bone', // Đại Thừa - khung thần lực
-  'tower', // Độ Kiếp - tháp giữa thiên lôi
-  'bone', // Phi Thăng
-];
+// Dùng chung bộ art cảnh giới với nền hub để thẻ và nền không lệch nhau.
 
 interface Props {
   realmIndex: number;
@@ -34,8 +24,9 @@ export default function RealmScene({ realmIndex, variant = 'hero', className, ti
 
   return (
     <div className={cn('relative h-full w-full overflow-hidden', className)} aria-hidden>
-      <img
-        src={`/art/scene/${REALM_SCENE[i]}.jpg`}
+      <ArtImage
+        src={`/art/realm/${REALM_SLUG[i]}.jpg`}
+        fallback="/art/scene/main.jpg"
         alt=""
         loading="lazy"
         className="h-full w-full object-cover"
@@ -45,8 +36,10 @@ export default function RealmScene({ realmIndex, variant = 'hero', className, ti
         className="absolute inset-0 mix-blend-overlay"
         style={{ background: realm.color, opacity: tint }}
       />
+      {/* Hạ sáng nền tranh để chữ và vòng tiến độ đè lên vẫn đọc được */}
+      <div className="bg-background/45 absolute inset-0" />
       {variant === 'hero' && (
-        <div className="from-card/85 absolute inset-0 bg-gradient-to-t via-transparent to-transparent" />
+        <div className="from-card absolute inset-0 bg-gradient-to-t via-transparent to-transparent" />
       )}
     </div>
   );

@@ -30,13 +30,17 @@ const Toaster = ({ ...props }: ToasterProps) => {
         {
           "--normal-bg": "var(--popover)",
           "--normal-text": "var(--popover-foreground)",
-          "--normal-border": "var(--border)",
+          "--normal-border": "color-mix(in oklab, var(--gold) 42%, transparent)",
           "--border-radius": "var(--radius)",
         } as React.CSSProperties
       }
       toastOptions={{
         classNames: {
-          toast: "cn-toast",
+          // Viền vàng mảnh + đổ bóng sâu cho hợp bảng màu tu tiên.
+          toast: "cn-toast !shadow-[0_10px_30px_rgb(0_0_0/55%)]",
+          success: "[&_svg]:text-[var(--success)]",
+          warning: "[&_svg]:text-[var(--warning)]",
+          error: "[&_svg]:text-[var(--destructive)]",
         },
       }}
       {...props}

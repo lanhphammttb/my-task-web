@@ -126,7 +126,7 @@ export default function StatsView() {
       <Section
         icon={BarChart3}
         title="Nhiệm vụ hoàn thành theo ngày"
-        subtitle="Cột tím: việc xong · cột xanh: phút tập trung"
+        subtitle="Cột vàng: việc xong · cột ngọc: phút bế quan"
       >
         <div className="flex h-40 items-end gap-[3px]">
           {series.map((d) => (
