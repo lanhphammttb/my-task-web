@@ -20,10 +20,11 @@ Mô tả chi tiết từng ảnh → [`docs/art-brief.md`](../../docs/art-brief.
 | `beast/` | 18 linh thú | có sẵn từ đầu |
 | `pill/` `icon/` `page/` `scene/` `media/` `ui/` | ảnh nền, icon, video | có sẵn từ đầu |
 
-## Còn thiếu
+Ba file icon ứng dụng nằm ở `public/` (không phải ở đây): `favicon.png`,
+`apple-touch-icon.png`, `og.jpg`. Riêng `og.jpg` do `scripts/make-og.mjs` dựng
+từ `art-src/og-bg.png` — chữ ghép bằng code nên đổi khẩu hiệu chỉ cần chạy lại.
 
-Chỉ còn 3 file icon ứng dụng — `favicon.png`, `apple-touch-icon.png`, `og.jpg` —
-đặt ở `public/`, **không** ở đây. Thêm xong thì nhắn tôi sửa `index.html`.
+**Bộ art đã đủ 55/55.**
 
 ## Quy trình khi thả ảnh mới
 

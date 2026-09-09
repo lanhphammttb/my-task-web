@@ -3,7 +3,7 @@
 Web app tu tiên, giao diện **vàng kim trên đen nâu**. Mọi chữ và thành phần UI do
 web vẽ đè lên → ảnh chỉ là **nền và minh hoạ**.
 
-**Tình trạng: 52/55 đã xong. Chỉ còn 3 icon ứng dụng.**
+**Tình trạng: 55/55 đã xong. Bộ art đã đủ.**
 
 | Nhóm | Tình trạng |
 |---|---|
@@ -15,7 +15,7 @@ web vẽ đè lên → ảnh chỉ là **nền và minh hoạ**.
 | `award/` 16 huy hiệu | ✅ xong |
 | `avatar/` 4 ảnh đại diện | ✅ xong |
 | `media/thien-loi.mp4` | ✅ xong |
-| icon ứng dụng (3 file) | ❌ **cần làm** → mục C1 |
+| icon ứng dụng (3 file) | ✅ xong |
 
 Tên file rút gọn + quy trình xử lý: [`public/art/README.md`](../public/art/README.md)
 
@@ -162,7 +162,7 @@ Khi anh gửi file về, tôi kiểm 6 điểm rồi báo lại từng file:
 
 ---
 
-# B. Đã xong — giữ để tham chiếu cho nhất quán
+# B. Toàn bộ bộ art — giữ để tham chiếu cho nhất quán
 
 ## B1. `realm/` — nền 10 cảnh giới ✅
 `1280×1280` JPG · 78–208 KB
@@ -269,44 +269,29 @@ luôn chạy `muted`. Bản gốc giữ ở `art-src/media/`.
 Sân khấu three.js cũ (`TribulationScene.tsx`) đã xoá — video thay được hoàn toàn.
 three.js vẫn dùng cho nền 3D toàn app (`Scene3DBackdrop.tsx`).
 
+## B9. Icon ứng dụng ✅
+Đặt ở `public/`, không phải `public/art/`.
+
+| File | Kích thước | Ghi chú |
+|---|---|---|
+| `favicon.png` | 512×512 PNG · 14 KB | Ấn triện chu sa khắc 道 — ảnh duy nhất được có chữ |
+| `apple-touch-icon.png` | 180×180 PNG · 4,7 KB | Cùng thiết kế, nền phủ đầy khung |
+| `og.jpg` | 1200×630 JPG · 54 KB | Ảnh chia sẻ link |
+
+`og.jpg` **do code dựng**, không nung chữ vào tranh: `node scripts/make-og.mjs`
+lấy nền từ `art-src/og-bg.png` (ảnh Phi Thăng làm mờ, giữa để trống) rồi ghép ấn
+triện, tên app và khẩu hiệu lên. Đổi tên hay khẩu hiệu thì sửa `make-og.mjs` và
+chạy lại, không cần vẽ lại tranh.
+
+`index.html` đã nối đủ `rel="icon"`, `apple-touch-icon`, thẻ `og:*` và
+`twitter:*`. **Khi có tên miền thật, đổi `og:image` thành URL tuyệt đối**
+(`https://<tên-miền>/og.jpg`) — nhiều nơi bóc link không hiểu đường dẫn tương đối.
+
 ---
 
 # C. Còn thiếu — 29 file
 
-## C1. Icon ứng dụng — đặt trực tiếp ở `public/`
-
-**Không** đặt trong `public/art/`. Ba file này cần tôi sửa `index.html` một dòng,
-nhắn tôi khi anh đã thêm.
-
-```
-────────────────────────────────────────────────
-favicon.png
-Kích thước    : 512×512, PNG
-Nội dung      : Ấn triện hình vuông bo góc, nền màu chu sa #a8321f.
-                Bên trong có một đường viền trắng mảnh chạy song song
-                mép ấn. Chính giữa là chữ Hán 道 màu giấy #f0e2c0,
-                nét dày, chiếm khoảng 60% chiều rộng ấn.
-Ngoại lệ      : đây là ảnh DUY NHẤT được phép có chữ, vì chữ 道 chính
-                là logo
-Bắt buộc      : phải đọc được ở 16 px — nét chữ dày, không có chi tiết nhỏ
-────────────────────────────────────────────────
-apple-touch-icon.png
-Kích thước    : 180×180, PNG
-Nội dung      : Cùng thiết kế với favicon.png, nhưng nền chu sa phủ
-                ĐẦY khung, KHÔNG bo góc (iOS tự bo góc)
-────────────────────────────────────────────────
-og.jpg
-Kích thước    : 1200×630, JPG
-Dùng ở        : ảnh hiện ra khi chia sẻ link web
-Nội dung      : Lấy ảnh 09-do-kiep hoặc 10-phi-thang làm nền, làm mờ
-                và tối đi. CHÍNH GIỮA ĐỂ TRỐNG.
-Bắt buộc      : KHÔNG nung chữ vào ảnh — tôi sẽ ghép chữ bằng code
-────────────────────────────────────────────────
-```
-
----
-
-# D. Phụ lục — prompt tiếng Anh
+# C. Phụ lục — prompt tiếng Anh
 
 **Chỉ dùng khi đặt qua tool sinh ảnh. Gửi cho người vẽ thì bỏ hẳn phần này.**
 
@@ -346,9 +331,14 @@ high contrast, plain white background, no text, no numbers, no border
 
 | Nhóm | Số file | Tình trạng |
 |---|---|---|
-| `realm/` · `chibi/` · `encounter/` · `element/` · `banner/` · `award/` · `avatar/` | 51 | ✅ |
+| `realm/` 10 · `chibi/` 2 · `encounter/` 6 · `element/` 5 | 23 | ✅ |
+| `banner/` 8 · `award/` 16 · `avatar/` 4 | 28 | ✅ |
 | `media/thien-loi.mp4` | 1 | ✅ |
-| icon ứng dụng (`favicon.png` · `apple-touch-icon.png` · `og.jpg`) | 3 | ❌ mục C1 |
+| icon ứng dụng | 3 | ✅ |
+| **Tổng** | **55** | **✅ đủ** |
 
-**Chỉ còn 3 icon ứng dụng.** Đặt ở `public/`, không phải `public/art/`. Thêm xong
-nhắn tôi sửa `index.html` một dòng.
+Tổng `public/art` 22,8 MB, trong đó 8,6 MB là ba file media (`tu.mp4`,
+`ambient.mp3`, `thien-loi.mp4`).
+
+Việc còn lại duy nhất liên quan đến ảnh: khi deploy, đổi `og:image` trong
+`index.html` thành URL tuyệt đối.
