@@ -3,7 +3,7 @@
 Web app tu tiên, giao diện **vàng kim trên đen nâu**. Mọi chữ và thành phần UI do
 web vẽ đè lên → ảnh chỉ là **nền và minh hoạ**.
 
-**Tình trạng: 51/55 ảnh đã xong. Còn 1 video + 3 icon ứng dụng.**
+**Tình trạng: 52/55 đã xong. Chỉ còn 3 icon ứng dụng.**
 
 | Nhóm | Tình trạng |
 |---|---|
@@ -14,8 +14,8 @@ web vẽ đè lên → ảnh chỉ là **nền và minh hoạ**.
 | `banner/` 8 dải đầu bảng | ✅ xong |
 | `award/` 16 huy hiệu | ✅ xong |
 | `avatar/` 4 ảnh đại diện | ✅ xong |
-| `media/thien-loi.mp4` | ❌ **cần làm** → mục C1 |
-| icon ứng dụng (3 file) | ❌ **cần làm** → mục C2 |
+| `media/thien-loi.mp4` | ✅ xong |
+| icon ứng dụng (3 file) | ❌ **cần làm** → mục C1 |
 
 Tên file rút gọn + quy trình xử lý: [`public/art/README.md`](../public/art/README.md)
 
@@ -252,36 +252,28 @@ Nhận dạng ảnh ghép 2×2 (1254×1254). Các ô **dính liền không có r
 Mốc đổi ảnh nằm ở `HeaderHUD.tsx` (`avatarTier`): cảnh giới 0–1 → 1, 2–4 → 2,
 5–7 → 3, 8–9 → 4.
 
+## B8. `media/thien-loi.mp4` ✅
+`720×1280` **dọc** · 6,0 giây · 24 fps · H.264 · 2,09 MB · không âm thanh
+
+Quy cách ban đầu tôi ghi 1280×720 ngang, nhận được 720×1280 dọc. Thay vì cắt lấy
+dải giữa (chỉ còn 22% chiều cao), tôi đổi cách hiển thị: **video làm nền cả hộp
+thoại độ kiếp** — hộp thoại cũng cao hơn rộng nên giữ được ~64% khung hình.
+
+- Lúc chờ: video mờ 55%, lớp phủ tối 82% → chỉ làm không khí, chữ vẫn đọc rõ.
+- Lúc thiên kiếp giáng: video sáng 100%, lớp phủ hạ còn 35% → video thành chủ thể.
+- Phần mô tả đổi thành "Thiên kiếp giáng lâm…" thay vì phủ chữ đè lên tiêu đề.
+
+File gốc có track âm thanh AAC, đã tách bỏ (`ffmpeg -an -c:v copy`) vì thẻ video
+luôn chạy `muted`. Bản gốc giữ ở `art-src/media/`.
+
+Sân khấu three.js cũ (`TribulationScene.tsx`) đã xoá — video thay được hoàn toàn.
+three.js vẫn dùng cho nền 3D toàn app (`Scene3DBackdrop.tsx`).
+
 ---
 
 # C. Còn thiếu — 29 file
 
-## C1. `public/art/media/thien-loi.mp4` — video thiên lôi
-
-```
-────────────────────────────────────────────────
-thien-loi.mp4
-Thư mục       : public/art/media/
-Độ phân giải  : 1280×720
-Thời lượng    : 3–6 giây
-Định dạng     : MP4 / H.264, KHÔNG có âm thanh, dưới 3 MB
-Loop          : PHẢI LIỀN MẠCH — frame đầu và frame cuối khớp nhau,
-                phát lặp không được thấy chỗ nối
-Dùng ở        : nền màn độ kiếp (chỗ hiện đang trông thưa nhất)
-
-Nội dung      : Mây đen xoáy chậm phủ kín khung. Khoảng 1,5 giây một lần
-                có MỘT tia lôi tím trắng đánh xuống từ trên xuống, cả
-                khung sáng loé trong 2–3 frame rồi tối lại. Mưa xối mờ
-                ở tiền cảnh, hạt mưa bay chéo.
-
-Bắt buộc      : KHÔNG có nhân vật, KHÔNG có kiến trúc, KHÔNG có mặt đất
-                — chỉ mây, lôi và mưa. Giao diện sẽ vẽ đè nội dung lên trên.
-Ghi chú       : script `npm run art` KHÔNG xử lý video — file phải đúng
-                quy cách ngay từ đầu.
-────────────────────────────────────────────────
-```
-
-## C2. Icon ứng dụng — đặt trực tiếp ở `public/`
+## C1. Icon ứng dụng — đặt trực tiếp ở `public/`
 
 **Không** đặt trong `public/art/`. Ba file này cần tôi sửa `index.html` một dòng,
 nhắn tôi khi anh đã thêm.
@@ -355,13 +347,8 @@ high contrast, plain white background, no text, no numbers, no border
 | Nhóm | Số file | Tình trạng |
 |---|---|---|
 | `realm/` · `chibi/` · `encounter/` · `element/` · `banner/` · `award/` · `avatar/` | 51 | ✅ |
-| `media/thien-loi.mp4` | 1 | ❌ mục C1 |
-| icon ứng dụng | 3 | ❌ mục C2 |
+| `media/thien-loi.mp4` | 1 | ✅ |
+| icon ứng dụng (`favicon.png` · `apple-touch-icon.png` · `og.jpg`) | 3 | ❌ mục C1 |
 
-Còn **1 video + 3 icon ứng dụng**.
-
-`thien-loi.mp4` là thứ đáng làm nhất — vá chỗ yếu nhất còn lại là màn độ kiếp.
-Lưu ý `npm run art` **không** xử lý video, file phải đúng quy cách ngay từ đầu.
-
-Ba icon ứng dụng đặt ở `public/` (không phải `public/art/`), thêm xong nhắn tôi
-sửa `index.html` một dòng.
+**Chỉ còn 3 icon ứng dụng.** Đặt ở `public/`, không phải `public/art/`. Thêm xong
+nhắn tôi sửa `index.html` một dòng.

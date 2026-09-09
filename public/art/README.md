@@ -16,17 +16,14 @@ Mô tả chi tiết từng ảnh → [`docs/art-brief.md`](../../docs/art-brief.
 | `banner/` | 8/8 dải đầu bảng | 1200×240 JPG (5:1) · 18–35 KB |
 | `award/` | 16/16 huy hiệu | 512×512 PNG alpha · 102–132 KB |
 | `avatar/` | 4/4 ảnh đại diện | 256×256 PNG · 43–45 KB |
+| `media/` | `thien-loi.mp4` video độ kiếp | 720×1280 dọc · 6 s · 2,09 MB · không tiếng |
 | `beast/` | 18 linh thú | có sẵn từ đầu |
 | `pill/` `icon/` `page/` `scene/` `media/` `ui/` | ảnh nền, icon, video | có sẵn từ đầu |
 
 ## Còn thiếu
 
-| Thư mục | Cần | Quy cách |
-|---|---|---|
-| `media/thien-loi.mp4` | 1 video độ kiếp | 1280×720 MP4, loop 3–6 s (script không xử lý video) |
-
-Ba file icon ứng dụng (`favicon.png`, `apple-touch-icon.png`, `og.jpg`) đặt ở
-`public/`, **không** ở đây — thêm xong thì nhắn tôi sửa `index.html`.
+Chỉ còn 3 file icon ứng dụng — `favicon.png`, `apple-touch-icon.png`, `og.jpg` —
+đặt ở `public/`, **không** ở đây. Thêm xong thì nhắn tôi sửa `index.html`.
 
 ## Quy trình khi thả ảnh mới
 
