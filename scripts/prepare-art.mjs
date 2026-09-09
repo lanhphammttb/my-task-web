@@ -21,19 +21,23 @@ const ART = 'public/art';
 const SRC = 'art-src';
 const INK = '#0d0a08'; // nền app, dùng khi dẹp alpha của ảnh cảnh
 
-/** Quy cách từng nhóm. `cut` = kiểu nền cần tách. */
+/**
+ * Quy cách từng nhóm. `cut` = kiểu nền cần tách. `maxKB` = ngưỡng dung lượng:
+ * file đúng định dạng và đúng kích thước nhưng vượt ngưỡng vẫn bị nén lại, vì
+ * đó là dấu hiệu file đã bị thay bằng bản chưa qua xử lý.
+ */
 const GROUPS = {
   // Nền toàn màn: giữ khung vuông để máy tính cắt trên-dưới, điện thoại cắt hai bên.
-  realm: { kind: 'jpeg', w: 1280, h: 1280, quality: 80 },
+  realm: { kind: 'jpeg', w: 1280, h: 1280, quality: 80, maxKB: 400 },
   // 5:1 theo đúng tỷ lệ ảnh nhận được; ép về 4:1 sẽ cắt mất chủ thể ở hai mép.
-  banner: { kind: 'jpeg', w: 1200, h: 240, quality: 82 },
-  encounter: { kind: 'jpeg', w: 1024, h: 576, quality: 82 },
-  element: { kind: 'png', w: 512, h: 512, cut: 'white' },
+  banner: { kind: 'jpeg', w: 1200, h: 240, quality: 82, maxKB: 120 },
+  encounter: { kind: 'jpeg', w: 1024, h: 576, quality: 82, maxKB: 200 },
+  element: { kind: 'png', w: 512, h: 512, cut: 'white', maxKB: 200 },
   // Huy hiệu có hào quang kem toả ra ngoài vành vàng: ngưỡng 'white' quá gắt,
   // hào quang sẽ thành viền trắng bệt trên nền tối.
-  award: { kind: 'png', w: 512, h: 512, cut: 'glow' },
-  chibi: { kind: 'png', w: 512, h: 512, cut: 'checker' },
-  avatar: { kind: 'png', w: 256, h: 256 }, // nền màu phẳng, giữ nguyên
+  award: { kind: 'png', w: 512, h: 512, cut: 'glow', maxKB: 200 },
+  chibi: { kind: 'png', w: 512, h: 512, cut: 'checker', maxKB: 200 },
+  avatar: { kind: 'png', w: 256, h: 256, maxKB: 120 }, // nền màu phẳng, giữ nguyên
 };
 
 /**
@@ -154,7 +158,13 @@ for (const dir of groups) {
     const meta = await sharp(p).metadata();
     const ext = spec.kind === 'jpeg' ? '.jpg' : '.png';
     const target = `${abs}/${f.replace(/\.[^.]*$/, '')}${ext}`;
-    const done = meta.format === spec.kind && meta.width === spec.w && meta.height === spec.h && p === target;
+    const kbNow = Math.round(fs.statSync(p).size / 1024);
+    const done =
+      meta.format === spec.kind &&
+      meta.width === spec.w &&
+      meta.height === spec.h &&
+      p === target &&
+      (!spec.maxKB || kbNow <= spec.maxKB);
     if (done) continue;
 
     fs.mkdirSync(`${SRC}/${dir}`, { recursive: true });

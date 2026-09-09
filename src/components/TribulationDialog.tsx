@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AlertTriangle, Check, FlaskConical, Sparkles, Zap } from 'lucide-react';
 import { PILLS, PILL_ORDER, tribulationChance } from '../lib/pills';
 import type { PillGrade } from '../lib/pills';
@@ -9,8 +9,6 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 
-// three.js chỉ nạp khi thật sự mở màn độ kiếp, tránh phình bundle chính.
-const TribulationScene = lazy(() => import('./TribulationScene'));
 
 /** Bao lâu cho thiên kiếp giáng trước khi lộ kết quả. */
 const STRIKE_MS = 2800;
@@ -60,30 +58,55 @@ export default function TribulationDialog({
 
   return (
     <Dialog open={open} onOpenChange={(v) => !striking && onOpenChange(v)}>
-      <DialogContent className="overflow-hidden p-0 sm:max-w-[560px]">
-        {/* Sân khấu 3D: mây đen, linh khí và thiên lôi */}
-        <div className="relative h-56 bg-black">
-          <Suspense fallback={<div className="text-muted-foreground grid h-full place-items-center text-xs">Đang tụ mây…</div>}>
-            <TribulationScene color={nextRealm.color} striking={striking} className="h-full w-full" />
-          </Suspense>
-          <div className="from-card absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t to-transparent" />
-          {striking && (
-            <p className="absolute inset-x-0 bottom-3 text-center text-sm font-bold tracking-[0.2em] text-white uppercase drop-shadow">
-              Thiên kiếp giáng lâm…
-            </p>
+      <DialogContent className="relative overflow-hidden bg-black p-0 sm:max-w-[560px]">
+        {/*
+          Video thiên lôi là ảnh dọc 720×1280, còn hộp thoại cũng cao hơn rộng —
+          nên dùng làm nền cả khung thì giữ được phần lớn khung hình, thay vì
+          nhét vào một dải ngang chỉ thấy 22% chiều cao. Lúc chưa độ kiếp thì
+          video chạy mờ làm không khí; lúc thiên kiếp giáng thì sáng hẳn lên.
+        */}
+        <video
+          src="/art/media/thien-loi.mp4"
+          autoPlay
+          muted
+          loop
+          playsInline
+          aria-hidden
+          className={cn(
+            'pointer-events-none absolute inset-0 h-full w-full object-cover transition-opacity duration-700',
+            striking ? 'opacity-100' : 'opacity-55',
           )}
-        </div>
+        />
+        {/* Lớp phủ tối để chữ và nút luôn đọc được trên nền video động */}
+        <div
+          className={cn(
+            'pointer-events-none absolute inset-0 transition-opacity duration-700',
+            striking ? 'opacity-35' : 'opacity-82',
+          )}
+          style={{
+            background:
+              'linear-gradient(to bottom, rgb(0 0 0 / 38%) 0%, rgb(0 0 0 / 84%) 34%, rgb(0 0 0 / 94%) 100%)',
+          }}
+        />
 
-        <div className="p-6 pt-2">
+        <div className="relative z-10 p-6">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Zap className="text-warning size-4" />
               Độ kiếp lên {nextRealm.name}
             </DialogTitle>
-            <DialogDescription>
-              Bạn đã tích đủ tu vi ở đỉnh cảnh giới. Nuốt đan dược rồi đón thiên kiếp — vượt qua thì
-              bước sang cảnh giới mới, thất bại thì hao tổn khí tức.
-            </DialogDescription>
+            {/* Lúc thiên kiếp giáng thì phần mô tả nhường chỗ cho trạng thái,
+                tránh chồng chữ lên tiêu đề như cách dùng lớp phủ tuyệt đối. */}
+            {striking ? (
+              <DialogDescription className="glow-text animate-glow text-sm font-bold tracking-[0.2em] uppercase">
+                Thiên kiếp giáng lâm…
+              </DialogDescription>
+            ) : (
+              <DialogDescription>
+                Bạn đã tích đủ tu vi ở đỉnh cảnh giới. Nuốt đan dược rồi đón thiên kiếp — vượt qua
+                thì bước sang cảnh giới mới, thất bại thì hao tổn khí tức.
+              </DialogDescription>
+            )}
           </DialogHeader>
 
           {owned.length === 0 ? (
