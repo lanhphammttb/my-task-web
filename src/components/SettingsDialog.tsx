@@ -1,34 +1,80 @@
-import { useRef } from 'react';
+import { useRef } from "react";
 import {
-  Brush, Database, Download, Eraser, Film, Keyboard, ShieldCheck, Sparkles, Timer, Trash2,
-  TriangleAlert, Upload, Volume2, Wind,
-} from 'lucide-react';
-import { exportFile, readFile } from '../lib/storage';
-import { useApp } from '../store/AppStore';
-import { Button } from '@/components/ui/button';
+  Brush,
+  Database,
+  Download,
+  Eraser,
+  Film,
+  Keyboard,
+  ShieldCheck,
+  Sparkles,
+  Timer,
+  Trash2,
+  TriangleAlert,
+  Upload,
+  Volume2,
+  Wind,
+} from "lucide-react";
+import { exportFile, readFile } from "../lib/storage";
+import { useApp } from "../store/AppStore";
+import { Button } from "@/components/ui/button";
 import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
-  AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
-import { cn } from '@/lib/utils';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const SHORTCUTS: [string, string][] = [
-  ['N', 'Nhiệm vụ mới'],
-  ['1 – 7', 'Chuyển màn hình'],
-  ['/', 'Tìm kiếm'],
-  ['T', 'Về hôm nay'],
-  ['Esc', 'Đóng hộp thoại'],
+  ["N", "Nhiệm vụ mới"],
+  ["1 – 7", "Chuyển màn hình"],
+  ["/", "Tìm kiếm"],
+  ["T", "Về hôm nay"],
+  ["Esc", "Đóng hộp thoại"],
 ];
 
-export default function SettingsDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
-  const { data, audit, resealLedger, updateSettings, replaceAll, loadSample, resetAll, clearDone, notify } =
-    useApp();
+export default function SettingsDialog({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+}) {
+  const {
+    data,
+    audit,
+    resealLedger,
+    updateSettings,
+    replaceAll,
+    loadSample,
+    resetAll,
+    clearDone,
+    notify,
+  } = useApp();
   const fileRef = useRef<HTMLInputElement>(null);
   const s = data.settings;
 
@@ -36,10 +82,10 @@ export default function SettingsDialog({ open, onOpenChange }: { open: boolean; 
     if (!file) return;
     try {
       replaceAll(await readFile(file));
-      notify('Đã nhập dữ liệu thành công');
+      notify("Đã nhập dữ liệu thành công");
       onOpenChange(false);
     } catch {
-      notify('Tệp không hợp lệ', 'warn');
+      notify("Tệp không hợp lệ", "warn");
     }
   };
 
@@ -48,14 +94,22 @@ export default function SettingsDialog({ open, onOpenChange }: { open: boolean; 
       <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>Cài đặt</DialogTitle>
-          <DialogDescription>Đặt nhật khoá vừa sức để chuỗi tu luyện không bị đứt oan.</DialogDescription>
+          <DialogDescription>
+            Đặt nhật khoá vừa sức để chuỗi tu luyện không bị đứt oan.
+          </DialogDescription>
         </DialogHeader>
 
         <Tabs defaultValue="goals" className="mt-2">
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="goals" className="gap-1.5"><Wind className="size-3.5" /> Tu luyện</TabsTrigger>
-            <TabsTrigger value="look" className="gap-1.5"><Brush className="size-3.5" /> Giao diện</TabsTrigger>
-            <TabsTrigger value="data" className="gap-1.5"><Database className="size-3.5" /> Dữ liệu</TabsTrigger>
+            <TabsTrigger value="goals" className="gap-1.5">
+              <Wind className="size-3.5" /> Tu luyện
+            </TabsTrigger>
+            <TabsTrigger value="look" className="gap-1.5">
+              <Brush className="size-3.5" /> Giao diện
+            </TabsTrigger>
+            <TabsTrigger value="data" className="gap-1.5">
+              <Database className="size-3.5" /> Dữ liệu
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="goals" className="space-y-4 pt-5">
@@ -68,7 +122,9 @@ export default function SettingsDialog({ open, onOpenChange }: { open: boolean; 
                 onChange={(e) => updateSettings({ daoName: e.target.value })}
                 placeholder="Ví dụ: Thanh Vân Tử"
               />
-              <p className="text-muted-foreground text-xs">Tên hiển thị trên thẻ cảnh giới ở Tiên Lộ.</p>
+              <p className="text-muted-foreground text-xs">
+                Tên hiển thị trên thẻ cảnh giới ở Tiên Lộ.
+              </p>
             </div>
             <Separator />
             <div className="grid gap-4 sm:grid-cols-2">
@@ -80,7 +136,9 @@ export default function SettingsDialog({ open, onOpenChange }: { open: boolean; 
                   min={1}
                   max={30}
                   value={s.dailyTarget}
-                  onChange={(e) => updateSettings({ dailyTarget: Number(e.target.value) || 1 })}
+                  onChange={(e) =>
+                    updateSettings({ dailyTarget: Number(e.target.value) || 1 })
+                  }
                 />
               </div>
               <div className="grid gap-2">
@@ -91,7 +149,11 @@ export default function SettingsDialog({ open, onOpenChange }: { open: boolean; 
                   min={15}
                   step={15}
                   value={s.dailyFocusTarget}
-                  onChange={(e) => updateSettings({ dailyFocusTarget: Number(e.target.value) || 15 })}
+                  onChange={(e) =>
+                    updateSettings({
+                      dailyFocusTarget: Number(e.target.value) || 15,
+                    })
+                  }
                 />
               </div>
             </div>
@@ -101,7 +163,9 @@ export default function SettingsDialog({ open, onOpenChange }: { open: boolean; 
             </p>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="grid gap-2">
-                <Label htmlFor="s-focus-len">Độ dài phiên nhập định (phút)</Label>
+                <Label htmlFor="s-focus-len">
+                  Độ dài phiên nhập định (phút)
+                </Label>
                 <Input
                   id="s-focus-len"
                   type="number"
@@ -109,7 +173,9 @@ export default function SettingsDialog({ open, onOpenChange }: { open: boolean; 
                   max={120}
                   step={5}
                   value={s.focusLength}
-                  onChange={(e) => updateSettings({ focusLength: Number(e.target.value) || 5 })}
+                  onChange={(e) =>
+                    updateSettings({ focusLength: Number(e.target.value) || 5 })
+                  }
                 />
               </div>
               <div className="grid gap-2">
@@ -120,7 +186,9 @@ export default function SettingsDialog({ open, onOpenChange }: { open: boolean; 
                   min={1}
                   max={60}
                   value={s.breakLength}
-                  onChange={(e) => updateSettings({ breakLength: Number(e.target.value) || 1 })}
+                  onChange={(e) =>
+                    updateSettings({ breakLength: Number(e.target.value) || 1 })
+                  }
                 />
               </div>
             </div>
@@ -130,8 +198,15 @@ export default function SettingsDialog({ open, onOpenChange }: { open: boolean; 
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="grid gap-2">
                 <Label>Giao diện</Label>
-                <Select value={s.theme} onValueChange={(v) => updateSettings({ theme: v as 'dark' | 'light' })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                <Select
+                  value={s.theme}
+                  onValueChange={(v) =>
+                    updateSettings({ theme: v as "dark" | "light" })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="dark">Tối</SelectItem>
                     <SelectItem value="light">Sáng</SelectItem>
@@ -142,9 +217,13 @@ export default function SettingsDialog({ open, onOpenChange }: { open: boolean; 
                 <Label>Tuần bắt đầu từ</Label>
                 <Select
                   value={String(s.weekStartsOn)}
-                  onValueChange={(v) => updateSettings({ weekStartsOn: Number(v) as 0 | 1 })}
+                  onValueChange={(v) =>
+                    updateSettings({ weekStartsOn: Number(v) as 0 | 1 })
+                  }
                 >
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="1">Thứ Hai</SelectItem>
                     <SelectItem value="0">Chủ Nhật</SelectItem>
@@ -158,30 +237,41 @@ export default function SettingsDialog({ open, onOpenChange }: { open: boolean; 
             <label className="border-border hover:bg-muted/50 flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-colors">
               <Volume2 className="text-muted-foreground size-4 shrink-0" />
               <span className="min-w-0 flex-1">
-                <span className="block text-sm font-medium">Âm thanh phản hồi</span>
-                <span className="text-muted-foreground text-xs">Tiếng ting khi xong việc, nhạc ngắn khi đột phá cảnh giới</span>
+                <span className="block text-sm font-medium">
+                  Âm thanh phản hồi
+                </span>
+                <span className="text-muted-foreground text-xs">
+                  Tiếng ting khi xong việc, nhạc ngắn khi đột phá cảnh giới
+                </span>
               </span>
               <input
                 type="checkbox"
                 className="accent-primary size-4 shrink-0"
                 checked={s.soundEnabled}
-                onChange={(e) => updateSettings({ soundEnabled: e.target.checked })}
+                onChange={(e) =>
+                  updateSettings({ soundEnabled: e.target.checked })
+                }
               />
             </label>
 
             <label className="border-border hover:bg-muted/50 flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-colors">
               <Film className="text-muted-foreground size-4 shrink-0" />
               <span className="min-w-0 flex-1">
-                <span className="block text-sm font-medium">Video & nhạc nền khi bế quan</span>
+                <span className="block text-sm font-medium">
+                  Video & nhạc nền khi bế quan
+                </span>
                 <span className="text-muted-foreground text-xs">
-                  Phát video tu luyện kèm nhạc nền trong lúc nhập định; tắt để tiết kiệm pin
+                  Phát video tu luyện kèm nhạc nền trong lúc nhập định; tắt để
+                  tiết kiệm pin
                 </span>
               </span>
               <input
                 type="checkbox"
                 className="accent-primary size-4 shrink-0"
                 checked={s.ambientEnabled}
-                onChange={(e) => updateSettings({ ambientEnabled: e.target.checked })}
+                onChange={(e) =>
+                  updateSettings({ ambientEnabled: e.target.checked })
+                }
               />
             </label>
 
@@ -206,24 +296,29 @@ export default function SettingsDialog({ open, onOpenChange }: { open: boolean; 
             {/* --------------------------------------- toàn vẹn dữ liệu */}
             <div
               className={cn(
-                'rounded-lg border p-3',
-                audit.ok ? 'border-success/40 bg-success/[0.07]' : 'border-destructive/45 bg-destructive/[0.07]',
+                "rounded-lg border p-3",
+                audit.ok
+                  ? "border-success/40 bg-success/[0.07]"
+                  : "border-destructive/45 bg-destructive/[0.07]",
               )}
             >
               <p className="flex items-center gap-2 text-sm font-semibold">
                 {audit.ok ? (
                   <>
-                    <ShieldCheck className="text-success size-4" /> Sổ ghi liền mạch
+                    <ShieldCheck className="text-success size-4" /> Sổ ghi liền
+                    mạch
                   </>
                 ) : (
                   <>
-                    <TriangleAlert className="text-destructive size-4" /> Sổ ghi có dấu hiệu bị sửa
+                    <TriangleAlert className="text-destructive size-4" /> Sổ ghi
+                    có dấu hiệu bị sửa
                   </>
                 )}
               </p>
               <p className="text-muted-foreground mt-1 text-xs">
-                Đã kiểm {audit.verified}/{data.ledger.length} bản ghi. Mỗi nhiệm vụ hoàn thành và mỗi
-                phiên bế quan đều được móc vào một chuỗi băm; sửa tay ở bất kỳ đâu sẽ làm đứt chuỗi.
+                Đã kiểm {audit.verified}/{data.ledger.length} bản ghi. Mỗi nhiệm
+                vụ hoàn thành và mỗi phiên bế quan đều được móc vào một chuỗi
+                băm; sửa tay ở bất kỳ đâu sẽ làm đứt chuỗi.
               </p>
 
               {audit.findings.length > 0 && (
@@ -232,10 +327,10 @@ export default function SettingsDialog({ open, onOpenChange }: { open: boolean; 
                     <li
                       key={f.code}
                       className={cn(
-                        'rounded border px-2.5 py-1.5 text-[11.5px]',
-                        f.severity === 'error'
-                          ? 'border-destructive/35 bg-destructive/10 text-destructive'
-                          : 'border-warning/35 bg-warning/10 text-warning',
+                        "rounded border px-2.5 py-1.5 text-[11.5px]",
+                        f.severity === "error"
+                          ? "border-destructive/35 bg-destructive/10 text-destructive"
+                          : "border-warning/35 bg-warning/10 text-warning",
                       )}
                     >
                       {f.message}
@@ -245,13 +340,19 @@ export default function SettingsDialog({ open, onOpenChange }: { open: boolean; 
               )}
 
               <p className="text-muted-foreground mt-2.5 text-[11px] leading-relaxed">
-                App chạy hoàn toàn trên máy bạn nên <strong>không thể chống gian lận tuyệt đối</strong> —
-                người quyết tâm vẫn có thể đọc mã nguồn rồi tự dựng chuỗi hợp lệ. Muốn chống thật thì
-                phải có server ký sổ ghi.
+                App chạy hoàn toàn trên máy bạn nên{" "}
+                <strong>không thể chống gian lận tuyệt đối</strong> — người
+                quyết tâm vẫn có thể đọc mã nguồn rồi tự dựng chuỗi hợp lệ. Muốn
+                chống thật thì phải có server ký sổ ghi.
               </p>
 
               {!audit.ok && (
-                <Button variant="outline" size="sm" className="mt-2.5 gap-1.5" onClick={resealLedger}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-2.5 gap-1.5"
+                  onClick={resealLedger}
+                >
                   <ShieldCheck className="size-3.5" /> Chấp nhận & ký lại sổ ghi
                 </Button>
               )}
@@ -259,13 +360,22 @@ export default function SettingsDialog({ open, onOpenChange }: { open: boolean; 
 
             <Separator />
             <p className="text-muted-foreground text-xs">
-              Dữ liệu nằm trong trình duyệt của bạn. Xuất tệp định kỳ để sao lưu hoặc chuyển sang máy khác.
+              Dữ liệu nằm trong trình duyệt của bạn. Xuất tệp định kỳ để sao lưu
+              hoặc chuyển sang máy khác.
             </p>
             <div className="grid gap-2 sm:grid-cols-2">
-              <Button variant="outline" className="justify-start gap-2" onClick={() => exportFile(data)}>
+              <Button
+                variant="outline"
+                className="justify-start gap-2"
+                onClick={() => exportFile(data)}
+              >
                 <Download className="size-4" /> Xuất tệp JSON
               </Button>
-              <Button variant="outline" className="justify-start gap-2" onClick={() => fileRef.current?.click()}>
+              <Button
+                variant="outline"
+                className="justify-start gap-2"
+                onClick={() => fileRef.current?.click()}
+              >
                 <Upload className="size-4" /> Nhập từ tệp
               </Button>
               <input
@@ -275,10 +385,18 @@ export default function SettingsDialog({ open, onOpenChange }: { open: boolean; 
                 hidden
                 onChange={(e) => void doImport(e.target.files?.[0])}
               />
-              <Button variant="outline" className="justify-start gap-2" onClick={() => clearDone()}>
+              <Button
+                variant="outline"
+                className="justify-start gap-2"
+                onClick={() => clearDone()}
+              >
                 <Eraser className="size-4" /> Dọn việc đã xong
               </Button>
-              <Button variant="outline" className="justify-start gap-2" onClick={loadSample}>
+              <Button
+                variant="outline"
+                className="justify-start gap-2"
+                onClick={loadSample}
+              >
                 <Sparkles className="size-4" /> Nạp dữ liệu mẫu
               </Button>
             </div>
@@ -287,7 +405,10 @@ export default function SettingsDialog({ open, onOpenChange }: { open: boolean; 
 
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="outline" className="text-destructive hover:text-destructive w-full justify-start gap-2">
+                <Button
+                  variant="outline"
+                  className="text-destructive hover:text-destructive w-full justify-start gap-2"
+                >
                   <Trash2 className="size-4" /> Xoá sạch dữ liệu
                 </Button>
               </AlertDialogTrigger>
@@ -295,8 +416,9 @@ export default function SettingsDialog({ open, onOpenChange }: { open: boolean; 
                 <AlertDialogHeader>
                   <AlertDialogTitle>Xoá toàn bộ dữ liệu?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Mọi nhiệm vụ, mục tiêu và lịch sử tập trung sẽ bị xoá vĩnh viễn. Chuỗi ngày và
-                    huy hiệu cũng mất theo. Hành động này không thể hoàn tác.
+                    Mọi nhiệm vụ, mục tiêu và lịch sử tập trung sẽ bị xoá vĩnh
+                    viễn. Chuỗi ngày và huy hiệu cũng mất theo. Hành động này
+                    không thể hoàn tác.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>

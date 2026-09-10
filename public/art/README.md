@@ -16,7 +16,8 @@ Mô tả chi tiết từng ảnh → [`docs/art-brief.md`](../../docs/art-brief.
 | `banner/` | 8/8 dải đầu bảng | 1200×240 JPG (5:1) · 18–35 KB |
 | `award/` | 16/16 huy hiệu | 512×512 PNG alpha · 102–132 KB |
 | `avatar/` | 4/4 ảnh đại diện | 256×256 PNG · 43–45 KB |
-| `media/` | `thien-loi.mp4` video độ kiếp | 720×1280 dọc · 6 s · 2,09 MB · không tiếng |
+| `rail/` | 11/11 icon hai cột hub | 256×256 PNG alpha · 24–34 KB |
+| `media/` | 5 video + 1 audio | `thien-loi` 2,0 MB · `do-kiep-chibi` 1,7 MB · `dot-pha` 1,3 MB · `phi-thang` 792 KB · `be-quan` 380 KB · `ambient.mp3` 4,1 MB |
 | `beast/` | 18 linh thú | có sẵn từ đầu |
 | `pill/` `icon/` `page/` `scene/` `media/` `ui/` | ảnh nền, icon, video | có sẵn từ đầu |
 
@@ -24,7 +25,23 @@ Ba file icon ứng dụng nằm ở `public/` (không phải ở đây): `favico
 `apple-touch-icon.png`, `og.jpg`. Riêng `og.jpg` do `scripts/make-og.mjs` dựng
 từ `art-src/og-bg.png` — chữ ghép bằng code nên đổi khẩu hiệu chỉ cần chạy lại.
 
-**Bộ art đã đủ 55/55.**
+## Có thể thêm
+
+| Thư mục | Cần | Quy cách |
+|---|---|---|
+| `elder/` | 13 chân dung tiền bối | 256×256 PNG, nền màu phẳng tối |
+| `empty/` | 5 minh hoạ trạng thái trống | 512×512 PNG alpha |
+
+App chạy hoàn chỉnh với 70 file hiện có — hai nhóm này là thêm cho dày, không
+phải sửa lỗi. `beast/` 18 · `pill/` 3 · `scene/cave.jpg` vẫn là art mượn từ
+Tiên Ma Giới, xếp mức thấp. Chi tiết ở mục C của
+[`docs/art-brief.md`](../../docs/art-brief.md).
+
+## Đã đủ
+
+Toàn bộ 70 file ảnh và video của brief đã xong. Ba file icon ứng dụng nằm ở `public/`
+(không phải ở đây): `favicon.png`, `apple-touch-icon.png`, `og.jpg` — riêng
+`og.jpg` do `scripts/make-og.mjs` dựng từ `art-src/og-bg.png`.
 
 ## Quy trình khi thả ảnh mới
 

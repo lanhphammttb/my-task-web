@@ -1,44 +1,67 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  ArrowLeftRight, CheckCircle2, Coffee, Crosshair, ListChecks, PartyPopper, Pause, Play, Square, Timer,
-} from 'lucide-react';
-import type { Task } from '../types';
-import { clockLabel, formatDuration, todayKey } from '../lib/date';
-import { sortTasks } from '../lib/stats';
-import { PRIORITY_UI } from '../lib/ui';
-import { soundComplete } from '../lib/celebrate';
-import { useApp } from '../store/AppStore';
-import ProgressRing from '../components/ProgressRing';
-import MeditationScene from '../components/MeditationScene';
-import { EmptyState, Meter, MetaChip, Section } from '../components/primitives';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { cn } from '@/lib/utils';
+  ArrowLeftRight,
+  CheckCircle2,
+  Coffee,
+  Crosshair,
+  ListChecks,
+  PartyPopper,
+  Pause,
+  Play,
+  Square,
+  Timer,
+} from "lucide-react";
+import type { Task } from "../types";
+import { clockLabel, formatDuration, todayKey } from "../lib/date";
+import { sortTasks } from "../lib/stats";
+import { PRIORITY_UI } from "../lib/ui";
+import { soundComplete } from "../lib/celebrate";
+import { useApp } from "../store/AppStore";
+import ProgressRing from "../components/ProgressRing";
+import MeditationScene from "../components/MeditationScene";
+import { EmptyState, Meter, MetaChip, Section } from "../components/primitives";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 
-type Mode = 'work' | 'break';
+type Mode = "work" | "break";
 
-export default function FocusView({ taskId, onPickTask }: { taskId?: string; onPickTask: (id?: string) => void }) {
+export default function FocusView({
+  taskId,
+  onPickTask,
+}: {
+  taskId?: string;
+  onPickTask: (id?: string) => void;
+}) {
   const { data, logSession, setStatus, notify } = useApp();
   const { focusLength, breakLength, dailyFocusTarget } = data.settings;
 
-  const [mode, setMode] = useState<Mode>('work');
+  const [mode, setMode] = useState<Mode>("work");
   const [seconds, setSeconds] = useState(focusLength * 60);
   const [running, setRunning] = useState(false);
   const [rounds, setRounds] = useState(0);
   const tick = useRef<number | null>(null);
 
-  const totalSeconds = (mode === 'work' ? focusLength : breakLength) * 60;
+  const totalSeconds = (mode === "work" ? focusLength : breakLength) * 60;
   const task = data.tasks.find((t) => t.id === taskId);
-  const candidates = sortTasks(data.tasks.filter((t) => t.status !== 'done' && t.date <= todayKey()));
+  const candidates = sortTasks(
+    data.tasks.filter((t) => t.status !== "done" && t.date <= todayKey()),
+  );
   const todaySessions = data.sessions.filter((s) => s.date === todayKey());
   const todayMin = todaySessions.reduce((s, x) => s + x.minutes, 0);
-  const isWork = mode === 'work';
+  const isWork = mode === "work";
 
   const reset = useCallback(
     (next: Mode) => {
       setMode(next);
-      setSeconds((next === 'work' ? focusLength : breakLength) * 60);
+      setSeconds((next === "work" ? focusLength : breakLength) * 60);
       setRunning(false);
     },
     [focusLength, breakLength],
@@ -48,9 +71,11 @@ export default function FocusView({ taskId, onPickTask }: { taskId?: string; onP
   const cfgRef = useRef({ focusLength, breakLength });
   useEffect(() => {
     const prev = cfgRef.current;
-    if (prev.focusLength === focusLength && prev.breakLength === breakLength) return;
+    if (prev.focusLength === focusLength && prev.breakLength === breakLength)
+      return;
     cfgRef.current = { focusLength, breakLength };
-    if (!running) setSeconds((mode === 'work' ? focusLength : breakLength) * 60);
+    if (!running)
+      setSeconds((mode === "work" ? focusLength : breakLength) * 60);
   }, [focusLength, breakLength, mode, running]);
 
   useEffect(() => {
@@ -65,29 +90,29 @@ export default function FocusView({ taskId, onPickTask }: { taskId?: string; onP
     if (seconds > 0) return;
     setRunning(false);
     soundComplete();
-    if (mode === 'work') {
+    if (mode === "work") {
       logSession(focusLength, taskId);
       setRounds((r) => r + 1);
-      reset('break');
+      reset("break");
     } else {
-      notify('Hết giờ nghỉ. Vào phiên tập trung tiếp theo!');
-      reset('work');
+      notify("Hết giờ nghỉ. Vào phiên tập trung tiếp theo!");
+      reset("work");
     }
   }, [seconds, mode, focusLength, taskId, logSession, notify, reset]);
 
   useEffect(() => {
     document.title = running
-      ? `${clockLabel(seconds)} · ${isWork ? 'Nhập định' : 'Điều tức'}`
-      : 'Đạo Trình · Kế hoạch & tu luyện';
+      ? `${clockLabel(seconds)} · ${isWork ? "Nhập định" : "Điều tức"}`
+      : "Đạo Trình · Kế hoạch & tu luyện";
     return () => {
-      document.title = 'Đạo Trình · Kế hoạch & tu luyện';
+      document.title = "Đạo Trình · Kế hoạch & tu luyện";
     };
   }, [seconds, running, isWork]);
 
   const stopEarly = () => {
     const spent = Math.round((totalSeconds - seconds) / 60);
     if (isWork && spent >= 1) logSession(spent, taskId);
-    reset('work');
+    reset("work");
   };
 
   return (
@@ -95,18 +120,18 @@ export default function FocusView({ taskId, onPickTask }: { taskId?: string; onP
       <div>
         <h2 className="text-lg font-bold tracking-tight">Bế quan tu luyện</h2>
         <p className="text-muted-foreground text-xs">
-          Nhập định {focusLength} phút với đúng một việc. Không chuyển tab, không điện thoại — mỗi
-          phút bế quan đều đổi thành tu vi.
+          Nhập định {focusLength} phút với đúng một việc. Không chuyển tab,
+          không điện thoại — mỗi phút bế quan đều đổi thành tu vi.
         </p>
       </div>
 
       {/* ------------------------------------------------------ đồng hồ */}
       <section
         className={cn(
-          'relative overflow-hidden rounded-2xl border p-6 sm:p-8',
+          "relative overflow-hidden rounded-2xl border p-6 sm:p-8",
           isWork
-            ? 'border-primary/30 bg-gradient-to-br from-primary/14 to-card'
-            : 'border-success/35 bg-gradient-to-br from-success/14 to-card',
+            ? "border-primary/30 bg-gradient-to-br from-primary/14 to-card"
+            : "border-success/35 bg-gradient-to-br from-success/14 to-card",
         )}
       >
         <div className="relative flex flex-col items-center gap-7 sm:flex-row sm:items-center sm:gap-9">
@@ -131,8 +156,8 @@ export default function FocusView({ taskId, onPickTask }: { taskId?: string; onP
                   value={1 - seconds / totalSeconds}
                   label={clockLabel(seconds)}
                   labelClassName="glow-text text-[38px] leading-none"
-                  caption={isWork ? 'phiên bế quan' : 'điều tức'}
-                  color={isWork ? 'var(--gold-bright)' : 'var(--success)'}
+                  caption={isWork ? "phiên bế quan" : "điều tức"}
+                  color={isWork ? "var(--gold-bright)" : "var(--success)"}
                   track="rgb(0 0 0 / 45%)"
                   qi={running}
                   glowOnFull={false}
@@ -143,33 +168,44 @@ export default function FocusView({ taskId, onPickTask }: { taskId?: string; onP
 
             <span
               className={cn(
-                'glass-panel absolute top-2.5 left-1/2 -translate-x-1/2 rounded-full px-3 py-1',
-                'inline-flex items-center gap-1.5 text-[10.5px] font-bold tracking-[0.14em] whitespace-nowrap uppercase',
-                isWork ? 'text-gold-bright' : 'text-success',
-                !running && 'opacity-80',
+                "glass-panel absolute top-2.5 left-1/2 -translate-x-1/2 rounded-full px-3 py-1",
+                "inline-flex items-center gap-1.5 text-[10.5px] font-bold tracking-[0.14em] whitespace-nowrap uppercase",
+                isWork ? "text-gold-bright" : "text-success",
+                !running && "opacity-80",
               )}
             >
-              {isWork ? <Crosshair className="size-3" /> : <Coffee className="size-3" />}
+              {isWork ? (
+                <Crosshair className="size-3" />
+              ) : (
+                <Coffee className="size-3" />
+              )}
               {/* Đồng hồ chưa chạy mà đề "đang nhập định" là nói sai trạng thái. */}
               {running
                 ? isWork
-                  ? 'Đang nhập định'
-                  : 'Đang điều tức'
+                  ? "Đang nhập định"
+                  : "Đang điều tức"
                 : isWork
-                  ? 'Sẵn sàng nhập định'
-                  : 'Sẵn sàng điều tức'}
+                  ? "Sẵn sàng nhập định"
+                  : "Sẵn sàng điều tức"}
             </span>
           </div>
 
           <div className="w-full min-w-0 flex-1 space-y-4">
             <div className="grid gap-2">
               <Label>Nhiệm vụ đang làm</Label>
-              <Select value={taskId ?? 'free'} onValueChange={(v) => onPickTask(v === 'free' ? undefined : v)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+              <Select
+                value={taskId ?? "free"}
+                onValueChange={(v) => onPickTask(v === "free" ? undefined : v)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="free">Tập trung tự do</SelectItem>
                   {candidates.map((t) => (
-                    <SelectItem key={t.id} value={t.id}>{t.title}</SelectItem>
+                    <SelectItem key={t.id} value={t.id}>
+                      {t.title}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -177,15 +213,23 @@ export default function FocusView({ taskId, onPickTask }: { taskId?: string; onP
 
             {task && (
               <div className="border-border bg-card space-y-2.5 rounded-xl border p-3.5">
-                <strong className="block text-sm font-semibold">{task.title}</strong>
+                <strong className="block text-sm font-semibold">
+                  {task.title}
+                </strong>
                 <div className="flex flex-wrap gap-1.5">
-                  <MetaChip icon={Timer}>Dự kiến {formatDuration(task.estimateMin)}</MetaChip>
-                  <MetaChip icon={Crosshair} className="border-success/35 bg-success/12 text-success">
+                  <MetaChip icon={Timer}>
+                    Dự kiến {formatDuration(task.estimateMin)}
+                  </MetaChip>
+                  <MetaChip
+                    icon={Crosshair}
+                    className="border-success/35 bg-success/12 text-success"
+                  >
                     Đã làm {formatDuration(task.focusMin)}
                   </MetaChip>
                   {task.subtasks.length > 0 && (
                     <MetaChip icon={ListChecks}>
-                      {task.subtasks.filter((s) => s.done).length}/{task.subtasks.length} bước
+                      {task.subtasks.filter((s) => s.done).length}/
+                      {task.subtasks.length} bước
                     </MetaChip>
                   )}
                 </div>
@@ -194,7 +238,7 @@ export default function FocusView({ taskId, onPickTask }: { taskId?: string; onP
                   size="sm"
                   className="gap-1.5"
                   onClick={() => {
-                    setStatus(task.id, 'done');
+                    setStatus(task.id, "done");
                     onPickTask(undefined);
                   }}
                 >
@@ -204,16 +248,34 @@ export default function FocusView({ taskId, onPickTask }: { taskId?: string; onP
             )}
 
             <div className="flex flex-wrap gap-2">
-              <Button size="lg" className="gap-2" onClick={() => setRunning((r) => !r)}>
-                {running ? <Pause className="size-4" /> : <Play className="size-4" />}
-                {running ? 'Tạm dừng' : 'Bắt đầu'}
+              <Button
+                size="lg"
+                className="gap-2"
+                onClick={() => setRunning((r) => !r)}
+              >
+                {running ? (
+                  <Pause className="size-4" />
+                ) : (
+                  <Play className="size-4" />
+                )}
+                {running ? "Tạm dừng" : "Bắt đầu"}
               </Button>
-              <Button variant="outline" size="lg" className="gap-2" onClick={stopEarly}>
+              <Button
+                variant="outline"
+                size="lg"
+                className="gap-2"
+                onClick={stopEarly}
+              >
                 <Square className="size-3.5" /> Kết thúc & ghi nhận
               </Button>
-              <Button variant="outline" size="lg" className="gap-2" onClick={() => reset(isWork ? 'break' : 'work')}>
+              <Button
+                variant="outline"
+                size="lg"
+                className="gap-2"
+                onClick={() => reset(isWork ? "break" : "work")}
+              >
                 <ArrowLeftRight className="size-4" />
-                {isWork ? 'Sang nghỉ' : 'Sang làm'}
+                {isWork ? "Sang nghỉ" : "Sang làm"}
               </Button>
             </div>
           </div>
@@ -224,18 +286,29 @@ export default function FocusView({ taskId, onPickTask }: { taskId?: string; onP
       <Section icon={Crosshair} title="Nhập định hôm nay">
         <div className="grid grid-cols-3 gap-3">
           {[
-            { value: String(rounds), label: 'phiên lượt này' },
-            { value: String(todaySessions.length), label: 'phiên hôm nay' },
-            { value: formatDuration(todayMin), label: 'tổng thời gian' },
+            { value: String(rounds), label: "phiên lượt này" },
+            { value: String(todaySessions.length), label: "phiên hôm nay" },
+            { value: formatDuration(todayMin), label: "tổng thời gian" },
           ].map((s) => (
-            <div key={s.label} className="border-border bg-surface/60 rounded-xl border p-3 text-center">
-              <strong className="tabular block text-lg leading-none">{s.value}</strong>
-              <span className="text-muted-foreground text-[11px]">{s.label}</span>
+            <div
+              key={s.label}
+              className="border-border bg-surface/60 rounded-xl border p-3 text-center"
+            >
+              <strong className="tabular block text-lg leading-none">
+                {s.value}
+              </strong>
+              <span className="text-muted-foreground text-[11px]">
+                {s.label}
+              </span>
             </div>
           ))}
         </div>
         <div className="mt-4">
-          <Meter value={dailyFocusTarget ? todayMin / dailyFocusTarget : 0} height={8} barClassName="bg-success" />
+          <Meter
+            value={dailyFocusTarget ? todayMin / dailyFocusTarget : 0}
+            height={8}
+            barClassName="bg-success"
+          />
           <p className="text-muted-foreground mt-1.5 text-right text-[11px]">
             Mục tiêu {formatDuration(dailyFocusTarget)}/ngày
           </p>
@@ -243,10 +316,15 @@ export default function FocusView({ taskId, onPickTask }: { taskId?: string; onP
       </Section>
 
       {/* ---------------------------------------------------- chọn nhanh */}
-      <Section icon={ListChecks} title="Chọn việc để bế quan" subtitle="Ưu tiên cao nằm trên cùng">
+      <Section
+        icon={ListChecks}
+        title="Chọn việc để bế quan"
+        subtitle="Ưu tiên cao nằm trên cùng"
+      >
         {candidates.length === 0 ? (
           <EmptyState
             icon={PartyPopper}
+            art="all-done"
             title="Không còn nhiệm vụ nào đang chờ"
             hint="Đạo tâm thanh tịnh. Nghỉ ngơi hoặc lên kế hoạch cho ngày mai."
           />
@@ -257,21 +335,30 @@ export default function FocusView({ taskId, onPickTask }: { taskId?: string; onP
                 key={t.id}
                 onClick={() => onPickTask(t.id)}
                 className={cn(
-                  'flex items-center gap-2.5 rounded-xl border p-3 text-left transition-colors',
+                  "flex items-center gap-2.5 rounded-xl border p-3 text-left transition-colors",
                   t.id === taskId
-                    ? 'border-primary bg-primary/12'
-                    : 'border-border bg-surface/60 hover:border-primary/50 hover:bg-surface',
+                    ? "border-primary bg-primary/12"
+                    : "border-border bg-surface/60 hover:border-primary/50 hover:bg-surface",
                 )}
               >
-                <span className={cn('size-2 shrink-0 rounded-full', PRIORITY_UI[t.priority].dot)} />
+                <span
+                  className={cn(
+                    "size-2 shrink-0 rounded-full",
+                    PRIORITY_UI[t.priority].dot,
+                  )}
+                />
                 <span className="min-w-0 flex-1">
-                  <strong className="block truncate text-sm font-medium">{t.title}</strong>
+                  <strong className="block truncate text-sm font-medium">
+                    {t.title}
+                  </strong>
                   <span className="text-muted-foreground text-[11px]">
                     {formatDuration(t.estimateMin)}
-                    {t.startTime ? ` · ${t.startTime}` : ''}
+                    {t.startTime ? ` · ${t.startTime}` : ""}
                   </span>
                 </span>
-                {t.id === taskId && <CheckCircle2 className="text-primary size-4 shrink-0" />}
+                {t.id === taskId && (
+                  <CheckCircle2 className="text-primary size-4 shrink-0" />
+                )}
               </button>
             ))}
           </div>

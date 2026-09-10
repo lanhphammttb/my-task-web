@@ -1,6 +1,7 @@
-import type { ReactNode } from 'react';
-import type { LucideIcon } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import type { ReactNode } from "react";
+import { useState } from "react";
+import type { LucideIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 /** Nhãn metadata nhỏ, thay cho việc nhồi emoji vào chuỗi văn bản. */
 export function MetaChip({
@@ -18,8 +19,8 @@ export function MetaChip({
     <span
       style={style}
       className={cn(
-        'inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] leading-4 font-medium whitespace-nowrap',
-        'border-border bg-muted/50 text-muted-foreground',
+        "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] leading-4 font-medium whitespace-nowrap",
+        "border-border bg-muted/50 text-muted-foreground",
         className,
       )}
     >
@@ -38,7 +39,7 @@ export function Section({
   action,
   children,
   className,
-  tone = 'default',
+  tone = "default",
 }: {
   /** Neo để hub cuộn thẳng tới mục này khi mở từ icon bên rìa. */
   id?: string;
@@ -48,16 +49,18 @@ export function Section({
   action?: ReactNode;
   children: ReactNode;
   className?: string;
-  tone?: 'default' | 'accent' | 'danger';
+  tone?: "default" | "accent" | "danger";
 }) {
   return (
     <section
       id={id}
       className={cn(
-        'scroll-mt-4 rounded-xl border p-4 sm:p-5',
-        tone === 'default' && 'border-border bg-card/80 backdrop-blur-[2px]',
-        tone === 'accent' && 'border-primary/35 bg-primary/[0.07] backdrop-blur-[2px]',
-        tone === 'danger' && 'border-destructive/40 bg-destructive/[0.07] backdrop-blur-[2px]',
+        "scroll-mt-4 rounded-xl border p-4 sm:p-5",
+        tone === "default" && "border-border bg-card/80 backdrop-blur-[2px]",
+        tone === "accent" &&
+          "border-primary/35 bg-primary/[0.07] backdrop-blur-[2px]",
+        tone === "danger" &&
+          "border-destructive/40 bg-destructive/[0.07] backdrop-blur-[2px]",
         className,
       )}
     >
@@ -69,15 +72,21 @@ export function Section({
                 {Icon && (
                   <Icon
                     className={cn(
-                      'size-4',
-                      tone === 'danger' ? 'text-destructive' : tone === 'accent' ? 'text-primary' : 'text-muted-foreground',
+                      "size-4",
+                      tone === "danger"
+                        ? "text-destructive"
+                        : tone === "accent"
+                          ? "text-primary"
+                          : "text-muted-foreground",
                     )}
                   />
                 )}
                 {title}
               </h3>
             )}
-            {subtitle && <p className="text-muted-foreground mt-0.5 text-xs">{subtitle}</p>}
+            {subtitle && (
+              <p className="text-muted-foreground mt-0.5 text-xs">{subtitle}</p>
+            )}
           </div>
           {action}
         </header>
@@ -90,20 +99,50 @@ export function Section({
 /** Trạng thái rỗng có gợi ý hành động tiếp theo, không để màn hình trắng trơ. */
 export function EmptyState({
   icon: Icon,
+  art,
   title,
   hint,
   className,
 }: {
   icon: LucideIcon;
+  /**
+   * Tên minh hoạ trong `public/art/empty/`. Có file thì hiện tranh 72 px thay
+   * cho icon nét 28 px; chưa có thì lùi về icon, layout không đổi.
+   */
+  art?: string;
   title: string;
   hint?: string;
   className?: string;
 }) {
+  const [artOk, setArtOk] = useState(true);
+  const showArt = !!art && artOk;
+
   return (
-    <div className={cn('border-border/70 rounded-xl border border-dashed px-4 py-8 text-center', className)}>
-      <Icon className="text-muted-foreground/70 mx-auto mb-3 size-7" strokeWidth={1.75} />
+    <div
+      className={cn(
+        "border-border/70 rounded-xl border border-dashed px-4 py-8 text-center",
+        className,
+      )}
+    >
+      {showArt ? (
+        <img
+          src={`/art/empty/${art}.png`}
+          alt=""
+          onError={() => setArtOk(false)}
+          className="mx-auto mb-3 size-[72px] object-contain opacity-90"
+        />
+      ) : (
+        <Icon
+          className="text-muted-foreground/70 mx-auto mb-3 size-7"
+          strokeWidth={1.75}
+        />
+      )}
       <p className="text-sm font-semibold">{title}</p>
-      {hint && <p className="text-muted-foreground mx-auto mt-1 max-w-sm text-xs">{hint}</p>}
+      {hint && (
+        <p className="text-muted-foreground mx-auto mt-1 max-w-sm text-xs">
+          {hint}
+        </p>
+      )}
     </div>
   );
 }
@@ -120,11 +159,18 @@ export function Meter({
   barClassName?: string;
   height?: number;
 }) {
-  const pct = Math.max(0, Math.min(1, Number.isFinite(value) ? value : 0)) * 100;
+  const pct =
+    Math.max(0, Math.min(1, Number.isFinite(value) ? value : 0)) * 100;
   return (
-    <div className={cn('bg-muted w-full overflow-hidden rounded-full', className)} style={{ height }}>
+    <div
+      className={cn("bg-muted w-full overflow-hidden rounded-full", className)}
+      style={{ height }}
+    >
       <div
-        className={cn('bg-primary h-full rounded-full transition-[width] duration-700 ease-out', barClassName)}
+        className={cn(
+          "bg-primary h-full rounded-full transition-[width] duration-700 ease-out",
+          barClassName,
+        )}
         style={{ width: `${pct}%` }}
       />
     </div>
@@ -146,12 +192,19 @@ export function StatTile({
   className?: string;
 }) {
   return (
-    <div className={cn('border-border bg-card/80 rounded-lg border p-4', className)}>
+    <div
+      className={cn(
+        "border-border bg-card/80 rounded-lg border p-4",
+        className,
+      )}
+    >
       <div className="text-muted-foreground flex items-center gap-1.5 text-xs">
         {Icon && <Icon className="size-3.5" />}
         {label}
       </div>
-      <div className="tabular mt-1.5 text-2xl font-bold tracking-tight">{value}</div>
+      <div className="tabular mt-1.5 text-2xl font-bold tracking-tight">
+        {value}
+      </div>
       {hint && <div className="text-muted-foreground text-xs">{hint}</div>}
     </div>
   );

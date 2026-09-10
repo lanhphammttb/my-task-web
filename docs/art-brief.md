@@ -3,7 +3,7 @@
 Web app tu tiên, giao diện **vàng kim trên đen nâu**. Mọi chữ và thành phần UI do
 web vẽ đè lên → ảnh chỉ là **nền và minh hoạ**.
 
-**Tình trạng: 55/55 đã xong. Bộ art đã đủ.**
+**Tình trạng: 70/70 của brief đã xong. Có thể thêm 18 ảnh nữa — xem mục C.**
 
 | Nhóm | Tình trạng |
 |---|---|
@@ -16,6 +16,11 @@ web vẽ đè lên → ảnh chỉ là **nền và minh hoạ**.
 | `avatar/` 4 ảnh đại diện | ✅ xong |
 | `media/thien-loi.mp4` | ✅ xong |
 | icon ứng dụng (3 file) | ✅ xong |
+| `rail/` 11 icon hai cột hub | ✅ xong |
+| video mốc lớn 2 file | ✅ xong |
+| video bế quan chibi | ✅ xong |
+| `elder/` 13 chân dung tiền bối | ⭕ nên có → mục C1 |
+| `empty/` 5 minh hoạ trạng thái trống | ⭕ nên có → mục C2 |
 
 Tên file rút gọn + quy trình xử lý: [`public/art/README.md`](../public/art/README.md)
 
@@ -269,7 +274,81 @@ luôn chạy `muted`. Bản gốc giữ ở `art-src/media/`.
 Sân khấu three.js cũ (`TribulationScene.tsx`) đã xoá — video thay được hoàn toàn.
 three.js vẫn dùng cho nền 3D toàn app (`Scene3DBackdrop.tsx`).
 
-## B9. Icon ứng dụng ✅
+## B10. `rail/` — 11 icon hai cột hub ✅
+`256×256` PNG alpha · 24–34 KB
+
+Thay bộ mượn từ Tiên Ma Giới vốn có **chữ nung sẵn trong ảnh**: app đã vẽ nhãn
+riêng ngay dưới icon nên chữ hiện hai lần, và năm cái ghi khác hẳn nhãn ("BXH"
+trong khi nhãn là "Thống Kê"). Bộ mới không có chữ.
+
+`be-quan` · `nhat-khoa` · `tien-lo` · `thong-ke` · `linh-can` · `linh-thu` ·
+`dan-duong` · `dong-phu` · `cai-dat` · `linh-thach` · `chieu-thu`
+
+Bộ này gửi tới **đã có alpha thật**, hào quang quanh vật thể là alpha bán trong
+suốt do hoạ sĩ vẽ — nên `npm run art rail` **không tách nền**, chỉ cắt lề trong
+suốt rồi thu vừa khung vuông (`fit: 'contain'`; icon không vuông mà dùng `cover`
+sẽ cắt mất một phần).
+
+`tien-lo.png` có chữ số nhỏ trên các bậc thang, hơi lệch quy chuẩn "không chữ
+không số". Ở cỡ hiển thị thật 36 px thì nó thành vân trên bậc, không đọc được —
+nên giữ nguyên. Chỉ cần vẽ lại nếu sau này icon được hiện to hơn.
+
+## B11. Bốn video + một audio ✅
+
+| File | Dài | Dung lượng | Dùng ở |
+|---|---|---|---|
+| `be-quan.mp4` | 2,3 s | 380 KB | Bế quan — lặp suốt phiên nhập định |
+| `thien-loi.mp4` | 6,0 s | 2,0 MB | Hộp thoại độ kiếp, **lúc chờ** (mây đen tụ) |
+| `do-kiep-chibi.mp4` | 6,5 s | 1,7 MB | Hộp thoại độ kiếp, **lúc chống kiếp** |
+| `dot-pha.mp4` | 10,0 s | 1,3 MB | Thẻ ăn mừng độ kiếp thành công |
+| `phi-thang.mp4` | 10,0 s | 792 KB | Thẻ ăn mừng phi thăng |
+| `ambient.mp3` | 174 s | 4,1 MB | Nhạc nền lúc nhập định |
+
+Ba video nhận về đều **1280×720, 10 giây, có track âm thanh AAC** — đã tách bỏ
+tiếng cả ba (`ffmpeg -an`) vì thẻ `<video>` luôn chạy `muted`.
+
+### Một video gốc chia thành hai
+
+File gốc tên `Chibi_cultivator_breakthrough.mp4` là **một cung cảm xúc trọn vẹn**:
+giây 0–2 ngồi thiền linh khí xanh tụ → giây 4 kim quang bùng → **giây 6 cận mặt
+mở mắt tóc tạt ngược** → giây 8–9 lắng lại. Cắt theo cung đó thành hai:
+
+- **0–3 s → `be-quan.mp4`** (phần tĩnh tại)
+- **2,5–9 s → `do-kiep-chibi.mp4`** (phần đột phá)
+
+### Vòng lặp cho `be-quan.mp4`: chồng mờ, không đảo chiều
+
+Video này lặp suốt một phiên 25 phút nên chỗ nối phải sạch. Ba cách và lý do chọn:
+
+| Cách | Kết quả |
+|---|---|
+| Cắt thẳng một đoạn | ❌ `scripts/find-loop.mjs` quét cả 10 s: **không có điểm lặp tự nhiên nào** — linh khí tăng dần đơn điệu nên không hai khung nào giống nhau (chỗ nối lệch 17–27 so với 9 giữa hai khung liền nhau) |
+| Nối thêm bản chạy ngược (ping-pong) | ❌ Lặp thì khớp tuyệt đối, nhưng thành **hít khí vào rồi nhả ra** — sai hẳn: tu luyện là hấp thu MỘT CHIỀU |
+| **Chồng mờ đuôi vào đầu** | ✅ Luôn chạy xuôi, chỗ nối biến mất, và vòng lặp ở trạng thái **đang hấp thu liên tục** thay vì tụ rồi reset |
+
+`scripts/loop-video.mjs` làm việc này: với đoạn dài `D` và độ chồng mờ `X`, bản
+ra dài `D − X`, trong đó `[0..X)` là đuôi chồng mờ vào đầu và `[X..D−X)` phát
+nguyên. Khung cuối khớp khung đầu nên lặp không thấy chỗ nối.
+
+```bash
+node scripts/find-loop.mjs <video> [giây tối thiểu] [từ-đến]   # đo xem có lặp thẳng được không
+node scripts/loop-video.mjs <vào> <ra> <đầu> <cuối> [chồng mờ]  # dựng vòng lặp chồng mờ
+```
+
+### Ba chỗ đổi trong code cho khớp video
+
+- `STRIKE_MS` **2800 → 6600 ms** trong `TribulationDialog`, khớp độ dài
+  `do-kiep-chibi.mp4` để xem trọn cung: kim quang bùng → mở mắt → lắng lại.
+  Chỉ xảy ra 9 lần cả hành trình nên chờ là đáng.
+- Thẻ ăn mừng **tự đóng sau 10 s** khi mốc đó có video (độ kiếp, phi thăng),
+  vẫn 5 s cho các mốc thường. Trước đó tôi cắt video còn 5 s cho vừa thẻ —
+  làm mất **bóng người bay lên ở giây 6–8** của `phi-thang` và **cú bùng thành
+  vòng sáng ở giây 6** của `dot-pha`. Giờ giữ trọn 10 s và nới thẻ.
+- Lúc đang chống kiếp, khối thông tin trong hộp thoại **mờ hẳn đi** (vẫn giữ
+  chỗ nên khung không nhảy) — video mở 100% thì chữ chìm, mà lúc đó cũng không
+  còn gì để đọc hay để chọn.
+
+## B9. Icon ứng dụng ✅## B9. Icon ứng dụng ✅
 Đặt ở `public/`, không phải `public/art/`.
 
 | File | Kích thước | Ghi chú |
@@ -291,7 +370,107 @@ chạy lại, không cần vẽ lại tranh.
 
 # C. Còn thiếu — 29 file
 
-# C. Phụ lục — prompt tiếng Anh
+# C. Có thể thêm — 18 ảnh
+
+Bộ art trong brief đã đủ và app chạy hoàn chỉnh. Phần này là những chỗ **vẫn còn
+trắng trơn, chỉ có chữ và icon nét** — thêm art vào thì dày dặn hơn.
+
+## Nguyên tắc lọc: đo cỡ hiển thị trước khi vẽ
+
+Tôi đo cỡ thật của từng bề mặt trong code rồi mới đề xuất. **Art vẽ tay dưới
+24 px sẽ thành bùn — icon nét ăn hẳn ở cỡ đó.** Nên có những chỗ nhìn như "thiếu
+art" mà thật ra không nên thêm:
+
+| Bề mặt | Cỡ hiển thị | Kết luận |
+|---|---|---|
+| Icon trên thẻ nhiệm vụ (mức ưu tiên, giờ, nhãn) | **12–16 px** | ❌ giữ icon nét |
+| Icon nhật khoá trong bảng Hôm nay | **12–16 px** | ❌ giữ icon nét |
+| 4 tab dưới cùng | **20 px** | ❌ giữ icon nét, và để phân cấp với hai cột hub |
+| Biểu đồ thống kê | vector | ❌ giữ vector, số liệu phải sắc nét |
+| Chân dung tiền bối trên hub | **48 px** | ✅ nên có art |
+| Minh hoạ trạng thái trống | **72 px** (đã nới từ 28) | ✅ nên có art |
+| Linh thú trong Động Phủ | **56 px** | ✅ đang là art mượn |
+
+## C1. `public/art/elder/` — 13 chân dung tiền bối ★★★
+
+**Đáng làm nhất.** Châm ngôn tiền bối hiện trên hub **mỗi lần mở app**, nhưng
+hiện chỉ có chữ và một dấu ngoặc kép. Anh đòi "châm ngôn của các tiền bối" từ
+đầu — có mặt người nói thì câu nói mới có sức.
+
+Code đã nối sẵn: có ảnh thì khối châm ngôn đổi sang bố cục ngang, ảnh tròn 48 px
+bên trái; chưa có thì canh giữa như cũ.
+
+```
+Thư mục       : public/art/elder/
+Kích thước    : 512×512 vuông
+Định dạng     : PNG, nền MỘT MÀU PHẲNG tối (không cần alpha)
+Phong cách    : nhóm B — anime, nét sạch, màu phẳng bóng mềm
+Khung hình    : BÁN THÂN hoặc chỉ đầu-vai, nhìn thẳng hoặc 3/4
+Hiển thị      : BỊ CROP THÀNH HÌNH TRÒN, đường kính 48 px
+Bắt buộc      : đặt mặt vào chính giữa và CHỪA LỀ, bốn góc sẽ bị cắt.
+                Không chữ, không khung.
+Lưu ý         : đây là 13 người KHÁC NHAU — phải phân biệt được ở 48 px,
+                nên dựa vào tuổi, màu áo, râu tóc, đạo cụ; đừng dựa vào
+                chi tiết nhỏ.
+```
+
+| File | Tiền bối | Câu nói tiêu biểu | Hình dung |
+|---|---|---|---|
+| `huyen-thanh.png` | Huyền Thanh Chân Nhân · Chưởng môn | *"Một ngày không tu, một ngày lùi."* | Trung niên nghiêm khắc, áo xanh đen, tóc buộc gọn, mắt sắc |
+| `bac-minh.png` | Bắc Minh Lão Tổ | *"Bế quan một canh giờ hơn tán tu ba ngày."* | Lão giả râu trắng dài, áo lam thẫm, mắt nhắm, đóng băng trên vai |
+| `kim-dan.png` | Kim Đan Trưởng Lão | *"Linh căn định điểm khởi hành, không định nơi tới."* | Trưởng lão đan đạo, áo vàng nhạt, tay cầm một viên đan phát sáng |
+| `ly-hoa.png` | Ly Hoả Đạo Quân | *"Ngươi thiếu một thứ đáng để bỏ thời gian vào."* | Nam trung niên, áo đỏ thẫm, tóc đỏ, đồng tử màu lửa |
+| `loi-kiep.png` | Lôi Kiếp Sứ | *"Việc gấp mà tránh, ngày mai nó thành kiếp nạn."* | Trẻ, áo tím than, quanh vai có tia lôi nhỏ, vẻ lạnh lùng |
+| `mac-van.png` | Mặc Vân Cư Sĩ | *"Kẻ đợi linh cảm mới động bút, cả đời chỉ mài mực."* | Thư sinh áo xám, cầm bút lông, có vết mực trên tay |
+| `ngu-thu.png` | Ngự Thú Trưởng Lão | *"Linh thú theo người có đạo tâm."* | Lão nhân áo nâu, một linh thú nhỏ đậu trên vai |
+| `thanh-van.png` | Thanh Vân Tán Nhân | *"Việc nhỏ làm trước thì việc lớn tự nhỏ lại."* | Thong dong, áo xanh nhạt, cười nhẹ, tay cầm bầu rượu |
+| `thach-son.png` | Thạch Sơn Lão Nhân | *"Đọc vạn quyển mà không luyện, chẳng bằng đứng tấn một canh giờ."* | Thể tu vai rộng, da rám, áo hở vai, tay quấn băng |
+| `truc-co.png` | Trúc Cơ Lão Tổ | *"Tầng nào vững tầng ấy — nền không nứt thì đỉnh không đổ."* | Lão tổ áo nâu đất, chống trượng gỗ, mặt phúc hậu |
+| `truong-sinh.png` | Trường Sinh Chân Quân | *"Chuỗi ngày đứt không đáng sợ. Đáng sợ là ngày thứ hai không nối lại."* | Tiên phong đạo cốt, áo trắng, râu bạc, hào quang nhạt sau đầu |
+| `tinh-tam.png` | Tĩnh Tâm Sư Thái | *"Tâm ma sinh từ việc hôm qua ngươi hứa mà không làm."* | **Nữ**, sư thái áo xám tro, tràng hạt, mắt nhắm, vẻ tĩnh |
+| `vo-danh.png` | Vô Danh Kiếm Tu | *"Tu vi là thứ dối trá được ít nhất trong thiên hạ."* | Áo đen, nón lá che nửa mặt, kiếm sau lưng, không rõ tuổi |
+
+Gửi cả 13 trong một ảnh ghép được — lưới 4×4 (để trống 3 ô cuối) hoặc 5×3.
+
+## C2. `public/art/empty/` — 5 minh hoạ trạng thái trống ★★
+
+Đây là chỗ người dùng **cảm thấy chưa có gì đang xảy ra** — cũng là chỗ dễ bỏ
+app nhất. Hiện chỉ có một icon nét 28 px. Tôi đã nới ô lên **72 px** để chứa được
+tranh; chưa có file thì tự lùi về icon nét.
+
+```
+Thư mục       : public/art/empty/
+Kích thước    : 512×512 vuông
+Định dạng     : PNG nền TRONG SUỐT (hoặc nền trắng phẳng, script tự tách)
+Phong cách    : nhóm C — vẽ chi tiết nhưng NHẸ, tông trầm, không rực
+Hiển thị      : 72 px, độ mờ 90%, trong một ô viền nét đứt
+Bắt buộc      : không chữ. Tinh thần "đang trống chờ được lấp", KHÔNG
+                phải "thất bại" — đừng vẽ gì bi thảm.
+```
+
+| File | Hiện ở đâu | Nội dung |
+|---|---|---|
+| `no-task.png` | Hôm nay / Tháng / Mục tiêu chưa có việc (3 chỗ) | Một thẻ tre trống buộc dây, dựng nghiêng, chờ được viết |
+| `all-done.png` | Bế quan: hết việc đang chờ | Một bồ đoàn trống với vòng khí tan dần — nghỉ ngơi, không phải thiếu |
+| `no-goal.png` | Mục tiêu / Thống kê chưa có mục tiêu (2 chỗ) | Một lá phướn cuộn chưa mở, cắm trên nền đá |
+| `no-beast.png` | Động Phủ chưa có linh thú | Một chiếc lồng gỗ chạm khắc để mở, trống, có vài hạt sáng |
+| `no-result.png` | Tra cứu không ra kết quả | Một kính lúp đồng cổ soi lên trang sổ trắng |
+
+## C3. Thay 22 ảnh còn mượn bằng art riêng ★
+
+Ba nhóm dưới đây **vẫn là art mượn từ Tiên Ma Giới**. Chúng không có chữ và dùng
+được, nên tôi xếp mức thấp — nhưng nếu muốn app hoàn toàn là art của mình thì đây
+là phần còn lại.
+
+| Nhóm | Số file | Hiện ở đâu | Ghi chú |
+|---|---|---|---|
+| `beast/` | 18 | Động Phủ, hub (linh thú đang theo) — 56 px | Khối mượn lớn nhất. Cần đúng 18 tên file hiện có, 5 phẩm cấp (phàm/linh/bảo/thánh/thoại) |
+| `pill/` | 3 | Đan Đường, hộp thoại độ kiếp — 40–56 px | `ha` · `trung` · `thuong`, phẩm cấp tăng dần |
+| `scene/cave.jpg` | 1 | Bế quan lúc đồng hồ chưa chạy | Ảnh tĩnh động phủ, ngang |
+
+---
+
+# D. Phụ lục — prompt tiếng Anh
 
 **Chỉ dùng khi đặt qua tool sinh ảnh. Gửi cho người vẽ thì bỏ hẳn phần này.**
 
@@ -311,11 +490,18 @@ anime bust portrait facing forward, clean lineart, flat colors with soft shading
 flat dark solid background, head centered with margin, no text, no border, no logo
 ```
 
-**Đuôi nhóm C — vật thể** (`award`)
+**Đuôi nhóm C — vật thể** (`award`, `rail`)
 ```
 ornate game achievement badge icon, Chinese xianxia style, painted, centered on a
 gold-rimmed medallion, gold #c4a661 rim with soft glow, bold readable silhouette,
 high contrast, plain white background, no text, no numbers, no border
+```
+
+Riêng `rail/` thì **bỏ phần medallion** (đó là khuôn của `award/`), thay bằng:
+```
+ornate game UI icon, Chinese xianxia style, painted, single centered object
+floating with no base and no frame, gold #c4a661 accents, soft glow, bold
+readable silhouette, high contrast, plain white background, no text, no border
 ```
 
 **Nhắc lại điều dễ quên nhất khi dùng tool sinh ảnh**
@@ -332,13 +518,18 @@ high contrast, plain white background, no text, no numbers, no border
 | Nhóm | Số file | Tình trạng |
 |---|---|---|
 | `realm/` 10 · `chibi/` 2 · `encounter/` 6 · `element/` 5 | 23 | ✅ |
-| `banner/` 8 · `award/` 16 · `avatar/` 4 | 28 | ✅ |
-| `media/thien-loi.mp4` | 1 | ✅ |
-| icon ứng dụng | 3 | ✅ |
-| **Tổng** | **55** | **✅ đủ** |
+| `banner/` 8 · `award/` 16 · `avatar/` 4 · `rail/` 11 | 39 | ✅ |
+| `media/` 5 video + 1 audio · icon ứng dụng 3 | 9 | ✅ |
+| **`elder/` 13 chân dung tiền bối** | **13** | ⭕ mục C1 — đáng làm nhất |
+| **`empty/` 5 minh hoạ trạng thái trống** | **5** | ⭕ mục C2 |
+| `beast/` 18 · `pill/` 3 · `scene/cave` 1 (đang mượn) | 22 | ⭕ mục C3 |
 
-Tổng `public/art` 22,8 MB, trong đó 8,6 MB là ba file media (`tu.mp4`,
-`ambient.mp3`, `thien-loi.mp4`).
+App chạy hoàn chỉnh với 70 file hiện có. 18 ảnh ở C1 + C2 là **thêm cho dày**,
+không phải sửa lỗi. Nếu chỉ làm một nhóm thì làm **`elder/`** — châm ngôn hiện
+trên hub mỗi lần mở app mà chưa có mặt người nói.
 
-Việc còn lại duy nhất liên quan đến ảnh: khi deploy, đổi `og:image` trong
+`public/art` hiện 16,0 MB (đã dọn 6,8 MB gồm ảnh lùi chết, `tu.mp4`, và bộ icon
+mượn 3,4 MB không còn ai gọi).
+
+Việc còn lại không liên quan đến ảnh: khi deploy, đổi `og:image` trong
 `index.html` thành URL tuyệt đối.

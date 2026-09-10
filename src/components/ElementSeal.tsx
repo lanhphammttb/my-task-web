@@ -1,15 +1,15 @@
-import { useState } from 'react';
-import type { Element } from '../lib/spirit';
-import { ELEMENTS } from '../lib/spirit';
-import { cn } from '@/lib/utils';
+import { useState } from "react";
+import type { Element } from "../lib/spirit";
+import { ELEMENTS } from "../lib/spirit";
+import { cn } from "@/lib/utils";
 
 /** Chữ Hán của ngũ hành - dấu hiệu nhận biết mạnh nhất, không cần ảnh. */
 const GLYPH: Record<Element, string> = {
-  kim: '金',
-  moc: '木',
-  thuy: '水',
-  hoa: '火',
-  tho: '土',
+  kim: "金",
+  moc: "木",
+  thuy: "水",
+  hoa: "火",
+  tho: "土",
 };
 
 /**
@@ -37,14 +37,17 @@ export default function ElementSeal({
         height: size,
         // Có tranh thật thì để tranh tự nói; chỉ khi vẽ chữ Hán mới cần nền màu.
         background: hasArt
-          ? 'transparent'
+          ? "transparent"
           : `radial-gradient(120% 120% at 50% 0%, ${meta.color}44, ${meta.color}14)`,
         borderColor: hasArt ? `${meta.color}55` : `${meta.color}80`,
         boxShadow: hasArt
           ? `0 0 ${size * 0.24}px ${meta.color}3a`
           : `inset 0 0 ${size * 0.3}px ${meta.color}33, 0 0 ${size * 0.22}px ${meta.color}33`,
       }}
-      className={cn('relative grid shrink-0 place-items-center rounded-md border', className)}
+      className={cn(
+        "relative grid shrink-0 place-items-center rounded-md border",
+        className,
+      )}
     >
       {hasArt ? (
         <img
@@ -56,7 +59,11 @@ export default function ElementSeal({
       ) : (
         <span
           className="font-heading tone leading-none font-bold"
-          style={{ color: meta.color, fontSize: size * 0.5, textShadow: `0 0 ${size * 0.18}px ${meta.color}66` }}
+          style={{
+            color: meta.color,
+            fontSize: size * 0.5,
+            textShadow: `0 0 ${size * 0.18}px ${meta.color}66`,
+          }}
         >
           {GLYPH[element]}
         </span>

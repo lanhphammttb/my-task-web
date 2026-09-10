@@ -1,8 +1,8 @@
-import type { ReactNode } from 'react';
-import { useEffect, useRef } from 'react';
-import { motion } from 'motion/react';
-import { X } from 'lucide-react';
-import ArtImage from '../ArtImage';
+import type { ReactNode } from "react";
+import { useEffect, useRef } from "react";
+import { motion } from "motion/react";
+import { X } from "lucide-react";
+import ArtImage from "../ArtImage";
 
 interface Props {
   title: string;
@@ -23,23 +23,31 @@ interface Props {
  * cuộn duy nhất của bảng nên nội dung dài vẫn cuộn mượt.
  */
 export default function OverlayPanel({
-  title, subtitle, banner, bannerFallback, onClose, anchor, children,
+  title,
+  subtitle,
+  banner,
+  bannerFallback,
+  onClose,
+  anchor,
+  children,
 }: Props) {
   const scroller = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === "Escape") onClose();
     };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
   // Cuộn tới đúng mục khi mở bảng từ một icon cụ thể (ví dụ Linh Thú).
   useEffect(() => {
     if (!anchor) return;
     const id = window.setTimeout(() => {
-      document.getElementById(anchor)?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+      document
+        .getElementById(anchor)
+        ?.scrollIntoView({ block: "start", behavior: "smooth" });
     }, 220);
     return () => window.clearTimeout(id);
   }, [anchor]);
@@ -68,7 +76,10 @@ export default function OverlayPanel({
               />
               <div
                 className="absolute inset-0"
-                style={{ background: 'linear-gradient(to bottom, transparent, var(--glass-bg))' }}
+                style={{
+                  background:
+                    "linear-gradient(to bottom, transparent, var(--glass-bg))",
+                }}
               />
             </>
           )}
@@ -77,7 +88,11 @@ export default function OverlayPanel({
               <h1 className="font-title glow-text truncate text-[15px] font-black tracking-[0.14em] uppercase">
                 {title}
               </h1>
-              {subtitle && <p className="text-muted-foreground truncate text-[11px]">{subtitle}</p>}
+              {subtitle && (
+                <p className="text-muted-foreground truncate text-[11px]">
+                  {subtitle}
+                </p>
+              )}
             </div>
             <button
               type="button"
@@ -92,7 +107,10 @@ export default function OverlayPanel({
         </div>
 
         {/* Vùng cuộn duy nhất của bảng */}
-        <div ref={scroller} className="min-h-0 flex-1 overflow-y-auto px-3 py-4 sm:px-5">
+        <div
+          ref={scroller}
+          className="min-h-0 flex-1 overflow-y-auto px-3 py-4 sm:px-5"
+        >
           {children}
         </div>
       </div>

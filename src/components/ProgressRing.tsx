@@ -1,4 +1,4 @@
-import { cn } from '@/lib/utils';
+import { cn } from "@/lib/utils";
 
 interface Props {
   value: number;
@@ -46,7 +46,11 @@ export default function ProgressRing({
 
   return (
     <div
-      className={cn('relative grid shrink-0 place-items-center', full && glowOnFull && 'animate-glow', className)}
+      className={cn(
+        "relative grid shrink-0 place-items-center",
+        full && glowOnFull && "animate-glow",
+        className,
+      )}
       style={{ width: size, height: size }}
     >
       {/* Vòng linh khí: nét đứt mảnh xoay chậm quanh vòng tiến độ */}
@@ -62,7 +66,7 @@ export default function ProgressRing({
             cy={size / 2}
             r={(size - stroke) / 2 + stroke * 0.85}
             fill="none"
-            stroke={color ?? 'var(--gold)'}
+            stroke={color ?? "var(--gold)"}
             strokeWidth={1}
             strokeDasharray="2 9"
             strokeLinecap="round"
@@ -70,7 +74,12 @@ export default function ProgressRing({
         </svg>
       )}
 
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="absolute inset-0 -rotate-90">
+      <svg
+        width={size}
+        height={size}
+        viewBox={`0 0 ${size} ${size}`}
+        className="absolute inset-0 -rotate-90"
+      >
         <defs>
           <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="1">
             <stop offset="0%" stopColor="var(--jade)" />
@@ -84,7 +93,7 @@ export default function ProgressRing({
           fill="none"
           strokeWidth={stroke}
           stroke={track}
-          className={track ? undefined : 'stroke-muted'}
+          className={track ? undefined : "stroke-muted"}
         />
         <circle
           cx={size / 2}
@@ -99,11 +108,23 @@ export default function ProgressRing({
           className="transition-[stroke-dashoffset] duration-700 ease-out"
         />
       </svg>
-      <div className={cn('relative z-10 flex flex-col items-center leading-tight', centerClassName)}>
-        <strong className={cn('font-heading tabular text-2xl font-bold tracking-tight', labelClassName)}>
+      <div
+        className={cn(
+          "relative z-10 flex flex-col items-center leading-tight",
+          centerClassName,
+        )}
+      >
+        <strong
+          className={cn(
+            "font-heading tabular text-2xl font-bold tracking-tight",
+            labelClassName,
+          )}
+        >
           {label ?? `${Math.round(clamped * 100)}%`}
         </strong>
-        {caption && <span className="text-muted-foreground text-[11px]">{caption}</span>}
+        {caption && (
+          <span className="text-muted-foreground text-[11px]">{caption}</span>
+        )}
       </div>
     </div>
   );

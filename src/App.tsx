@@ -1,106 +1,112 @@
-import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react';
-import { AnimatePresence } from 'motion/react';
-import { SearchX } from 'lucide-react';
-import type { Task, ViewKey } from './types';
-import { todayKey } from './lib/date';
-import { dayStats, sortTasks } from './lib/stats';
-import { AppProvider, useApp } from './store/AppStore';
-import { cultivationOf } from './lib/cultivation';
-import { effectiveXp, progressOf } from './lib/economy';
-import { achievementStates } from './lib/achievements';
-import { questStates } from './lib/quests';
-import { PILL_ORDER } from './lib/pills';
-import CelebrationLayer from './components/CelebrationLayer';
-import SettingsDialog from './components/SettingsDialog';
-import TribulationDialog from './components/TribulationDialog';
-import EncounterDialog from './components/EncounterDialog';
-import TaskCard from './components/TaskCard';
-import TaskEditorDialog from './components/TaskEditorDialog';
-import { EmptyState } from './components/primitives';
-import HubScene from './components/hub/HubScene';
-import HeaderHUD from './components/hub/HeaderHUD';
-import HubCenter from './components/hub/HubCenter';
-import HubIcon from './components/hub/HubIcon';
-import SideRail from './components/hub/SideRail';
-import OverlayPanel from './components/hub/OverlayPanel';
-import FooterMenu from './components/hub/FooterMenu';
-import { Toaster } from '@/components/ui/sonner';
-import { TooltipProvider } from '@/components/ui/tooltip';
-import { cn } from '@/lib/utils';
-import TodayView from './views/TodayView';
-import WeekView from './views/WeekView';
-import MonthView from './views/MonthView';
-import GoalsView from './views/GoalsView';
-import FocusView from './views/FocusView';
-import CaveView from './views/CaveView';
-import AwardsView from './views/AwardsView';
-import StatsView from './views/StatsView';
+import {
+  Suspense,
+  lazy,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import { AnimatePresence } from "motion/react";
+import { SearchX } from "lucide-react";
+import type { Task, ViewKey } from "./types";
+import { todayKey } from "./lib/date";
+import { dayStats, sortTasks } from "./lib/stats";
+import { AppProvider, useApp } from "./store/AppStore";
+import { cultivationOf } from "./lib/cultivation";
+import { effectiveXp, progressOf } from "./lib/economy";
+import { achievementStates } from "./lib/achievements";
+import { questStates } from "./lib/quests";
+import { PILL_ORDER } from "./lib/pills";
+import CelebrationLayer from "./components/CelebrationLayer";
+import SettingsDialog from "./components/SettingsDialog";
+import TribulationDialog from "./components/TribulationDialog";
+import EncounterDialog from "./components/EncounterDialog";
+import TaskCard from "./components/TaskCard";
+import TaskEditorDialog from "./components/TaskEditorDialog";
+import { EmptyState } from "./components/primitives";
+import HubScene, { SCENE_FALLBACK } from "./components/hub/HubScene";
+import HeaderHUD from "./components/hub/HeaderHUD";
+import HubCenter from "./components/hub/HubCenter";
+import HubIcon from "./components/hub/HubIcon";
+import SideRail from "./components/hub/SideRail";
+import OverlayPanel from "./components/hub/OverlayPanel";
+import FooterMenu from "./components/hub/FooterMenu";
+import { Toaster } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
+import TodayView from "./views/TodayView";
+import WeekView from "./views/WeekView";
+import MonthView from "./views/MonthView";
+import GoalsView from "./views/GoalsView";
+import FocusView from "./views/FocusView";
+import CaveView from "./views/CaveView";
+import AwardsView from "./views/AwardsView";
+import StatsView from "./views/StatsView";
 
 // three.js khá nặng nên lớp 3D được nạp trễ; nền ảnh 2D vẫn nằm phía dưới.
-const Scene3DBackdrop = lazy(() => import('./components/Scene3DBackdrop'));
+const Scene3DBackdrop = lazy(() => import("./components/Scene3DBackdrop"));
 
 interface PanelMeta {
   title: string;
   subtitle: string;
   /** Ảnh riêng của bảng - thả vào public/art/banner/ theo đúng tên này. */
   banner: string;
-  /** Ảnh dùng tạm khi chưa có ảnh riêng. */
-  fallback: string;
 }
 
 const PANEL: Record<ViewKey, PanelMeta> = {
   today: {
-    title: 'Nhật khoá hôm nay',
-    subtitle: 'Việc phải xong trước khi mặt trời lặn',
-    banner: '/art/banner/today.jpg',
-    fallback: '/art/page/hub.jpg',
+    title: "Nhật khoá hôm nay",
+    subtitle: "Việc phải xong trước khi mặt trời lặn",
+    banner: "/art/banner/today.jpg",
   },
   week: {
-    title: 'Kế hoạch tuần',
-    subtitle: 'Bảy ngày trước mắt, xếp việc cho khỏi dồn',
-    banner: '/art/banner/week.jpg',
-    fallback: '/art/page/sect.jpg',
+    title: "Kế hoạch tuần",
+    subtitle: "Bảy ngày trước mắt, xếp việc cho khỏi dồn",
+    banner: "/art/banner/week.jpg",
   },
   month: {
-    title: 'Kế hoạch tháng',
-    subtitle: 'Nhìn cả tháng để biết chỗ nào đang trống',
-    banner: '/art/banner/month.jpg',
-    fallback: '/art/page/bicanh.jpg',
+    title: "Kế hoạch tháng",
+    subtitle: "Nhìn cả tháng để biết chỗ nào đang trống",
+    banner: "/art/banner/month.jpg",
   },
   goals: {
-    title: 'Đại nguyện',
-    subtitle: 'Mục tiêu dài hạn - gốc rễ của mọi nhật khoá',
-    banner: '/art/banner/goals.jpg',
-    fallback: '/art/page/tower.jpg',
+    title: "Đại nguyện",
+    subtitle: "Mục tiêu dài hạn - gốc rễ của mọi nhật khoá",
+    banner: "/art/banner/goals.jpg",
   },
   focus: {
-    title: 'Bế quan',
-    subtitle: 'Nhập định, dồn toàn bộ tâm trí vào một việc',
-    banner: '/art/banner/focus.jpg',
-    fallback: '/art/page/cave.jpg',
+    title: "Bế quan",
+    subtitle: "Nhập định, dồn toàn bộ tâm trí vào một việc",
+    banner: "/art/banner/focus.jpg",
   },
   cave: {
-    title: 'Động phủ',
-    subtitle: 'Linh thạch, linh căn, đan dược và linh thú',
-    banner: '/art/banner/cave.jpg',
-    fallback: '/art/page/cave.jpg',
+    title: "Động phủ",
+    subtitle: "Linh thạch, linh căn, đan dược và linh thú",
+    banner: "/art/banner/cave.jpg",
   },
   awards: {
-    title: 'Tiên lộ',
-    subtitle: 'Chín cảnh giới và những kỳ ngộ đã mở',
-    banner: '/art/banner/awards.jpg',
-    fallback: '/art/scene/main.jpg',
+    title: "Tiên lộ",
+    subtitle: "Chín cảnh giới và những kỳ ngộ đã mở",
+    banner: "/art/banner/awards.jpg",
   },
   stats: {
-    title: 'Thống kê',
-    subtitle: 'Số liệu không biết nói dối',
-    banner: '/art/banner/stats.jpg',
-    fallback: '/art/page/bone.jpg',
+    title: "Thống kê",
+    subtitle: "Số liệu không biết nói dối",
+    banner: "/art/banner/stats.jpg",
   },
 };
 
 /** Thứ tự phím tắt 1..8 */
-const HOTKEY_ORDER: ViewKey[] = ['today', 'week', 'month', 'goals', 'focus', 'cave', 'awards', 'stats'];
+const HOTKEY_ORDER: ViewKey[] = [
+  "today",
+  "week",
+  "month",
+  "goals",
+  "focus",
+  "cave",
+  "awards",
+  "stats",
+];
 
 function Shell() {
   const { data, awaken } = useApp();
@@ -112,23 +118,23 @@ function Shell() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [tribulationOpen, setTribulationOpen] = useState(false);
   const [focusTaskId, setFocusTaskId] = useState<string | undefined>();
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState("");
 
   const open = useCallback((v: ViewKey, at?: string) => {
-    setQuery('');
+    setQuery("");
     setAnchor(at);
     setView(v);
   }, []);
 
   const toggle = useCallback((v: ViewKey) => {
-    setQuery('');
+    setQuery("");
     setAnchor(undefined);
     setView((cur) => (cur === v ? null : v));
   }, []);
 
   const closePanel = useCallback(() => {
     setView(null);
-    setQuery('');
+    setQuery("");
   }, []);
 
   const openNew = useCallback(() => {
@@ -141,43 +147,51 @@ function Shell() {
     setEditorOpen(true);
   }, []);
 
-  const startFocus = useCallback((t: Task) => {
-    setFocusTaskId(t.id);
-    open('focus');
-  }, [open]);
+  const startFocus = useCallback(
+    (t: Task) => {
+      setFocusTaskId(t.id);
+      open("focus");
+    },
+    [open],
+  );
 
-  const openDay = useCallback((d: string) => {
-    setDate(d);
-    open('today');
-  }, [open]);
+  const openDay = useCallback(
+    (d: string) => {
+      setDate(d);
+      open("today");
+    },
+    [open],
+  );
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const el = e.target as HTMLElement | null;
       const typing =
-        !!el && (['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName) || el.isContentEditable);
+        !!el &&
+        (["INPUT", "TEXTAREA", "SELECT"].includes(el.tagName) ||
+          el.isContentEditable);
       if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
 
-      if (e.key === '/') {
+      if (e.key === "/") {
         e.preventDefault();
-        document.getElementById('search-input')?.focus();
+        document.getElementById("search-input")?.focus();
         return;
       }
-      if (e.key.toLowerCase() === 'n') {
+      if (e.key.toLowerCase() === "n") {
         e.preventDefault();
         openNew();
         return;
       }
-      if (e.key.toLowerCase() === 't') {
+      if (e.key.toLowerCase() === "t") {
         setDate(todayKey());
-        open('today');
+        open("today");
         return;
       }
       const num = Number(e.key);
       if (num >= 1 && num <= HOTKEY_ORDER.length) toggle(HOTKEY_ORDER[num - 1]);
     };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
   }, [openNew, open, toggle]);
 
   const results = useMemo(() => {
@@ -193,7 +207,7 @@ function Shell() {
     );
   }, [query, data.tasks]);
 
-  const isDark = data.settings.theme === 'dark';
+  const isDark = data.settings.theme === "dark";
   const progress = progressOf(data);
   const c = cultivationOf(effectiveXp(data));
   const searching = query.trim().length > 0;
@@ -201,7 +215,9 @@ function Shell() {
 
   // Chỉ số nhỏ gắn lên icon: cho người dùng biết chỗ nào đang cần ghé.
   const stats = dayStats(data.tasks, data.sessions, todayKey());
-  const questsLeft = questStates(data, todayKey()).filter((q) => !q.done).length;
+  const questsLeft = questStates(data, todayKey()).filter(
+    (q) => !q.done,
+  ).length;
   const unlocked = achievementStates(data).filter((a) => a.unlocked).length;
   const pills = PILL_ORDER.reduce((s, g) => s + (data.pills[g] ?? 0), 0);
   const beastCount = data.beasts.length;
@@ -211,7 +227,7 @@ function Shell() {
       <HubScene
         realmIndex={c.realmIndex}
         override={view ? PANEL[view].banner : undefined}
-        overrideFallback={view ? PANEL[view].fallback : undefined}
+        overrideFallback={view ? SCENE_FALLBACK : undefined}
       />
       {/* Lớp 3D phủ lên nền ảnh, tô theo màu cảnh giới đang tu */}
       <Suspense fallback={null}>
@@ -227,62 +243,66 @@ function Shell() {
       {/* ----------------------------------------------------- hai cột icon */}
       <SideRail side="left" label="Hoạt động tu luyện" collapsed={panelOpen}>
         <HubIcon
-          icon="/art/icon/technique.png"
+          icon="be-quan"
           label="Bế Quan"
-          active={view === 'focus'}
+          active={view === "focus"}
           alert={stats.focusMin < (data.settings.dailyFocusTarget || 60)}
-          onClick={() => toggle('focus')}
+          onClick={() => toggle("focus")}
         />
         <HubIcon
-          icon="/art/icon/daily_tasks.png"
+          icon="nhat-khoa"
           label="Nhật Khoá"
           badge={questsLeft}
-          active={view === 'today' && anchor === 'quests'}
-          onClick={() => open('today', 'quests')}
+          active={view === "today" && anchor === "quests"}
+          onClick={() => open("today", "quests")}
         />
         <HubIcon
-          icon="/art/icon/daopath.png"
+          icon="tien-lo"
           label="Tiên Lộ"
           badge={unlocked}
-          active={view === 'awards'}
-          onClick={() => toggle('awards')}
+          active={view === "awards"}
+          onClick={() => toggle("awards")}
         />
         <HubIcon
-          icon="/art/icon/ranking.png"
+          icon="thong-ke"
           label="Thống Kê"
-          active={view === 'stats'}
-          onClick={() => toggle('stats')}
+          active={view === "stats"}
+          onClick={() => toggle("stats")}
         />
       </SideRail>
 
-      <SideRail side="right" label="Đạo thể và tài nguyên" collapsed={panelOpen}>
+      <SideRail
+        side="right"
+        label="Đạo thể và tài nguyên"
+        collapsed={panelOpen}
+      >
         <HubIcon
-          icon="/art/icon/linhcan.png"
+          icon="linh-can"
           label="Linh Căn"
           alert={!data.root}
-          active={view === 'cave' && anchor === 'cave-root'}
-          onClick={() => open('cave', 'cave-root')}
+          active={view === "cave" && anchor === "cave-root"}
+          onClick={() => open("cave", "cave-root")}
         />
         <HubIcon
-          icon="/art/icon/pet.png"
+          icon="linh-thu"
           label="Linh Thú"
           badge={beastCount}
-          active={view === 'cave' && anchor === 'cave-beast'}
-          onClick={() => open('cave', 'cave-beast')}
+          active={view === "cave" && anchor === "cave-beast"}
+          onClick={() => open("cave", "cave-beast")}
         />
         <HubIcon
-          icon="/art/icon/alchemy.png"
+          icon="dan-duong"
           label="Đan Đường"
           badge={pills}
           alert={progress.readyForTribulation && pills === 0}
-          active={view === 'cave' && anchor === 'cave-pill'}
-          onClick={() => open('cave', 'cave-pill')}
+          active={view === "cave" && anchor === "cave-pill"}
+          onClick={() => open("cave", "cave-pill")}
         />
         <HubIcon
-          icon="/art/icon/sect.png"
+          icon="dong-phu"
           label="Động Phủ"
-          active={view === 'cave' && !anchor}
-          onClick={() => toggle('cave')}
+          active={view === "cave" && !anchor}
+          onClick={() => toggle("cave")}
         />
       </SideRail>
 
@@ -292,13 +312,13 @@ function Shell() {
         // khỏi cây trợ năng, không chỉ mờ đi.
         inert={panelOpen}
         className={cn(
-          'absolute inset-x-0 top-[212px] bottom-[96px] z-10 flex items-center justify-center transition-opacity duration-300 lg:top-[76px] lg:right-24 lg:left-24',
-          panelOpen && 'pointer-events-none opacity-0',
+          "absolute inset-x-0 top-[212px] bottom-[96px] z-10 flex items-center justify-center transition-opacity duration-300 lg:top-[76px] lg:right-24 lg:left-24",
+          panelOpen && "pointer-events-none opacity-0",
         )}
       >
         <HubCenter
           onTribulation={() => setTribulationOpen(true)}
-          onFocus={() => open('focus')}
+          onFocus={() => open("focus")}
           onAwaken={() => awaken()}
         />
       </div>
@@ -311,12 +331,13 @@ function Shell() {
             title={`Tra cứu “${query}”`}
             subtitle={`${results.length} nhiệm vụ khớp`}
             banner="/art/banner/today.jpg"
-            bannerFallback="/art/page/hub.jpg"
-            onClose={() => setQuery('')}
+            bannerFallback={SCENE_FALLBACK}
+            onClose={() => setQuery("")}
           >
             {results.length === 0 ? (
               <EmptyState
                 icon={SearchX}
+                art="no-result"
                 title="Không tìm thấy nhiệm vụ nào"
                 hint="Thử từ khoá ngắn hơn, hoặc tìm theo nhãn."
               />
@@ -325,7 +346,13 @@ function Shell() {
                 <h2 className="sr-only">Kết quả tìm kiếm</h2>
                 <AnimatePresence initial={false}>
                   {results.map((t) => (
-                    <TaskCard key={t.id} task={t} onEdit={openEdit} onFocus={startFocus} showDate />
+                    <TaskCard
+                      key={t.id}
+                      task={t}
+                      onEdit={openEdit}
+                      onFocus={startFocus}
+                      showDate
+                    />
                   ))}
                 </AnimatePresence>
               </div>
@@ -337,41 +364,73 @@ function Shell() {
             title={PANEL[view].title}
             subtitle={PANEL[view].subtitle}
             banner={PANEL[view].banner}
-            bannerFallback={PANEL[view].fallback}
+            bannerFallback={SCENE_FALLBACK}
             anchor={anchor}
             onClose={closePanel}
           >
-            {view === 'today' && (
-              <TodayView date={date} onDateChange={setDate} onEdit={openEdit} onFocus={startFocus} />
+            {view === "today" && (
+              <TodayView
+                date={date}
+                onDateChange={setDate}
+                onEdit={openEdit}
+                onFocus={startFocus}
+              />
             )}
-            {view === 'week' && (
-              <WeekView anchor={date} onAnchorChange={setDate} onEdit={openEdit} onOpenDay={openDay} />
+            {view === "week" && (
+              <WeekView
+                anchor={date}
+                onAnchorChange={setDate}
+                onEdit={openEdit}
+                onOpenDay={openDay}
+              />
             )}
-            {view === 'month' && (
-              <MonthView anchor={date} onAnchorChange={setDate} onEdit={openEdit} onFocus={startFocus} />
+            {view === "month" && (
+              <MonthView
+                anchor={date}
+                onAnchorChange={setDate}
+                onEdit={openEdit}
+                onFocus={startFocus}
+              />
             )}
-            {view === 'goals' && <GoalsView onEdit={openEdit} onFocus={startFocus} />}
-            {view === 'focus' && <FocusView taskId={focusTaskId} onPickTask={setFocusTaskId} />}
-            {view === 'cave' && <CaveView />}
-            {view === 'awards' && <AwardsView onTribulation={() => setTribulationOpen(true)} />}
-            {view === 'stats' && <StatsView />}
+            {view === "goals" && (
+              <GoalsView onEdit={openEdit} onFocus={startFocus} />
+            )}
+            {view === "focus" && (
+              <FocusView taskId={focusTaskId} onPickTask={setFocusTaskId} />
+            )}
+            {view === "cave" && <CaveView />}
+            {view === "awards" && (
+              <AwardsView onTribulation={() => setTribulationOpen(true)} />
+            )}
+            {view === "stats" && <StatsView />}
           </OverlayPanel>
         ) : null}
       </AnimatePresence>
 
-      <FooterMenu view={searching ? null : view} onSelect={toggle} onNew={openNew} query={query} onQuery={setQuery} />
+      <FooterMenu
+        view={searching ? null : view}
+        onSelect={toggle}
+        onNew={openNew}
+        query={query}
+        onQuery={setQuery}
+      />
 
-      <TaskEditorDialog open={editorOpen} task={editorTask} defaultDate={date} onOpenChange={setEditorOpen} />
+      <TaskEditorDialog
+        open={editorOpen}
+        task={editorTask}
+        defaultDate={date}
+        onOpenChange={setEditorOpen}
+      />
       <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
       <TribulationDialog
         open={tribulationOpen}
         onOpenChange={setTribulationOpen}
-        onGoToPills={() => open('cave', 'cave-pill')}
+        onGoToPills={() => open("cave", "cave-pill")}
       />
       <EncounterDialog />
       <CelebrationLayer />
       {/* Không dùng richColors: xanh lá/đỏ tươi của sonner chọi hẳn với tông vàng kim. */}
-      <Toaster position="top-center" theme={isDark ? 'dark' : 'light'} />
+      <Toaster position="top-center" theme={isDark ? "dark" : "light"} />
     </div>
   );
 }

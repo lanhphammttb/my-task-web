@@ -22,7 +22,9 @@ const SRC = 'art-src';
 const INK = '#0d0a08'; // nền app, dùng khi dẹp alpha của ảnh cảnh
 
 /**
- * Quy cách từng nhóm. `cut` = kiểu nền cần tách. `maxKB` = ngưỡng dung lượng:
+ * Quy cách từng nhóm. `cut` = kiểu nền cần tách. `fit` = 'cover' (mặc định, cắt
+ * cho lấp khung) hoặc 'contain' (thu vừa khung, chừa lề trong suốt — dùng cho
+ * ảnh không vuông mà không được cắt mất). `maxKB` = ngưỡng dung lượng:
  * file đúng định dạng và đúng kích thước nhưng vượt ngưỡng vẫn bị nén lại, vì
  * đó là dấu hiệu file đã bị thay bằng bản chưa qua xử lý.
  */
@@ -38,6 +40,18 @@ const GROUPS = {
   award: { kind: 'png', w: 512, h: 512, cut: 'glow', maxKB: 200 },
   chibi: { kind: 'png', w: 512, h: 512, cut: 'checker', maxKB: 200 },
   avatar: { kind: 'png', w: 256, h: 256, maxKB: 120 }, // nền màu phẳng, giữ nguyên
+  /**
+   * Icon hai cột hub và HUD. Thay cho bộ mượn ở art/icon vốn có chữ nung sẵn.
+   *
+   * KHÔNG tách nền: bộ này gửi tới đã có alpha thật, hào quang quanh vật thể là
+   * alpha bán trong suốt do hoạ sĩ vẽ. Chạy tách nền lên ảnh đã sạch chỉ làm
+   * hào quang bị xoá loang lổ thành mảng tối lốm đốm.
+   */
+  rail: { kind: 'png', w: 256, h: 256, fit: 'contain', maxKB: 90 },
+  // Chân dung tiền bối: bị crop tròn 48 px nên giữ nền màu phẳng, cắt cho lấp khung.
+  elder: { kind: 'png', w: 256, h: 256, maxKB: 90 },
+  // Minh hoạ trạng thái trống: vật thể nền trong suốt, thu vừa khung.
+  empty: { kind: 'png', w: 512, h: 512, cut: 'white', fit: 'contain', maxKB: 120 },
 };
 
 /**
@@ -52,6 +66,7 @@ const CUT = {
   // Nới cả độ sáng và độ bão hoà để ăn nốt hào quang kem, nhưng vẫn dừng lại
   // trước vành vàng (vành có độ bão hoà ~0,35, cao hơn hẳn ngưỡng).
   glow: { lumMin: 232, satMax: 0.16, unmix: true },
+  'glow-soft': { lumMin: 232, satMax: 0.16, unmix: false },
   checker: { lumMin: 226, satMax: 0.07, unmix: false },
 };
 
@@ -59,7 +74,15 @@ const lum = (r, g, b) => 0.2126 * r + 0.7152 * g + 0.0722 * b;
 
 /** Tách nền: BFS từ mọi pixel viền, chỉ xoá vùng nền LIỀN MẠCH với viền. */
 function cutout(raw, w, h, { lumMin, satMax, unmix }) {
+  /**
+   * Pixel vốn đã trong suốt. Phải coi nó là nền để flood fill mọc được từ mép
+   * vào — ảnh nào đã có alpha thật mà quanh chủ thể còn hào quang kem thì
+   * không xử lý bước này sẽ chẳng xoá được gì.
+   */
+  const wasClear = (p) => raw[p * 4 + 3] < 8;
+
   const isBg = (p) => {
+    if (wasClear(p)) return true;
     const i = p * 4;
     const r = raw[i], g = raw[i + 1], b = raw[i + 2];
     const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
@@ -90,10 +113,16 @@ function cutout(raw, w, h, { lumMin, satMax, unmix }) {
   // Trong vùng nền: alpha giảm dần theo độ sáng để mép chủ thể không răng cưa.
   const T = lumMin - 22;
   for (let p = 0; p < n; p++) {
-    if (!bg[p]) continue;
+    // Pixel đã trong suốt thì để nguyên: tính lại theo độ sáng sẽ biến nó
+    // thành đen đặc, vì màu RGB của pixel trong suốt thường bằng 0.
+    if (!bg[p] || wasClear(p)) continue;
     const i = p * 4;
     const L = lum(raw[i], raw[i + 1], raw[i + 2]);
-    const a = Math.max(0, Math.min(255, Math.round(((255 - L) / (255 - T)) * 255)));
+    // NHÂN với alpha đang có thay vì gán thẳng: ảnh nền trắng đặc thì alpha
+    // đang là 255 nên kết quả không đổi, còn ảnh đã có alpha thật thì hào quang
+    // bán trong suốt chỉ mờ thêm chứ không bị đẩy ngược lên thành đục.
+    const f = Math.max(0, Math.min(1, (255 - L) / (255 - T)));
+    const a = Math.round(raw[i + 3] * f);
     raw[i + 3] = a;
     // Gỡ phần nền trắng đã trộn vào pixel bán trong suốt, tránh viền bạc.
     if (unmix && a > 0 && a < 255) {
@@ -190,6 +219,14 @@ for (const dir of groups) {
       });
     } else if (spec.kind === 'jpeg') {
       pipe = sharp(p).flatten({ background: INK }).resize(spec.w, spec.h, { fit: 'cover', position: 'centre' });
+    } else if (spec.fit === 'contain') {
+      // Cắt lề trong suốt trước để vật thể lấp đầy khung, rồi thu vừa khung
+      // vuông — ảnh không vuông mà dùng 'cover' sẽ bị cắt mất một phần.
+      const trimmed = await sharp(p).ensureAlpha().png().trim({ threshold: 2 }).toBuffer();
+      pipe = sharp(trimmed).resize(spec.w, spec.h, {
+        fit: 'contain',
+        background: { r: 0, g: 0, b: 0, alpha: 0 },
+      });
     } else {
       pipe = sharp(p).resize(spec.w, spec.h, { fit: 'cover', position: 'centre' });
     }

@@ -38,6 +38,31 @@ export function aphorismOfDay(seed = new Date()): Aphorism {
   return APHORISMS[dayIndex % APHORISMS.length];
 }
 
+/**
+ * Tên file chân dung của từng tiền bối trong `public/art/elder/`.
+ * Chưa có file thì khối châm ngôn vẫn hiện bình thường, chỉ không có mặt.
+ */
+const ELDER_SLUG: Record<string, string> = {
+  'Bắc Minh Lão Tổ': 'bac-minh',
+  'Huyền Thanh Chân Nhân': 'huyen-thanh',
+  'Kim Đan Trưởng Lão': 'kim-dan',
+  'Ly Hoả Đạo Quân': 'ly-hoa',
+  'Lôi Kiếp Sứ': 'loi-kiep',
+  'Mặc Vân Cư Sĩ': 'mac-van',
+  'Ngự Thú Trưởng Lão': 'ngu-thu',
+  'Thanh Vân Tán Nhân': 'thanh-van',
+  'Thạch Sơn Lão Nhân': 'thach-son',
+  'Trúc Cơ Lão Tổ': 'truc-co',
+  'Trường Sinh Chân Quân': 'truong-sinh',
+  'Tĩnh Tâm Sư Thái': 'tinh-tam',
+  'Vô Danh Kiếm Tu': 'vo-danh',
+};
+
+export const elderPortrait = (elder: string) => {
+  const slug = ELDER_SLUG[elder];
+  return slug ? `/art/elder/${slug}.png` : undefined;
+};
+
 /** Lời tiền bối ngẫu nhiên, dùng cho khoảnh khắc đột phá. */
 export function randomAphorism(rand: () => number = Math.random): Aphorism {
   return APHORISMS[Math.floor(rand() * APHORISMS.length) % APHORISMS.length];

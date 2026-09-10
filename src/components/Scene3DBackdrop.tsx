@@ -1,5 +1,5 @@
-import { useEffect, useRef } from 'react';
-import * as THREE from 'three';
+import { useEffect, useRef } from "react";
+import * as THREE from "three";
 
 /**
  * Nền 3D chạy suốt app: sao trời, ba tầng núi ở ba độ sâu khác nhau, mây trôi
@@ -18,7 +18,11 @@ interface Props {
 }
 
 /** Một dãy núi đá vôi dựng bằng Shape để đổ thành mặt phẳng có viền cong. */
-function ridgeShape(peaks: number[], width: number, height: number): THREE.Shape {
+function ridgeShape(
+  peaks: number[],
+  width: number,
+  height: number,
+): THREE.Shape {
   const shape = new THREE.Shape();
   const step = width / (peaks.length - 1);
   shape.moveTo(-width / 2, -height);
@@ -36,7 +40,11 @@ function ridgeShape(peaks: number[], width: number, height: number): THREE.Shape
   return shape;
 }
 
-export default function Scene3DBackdrop({ color, light = false, className }: Props) {
+export default function Scene3DBackdrop({
+  color,
+  light = false,
+  className,
+}: Props) {
   const host = useRef<HTMLDivElement>(null);
   const colorRef = useRef(color);
   colorRef.current = color;
@@ -45,7 +53,8 @@ export default function Scene3DBackdrop({ color, light = false, className }: Pro
     const el = host.current;
     if (!el) return;
 
-    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+    const reduce =
+      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
     const tint = new THREE.Color(color);
 
     const scene = new THREE.Scene();
@@ -74,10 +83,15 @@ export default function Scene3DBackdrop({ color, light = false, className }: Pro
       starPos[i * 3 + 2] = -60 - Math.random() * 40;
     }
     const starGeo = new THREE.BufferGeometry();
-    starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+    starGeo.setAttribute("position", new THREE.BufferAttribute(starPos, 3));
     const stars = new THREE.Points(
       starGeo,
-      new THREE.PointsMaterial({ color: tint, size: 0.34, transparent: true, opacity: 0.5 * dim }),
+      new THREE.PointsMaterial({
+        color: tint,
+        size: 0.34,
+        transparent: true,
+        opacity: 0.5 * dim,
+      }),
     );
     scene.add(stars);
 
@@ -97,9 +111,27 @@ export default function Scene3DBackdrop({ color, light = false, className }: Pro
     // -------------------------------------------------- ba tầng núi theo độ sâu
     const layers: { mesh: THREE.Mesh; depth: number }[] = [];
     const specs = [
-      { peaks: [0.1, 0.62, 0.3, 0.86, 0.28, 0.7, 0.2, 0.78, 0.16], w: 120, h: 16, z: -46, o: 0.1 },
-      { peaks: [0.08, 0.46, 0.22, 0.6, 0.18, 0.5, 0.55, 0.2, 0.4], w: 90, h: 13, z: -30, o: 0.16 },
-      { peaks: [0.06, 0.3, 0.12, 0.36, 0.1, 0.26, 0.16, 0.32, 0.08], w: 66, h: 10, z: -17, o: 0.24 },
+      {
+        peaks: [0.1, 0.62, 0.3, 0.86, 0.28, 0.7, 0.2, 0.78, 0.16],
+        w: 120,
+        h: 16,
+        z: -46,
+        o: 0.1,
+      },
+      {
+        peaks: [0.08, 0.46, 0.22, 0.6, 0.18, 0.5, 0.55, 0.2, 0.4],
+        w: 90,
+        h: 13,
+        z: -30,
+        o: 0.16,
+      },
+      {
+        peaks: [0.06, 0.3, 0.12, 0.36, 0.1, 0.26, 0.16, 0.32, 0.08],
+        w: 66,
+        h: 10,
+        z: -17,
+        o: 0.24,
+      },
     ];
     for (const sp of specs) {
       const mesh = new THREE.Mesh(
@@ -117,13 +149,13 @@ export default function Scene3DBackdrop({ color, light = false, className }: Pro
 
     // ------------------------------------------------------------- mây trôi
     const cloudTex = (() => {
-      const c = document.createElement('canvas');
+      const c = document.createElement("canvas");
       c.width = c.height = 128;
-      const ctx = c.getContext('2d');
+      const ctx = c.getContext("2d");
       if (ctx) {
         const g = ctx.createRadialGradient(64, 64, 4, 64, 64, 62);
-        g.addColorStop(0, 'rgba(255,255,255,0.5)');
-        g.addColorStop(1, 'rgba(255,255,255,0)');
+        g.addColorStop(0, "rgba(255,255,255,0.5)");
+        g.addColorStop(1, "rgba(255,255,255,0)");
         ctx.fillStyle = g;
         ctx.fillRect(0, 0, 128, 128);
       }
@@ -143,7 +175,11 @@ export default function Scene3DBackdrop({ color, light = false, className }: Pro
       );
       const s = 12 + Math.random() * 20;
       sprite.scale.set(s, s * 0.5, 1);
-      sprite.position.set((Math.random() - 0.5) * 110, -2 + Math.random() * 14, -22 - Math.random() * 26);
+      sprite.position.set(
+        (Math.random() - 0.5) * 110,
+        -2 + Math.random() * 14,
+        -22 - Math.random() * 26,
+      );
       scene.add(sprite);
       clouds.push(sprite);
     }
@@ -165,7 +201,8 @@ export default function Scene3DBackdrop({ color, light = false, className }: Pro
       target.x = (e.clientX / window.innerWidth - 0.5) * 2;
       target.y = (e.clientY / window.innerHeight - 0.5) * 2;
     };
-    if (!reduce) window.addEventListener('pointermove', onMove, { passive: true });
+    if (!reduce)
+      window.addEventListener("pointermove", onMove, { passive: true });
 
     let raf = 0;
     const clock = new THREE.Clock();
@@ -198,13 +235,14 @@ export default function Scene3DBackdrop({ color, light = false, className }: Pro
     return () => {
       cancelAnimationFrame(raf);
       ro.disconnect();
-      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener("pointermove", onMove);
       cloudTex.dispose();
       renderer.dispose();
       scene.traverse((o) => {
         const mesh = o as THREE.Mesh;
         mesh.geometry?.dispose?.();
-        const mat = mesh.material as THREE.Material | THREE.Material[] | undefined;
+        const mat = mesh.material as
+          THREE.Material | THREE.Material[] | undefined;
         if (Array.isArray(mat)) mat.forEach((x) => x.dispose());
         else mat?.dispose?.();
       });

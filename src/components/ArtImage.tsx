@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState } from "react";
 
-interface Props extends Omit<React.ComponentProps<'img'>, 'src'> {
+interface Props extends Omit<React.ComponentProps<"img">, "src"> {
   src: string;
   /**
    * Ảnh dùng khi `src` chưa có trong public. Bỏ trống thì ẩn hẳn thẻ ảnh.

@@ -1,19 +1,51 @@
-import { useMemo, useState } from 'react';
-import { BarChart3, CalendarRange, Crosshair, Flame, Tag, Target, TrendingUp } from 'lucide-react';
-import type { Priority } from '../types';
-import { addDays, dateKey, format, formatDuration, parseKey } from '../lib/date';
-import { allTags, bestStreak, currentStreak, groupByGoal, statsRange } from '../lib/stats';
-import { effectiveXp } from '../lib/economy';
-import { cultivationOf, realmShort } from '../lib/cultivation';
-import { PRIORITY_ORDER, PRIORITY_UI } from '../lib/ui';
-import { useApp } from '../store/AppStore';
-import ProgressRing from '../components/ProgressRing';
-import { EmptyState, Meter, Section, StatTile } from '../components/primitives';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { cn } from '@/lib/utils';
+import { useMemo, useState } from "react";
+import {
+  BarChart3,
+  CalendarRange,
+  Crosshair,
+  Flame,
+  Tag,
+  Target,
+  TrendingUp,
+} from "lucide-react";
+import type { Priority } from "../types";
+import {
+  addDays,
+  dateKey,
+  format,
+  formatDuration,
+  parseKey,
+} from "../lib/date";
+import {
+  allTags,
+  bestStreak,
+  currentStreak,
+  groupByGoal,
+  statsRange,
+} from "../lib/stats";
+import { effectiveXp } from "../lib/economy";
+import { cultivationOf, realmShort } from "../lib/cultivation";
+import { PRIORITY_ORDER, PRIORITY_UI } from "../lib/ui";
+import { useApp } from "../store/AppStore";
+import ProgressRing from "../components/ProgressRing";
+import { EmptyState, Meter, Section, StatTile } from "../components/primitives";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 
-const WEEKDAY_LABELS = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'];
+const WEEKDAY_LABELS = [
+  "Thứ 2",
+  "Thứ 3",
+  "Thứ 4",
+  "Thứ 5",
+  "Thứ 6",
+  "Thứ 7",
+  "Chủ nhật",
+];
 
 export default function StatsView() {
   const { data } = useApp();
@@ -30,7 +62,7 @@ export default function StatsView() {
     return data.tasks.filter((t) => t.date >= start);
   }, [data.tasks, from]);
 
-  const done = inRange.filter((t) => t.status === 'done').length;
+  const done = inRange.filter((t) => t.status === "done").length;
   const rate = inRange.length ? done / inRange.length : 0;
   const focusMin = series.reduce((s, d) => s + d.focusMin, 0);
   const maxDone = Math.max(1, ...series.map((d) => d.done));
@@ -41,7 +73,11 @@ export default function StatsView() {
     () =>
       PRIORITY_ORDER.map((p: Priority) => {
         const list = inRange.filter((t) => t.priority === p);
-        return { p, total: list.length, done: list.filter((t) => t.status === 'done').length };
+        return {
+          p,
+          total: list.length,
+          done: list.filter((t) => t.status === "done").length,
+        };
       }),
     [inRange],
   );
@@ -52,7 +88,7 @@ export default function StatsView() {
       // getDay(): 0 = Chủ nhật, nên dịch về mảng bắt đầu từ Thứ 2.
       const idx = (parseKey(t.date).getDay() + 6) % 7;
       buckets[idx].total += 1;
-      if (t.status === 'done') buckets[idx].done += 1;
+      if (t.status === "done") buckets[idx].done += 1;
     }
     return buckets.map((b, i) => ({
       label: WEEKDAY_LABELS[i],
@@ -67,20 +103,30 @@ export default function StatsView() {
       allTags(inRange)
         .map((tag) => {
           const list = inRange.filter((t) => t.tags.includes(tag));
-          return { tag, total: list.length, done: list.filter((t) => t.status === 'done').length };
+          return {
+            tag,
+            total: list.length,
+            done: list.filter((t) => t.status === "done").length,
+          };
         })
         .sort((a, b) => b.total - a.total),
     [inRange],
   );
 
-  const bestWeekday = [...byWeekday].filter((b) => b.total >= 2).sort((a, b) => b.rate - a.rate)[0];
+  const bestWeekday = [...byWeekday]
+    .filter((b) => b.total >= 2)
+    .sort((a, b) => b.rate - a.rate)[0];
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h2 className="text-lg font-bold tracking-tight">Thống kê hiệu suất</h2>
-          <p className="text-muted-foreground text-xs">Nhìn vào số liệu để biết nên siết chỗ nào.</p>
+          <h2 className="text-lg font-bold tracking-tight">
+            Thống kê hiệu suất
+          </h2>
+          <p className="text-muted-foreground text-xs">
+            Nhìn vào số liệu để biết nên siết chỗ nào.
+          </p>
         </div>
         <ToggleGroup
           type="single"
@@ -136,7 +182,9 @@ export default function StatsView() {
                   <div className="relative flex h-full w-full max-w-6 items-end justify-center">
                     <div
                       className="bg-success/55 absolute bottom-0 w-[46%] rounded-t-sm transition-[height] duration-500"
-                      style={{ height: `${Math.min(100, (d.focusMin / 240) * 100)}%` }}
+                      style={{
+                        height: `${Math.min(100, (d.focusMin / 240) * 100)}%`,
+                      }}
                     />
                     <div
                       className="bg-brand-gradient absolute bottom-0 w-[86%] rounded-t-sm transition-[height] duration-500"
@@ -144,12 +192,15 @@ export default function StatsView() {
                     />
                   </div>
                   {days <= 30 && (
-                    <span className="text-muted-foreground tabular text-[8.5px]">{parseKey(d.key).getDate()}</span>
+                    <span className="text-muted-foreground tabular text-[8.5px]">
+                      {parseKey(d.key).getDate()}
+                    </span>
                   )}
                 </div>
               </TooltipTrigger>
               <TooltipContent>
-                {format(parseKey(d.key), 'dd/MM')}: {d.done}/{d.total} xong · {formatDuration(d.focusMin)} tập trung
+                {format(parseKey(d.key), "dd/MM")}: {d.done}/{d.total} xong ·{" "}
+                {formatDuration(d.focusMin)} tập trung
               </TooltipContent>
             </Tooltip>
           ))}
@@ -179,7 +230,12 @@ export default function StatsView() {
         >
           <div className="space-y-2.5">
             {byWeekday.map((r) => (
-              <Row key={r.label} label={r.label} value={r.rate} trailing={`${r.done}/${r.total}`} />
+              <Row
+                key={r.label}
+                label={r.label}
+                value={r.rate}
+                trailing={`${r.done}/${r.total}`}
+              />
             ))}
           </div>
         </Section>
@@ -188,7 +244,11 @@ export default function StatsView() {
       <div className="grid gap-4 lg:grid-cols-2">
         <Section icon={Target} title="Tiến độ theo mục tiêu">
           {data.goals.length === 0 ? (
-            <EmptyState icon={Target} title="Chưa có mục tiêu nào" />
+            <EmptyState
+              icon={Target}
+              art="no-goal"
+              title="Chưa có mục tiêu nào"
+            />
           ) : (
             <div className="space-y-3">
               {data.goals.map((g) => {
@@ -205,7 +265,9 @@ export default function StatsView() {
                       labelClassName="text-[0px]"
                     />
                     <div className="min-w-0">
-                      <strong className="block truncate text-sm font-medium">{g.title}</strong>
+                      <strong className="block truncate text-sm font-medium">
+                        {g.title}
+                      </strong>
                       <span className="text-muted-foreground text-[11px]">
                         {s.done}/{s.total} nhiệm vụ trong {days} ngày
                       </span>
@@ -223,7 +285,12 @@ export default function StatsView() {
           ) : (
             <div className="space-y-2.5">
               {tagRows.slice(0, 8).map((r) => (
-                <Row key={r.tag} label={`#${r.tag}`} value={r.total ? r.done / r.total : 0} trailing={`${r.done}/${r.total}`} />
+                <Row
+                  key={r.tag}
+                  label={`#${r.tag}`}
+                  value={r.total ? r.done / r.total : 0}
+                  trailing={`${r.done}/${r.total}`}
+                />
               ))}
             </div>
           )}
@@ -248,9 +315,11 @@ function Row({
 }) {
   return (
     <div className="grid grid-cols-[76px_1fr_46px] items-center gap-3">
-      <span className={cn('truncate text-xs', labelClassName)}>{label}</span>
+      <span className={cn("truncate text-xs", labelClassName)}>{label}</span>
       <Meter value={value} barClassName={barClassName} />
-      <span className="text-muted-foreground tabular text-right text-[11px]">{trailing}</span>
+      <span className="text-muted-foreground tabular text-right text-[11px]">
+        {trailing}
+      </span>
     </div>
   );
 }
