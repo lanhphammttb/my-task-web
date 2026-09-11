@@ -48,10 +48,18 @@ const GROUPS = {
    * hào quang bị xoá loang lổ thành mảng tối lốm đốm.
    */
   rail: { kind: 'png', w: 256, h: 256, fit: 'contain', maxKB: 90 },
+  // Tranh mở đầu mỗi mục cơ chế, hiện ở ô vuông 80-96 px.
+  section: { kind: 'png', w: 512, h: 512, fit: 'contain', maxKB: 180 },
+  // Linh thú: nền trong suốt sẵn, chỉ thu về khung vuông.
+  beast: { kind: 'png', w: 512, h: 512, fit: 'contain', maxKB: 200 },
+  // Đan dược: nền trong suốt sẵn.
+  pill: { kind: 'png', w: 512, h: 512, fit: 'contain', maxKB: 160 },
+  // Panorama trời cho lớp 3D: tỷ lệ 2:1 để bọc quanh mặt cầu.
+  sky: { kind: 'webp', w: 2048, h: 1024, quality: 80, maxKB: 400 },
   // Chân dung tiền bối: bị crop tròn 48 px nên giữ nền màu phẳng, cắt cho lấp khung.
   elder: { kind: 'png', w: 256, h: 256, maxKB: 90 },
   // Minh hoạ trạng thái trống: vật thể nền trong suốt, thu vừa khung.
-  empty: { kind: 'png', w: 512, h: 512, cut: 'white', fit: 'contain', maxKB: 120 },
+  empty: { kind: 'png', w: 512, h: 512, fit: 'contain', maxKB: 140 },
 };
 
 /**
@@ -185,7 +193,7 @@ for (const dir of groups) {
   for (const f of fs.readdirSync(abs).filter((f) => !f.startsWith('.') && f !== 'README.md')) {
     const p = `${abs}/${f}`;
     const meta = await sharp(p).metadata();
-    const ext = spec.kind === 'jpeg' ? '.jpg' : '.png';
+    const ext = spec.kind === 'jpeg' ? '.jpg' : spec.kind === 'webp' ? '.webp' : '.png';
     const target = `${abs}/${f.replace(/\.[^.]*$/, '')}${ext}`;
     const kbNow = Math.round(fs.statSync(p).size / 1024);
     const done =
@@ -217,7 +225,7 @@ for (const dir of groups) {
         fit: 'contain',
         background: { r: 0, g: 0, b: 0, alpha: 0 },
       });
-    } else if (spec.kind === 'jpeg') {
+    } else if (spec.kind === 'jpeg' || spec.kind === 'webp') {
       pipe = sharp(p).flatten({ background: INK }).resize(spec.w, spec.h, { fit: 'cover', position: 'centre' });
     } else if (spec.fit === 'contain') {
       // Cắt lề trong suốt trước để vật thể lấp đầy khung, rồi thu vừa khung
@@ -234,7 +242,9 @@ for (const dir of groups) {
     const out = `${target}.out`;
     await (spec.kind === 'jpeg'
       ? pipe.jpeg({ quality: spec.quality, mozjpeg: true })
-      : pipe.png({ compressionLevel: 9, effort: 10 })
+      : spec.kind === 'webp'
+        ? pipe.webp({ quality: spec.quality, effort: 6 })
+        : pipe.png({ compressionLevel: 9, effort: 10 })
     ).toFile(out);
     if (p !== target) fs.unlinkSync(p);
     fs.renameSync(out, target);

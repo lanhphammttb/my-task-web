@@ -48,6 +48,19 @@ function tone(freq: number, startAfter: number, duration: number, peak = 0.16) {
 // Giấy vàng, kim quang, ngọc bích, chu sa - đúng tông tu tiên, không phải màu tiệc sinh nhật.
 const BRAND_COLORS = ['#f4d03f', '#c4a661', '#e0a83c', '#ece2cd', '#3fa796', '#a8321f'];
 
+/**
+ * Rung máy. Chỉ điện thoại có, và trình duyệt chỉ cho rung sau khi người dùng
+ * đã chạm vào trang - nên gọi thừa cũng không sao, chỉ im lặng bỏ qua.
+ */
+export function haptic(pattern: number | number[]) {
+  if (!soundOn) return;
+  try {
+    navigator.vibrate?.(pattern);
+  } catch {
+    /* trình duyệt không hỗ trợ - bỏ qua */
+  }
+}
+
 /** Bắn confetti an toàn - bỏ qua nếu môi trường không vẽ được canvas. */
 function fire(options: confetti.Options) {
   try {

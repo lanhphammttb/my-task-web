@@ -1,5 +1,5 @@
-import type { ReactNode } from 'react';
-import { cn } from '@/lib/utils';
+import type { ReactNode } from "react";
+import { cn } from "@/lib/utils";
 
 /**
  * Một lựa chọn dạng thẻ trong hộp thoại - dùng cho chọn hạt giống, chọn hệ để
@@ -34,14 +34,17 @@ export default function ChoiceCard({
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        'border-border bg-muted/30 hover:bg-muted hover:border-gold/45',
-        'flex w-full min-w-0 flex-col items-start gap-1 rounded-lg border px-3 py-2.5 text-left',
-        'transition-colors focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none',
-        'disabled:pointer-events-none disabled:opacity-45',
+        "border-border bg-muted/30 hover:bg-muted hover:border-gold/45",
+        "flex w-full min-w-0 flex-col items-start gap-1 rounded-lg border px-3 py-2.5 text-left",
+        "transition-colors focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none",
+        "disabled:pointer-events-none disabled:opacity-45",
       )}
     >
       <span className="flex w-full min-w-0 flex-wrap items-baseline justify-between gap-x-2 gap-y-0.5">
-        <span className="font-title text-sm font-bold" style={tone ? { color: tone } : undefined}>
+        <span
+          className="font-title text-sm font-bold"
+          style={tone ? { color: tone } : undefined}
+        >
           {title}
         </span>
         {trailing}

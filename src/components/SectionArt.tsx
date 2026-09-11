@@ -1,6 +1,6 @@
-import type { ReactNode } from 'react';
-import ArtImage from './ArtImage';
-import { cn } from '@/lib/utils';
+import type { ReactNode } from "react";
+import ArtImage from "./ArtImage";
+import { cn } from "@/lib/utils";
 
 /**
  * Ô tranh vuông mở đầu một mục, kèm đoạn dẫn nằm bên cạnh.
@@ -42,7 +42,7 @@ export default function SectionArt({
   className?: string;
 }) {
   return (
-    <div className={cn('mb-3 flex flex-wrap items-start gap-3', className)}>
+    <div className={cn("mb-3 flex flex-wrap items-start gap-3", className)}>
       <div className="shrink-0">
         <div
           className="relative size-20 overflow-hidden rounded-xl border sm:size-24"
@@ -53,7 +53,7 @@ export default function SectionArt({
             fallback={fallback}
             alt=""
             className="h-full w-full object-cover"
-            style={{ objectPosition: focus ?? '50% 50%' }}
+            style={{ objectPosition: focus ?? "50% 50%" }}
           />
           {/* Phủ nhẹ cho ô tranh chìm về tông chung, khỏi chọi với chữ bên cạnh */}
           <div className="absolute inset-0 bg-(--background)/15" />
@@ -69,7 +69,9 @@ export default function SectionArt({
       </div>
 
       {children && (
-        <p className="text-muted-foreground min-w-48 flex-1 text-xs leading-relaxed">{children}</p>
+        <p className="text-muted-foreground min-w-48 flex-1 text-xs leading-relaxed">
+          {children}
+        </p>
       )}
     </div>
   );

@@ -61,7 +61,13 @@ export default function OverlayPanel({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 22 }}
       transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
-      className="absolute inset-x-0 top-[68px] bottom-[86px] z-20 mx-auto flex min-h-0 w-full max-w-5xl flex-col px-2 sm:px-4"
+      // Chừa chỗ theo chiều cao ĐO ĐƯỢC của HUD và thanh tab, không đóng cứng:
+      // thanh tab trên điện thoại cao 129px chứ không phải 86px.
+      style={{
+        top: "calc(var(--hud-h, 92px) + 6px)",
+        bottom: "calc(var(--footer-h, 86px) + 6px)",
+      }}
+      className="absolute inset-x-0 z-20 mx-auto flex min-h-0 w-full max-w-5xl flex-col px-2 sm:px-4"
     >
       <div className="glass-panel panel-solid flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl">
         {/* ------------------------------------------------------------ đầu bảng */}

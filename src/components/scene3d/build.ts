@@ -93,6 +93,47 @@ export function mistTexture(seed = 11): THREE.CanvasTexture {
  * cạnh giữa trời. Nên người gọi phải cho `width` và `drop` rộng vượt hẳn ra
  * ngoài tầm nhìn ở độ sâu đặt núi.
  */
+/**
+ * Biến ảnh panorama trời thành tấm nền xa có bốn mép tan dần.
+ *
+ * Không dùng mặt cầu bọc kín (skybox): lớp 3D nằm ĐÈ LÊN bộ tranh cảnh giới 2D,
+ * phủ kín trời là xoá luôn tranh. Tấm phẳng có mép mờ thì hoà vào tranh phía
+ * dưới thay vì thay thế nó, và cũng không sinh ra đường nối cứng ngang màn.
+ */
+export function skyPanelTexture(img: HTMLImageElement): THREE.CanvasTexture {
+  const w = 1024;
+  const h = 512;
+  const c = document.createElement('canvas');
+  c.width = w;
+  c.height = h;
+  const ctx = c.getContext('2d');
+  if (ctx) {
+    ctx.drawImage(img, 0, 0, w, h);
+
+    // Mép trái/phải tan trước, rồi mép trên/dưới - đục ở giữa, trong ở rìa.
+    ctx.globalCompositeOperation = 'destination-in';
+    const side = ctx.createLinearGradient(0, 0, w, 0);
+    side.addColorStop(0, 'rgba(0,0,0,0)');
+    side.addColorStop(0.22, 'rgba(0,0,0,1)');
+    side.addColorStop(0.78, 'rgba(0,0,0,1)');
+    side.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = side;
+    ctx.fillRect(0, 0, w, h);
+
+    const vert = ctx.createLinearGradient(0, 0, 0, h);
+    vert.addColorStop(0, 'rgba(0,0,0,0)');
+    vert.addColorStop(0.3, 'rgba(0,0,0,1)');
+    vert.addColorStop(0.72, 'rgba(0,0,0,1)');
+    vert.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = vert;
+    ctx.fillRect(0, 0, w, h);
+    ctx.globalCompositeOperation = 'source-over';
+  }
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
 export function ridgeGeometry(
   peaks: number[],
   width: number,

@@ -1,19 +1,31 @@
-import { useState } from 'react';
-import { Droplets, Minus, Repeat } from 'lucide-react';
+import { useState } from "react";
+import { Droplets, Minus, Repeat } from "lucide-react";
 import {
-  ELEMENTS, ELEMENT_ORDER, MIN_ROOT_ELEMENTS, REFINE_COST, ROOT_GRADES, condenseCost, gradeOf,
-} from '../../lib/spirit';
-import type { Element } from '../../lib/spirit';
-import { stoneBalance } from '../../lib/economy';
-import { useApp } from '../../store/AppStore';
-import ElementSeal from '../ElementSeal';
-import { MetaChip, Section } from '../primitives';
-import ChoiceCard from './ChoiceCard';
-import { Button } from '@/components/ui/button';
+  ELEMENTS,
+  ELEMENT_ORDER,
+  MIN_ROOT_ELEMENTS,
+  REFINE_COST,
+  ROOT_GRADES,
+  condenseCost,
+  gradeOf,
+} from "../../lib/spirit";
+import type { Element } from "../../lib/spirit";
+import { stoneBalance } from "../../lib/economy";
+import { useApp } from "../../store/AppStore";
+import ElementSeal from "../ElementSeal";
+import { MetaChip, Section } from "../primitives";
+import ChoiceCard from "./ChoiceCard";
+import { Button } from "@/components/ui/button";
 import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
-  AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 /**
  * Tẩy tuỷ đúng nghĩa.
@@ -38,7 +50,9 @@ export default function RootRefineSection() {
   const grade = gradeOf(root);
   const canCondense = root.elements.length > MIN_ROOT_ELEMENTS;
   const condense = condenseCost(root.elements.length);
-  const nextGrade = ROOT_GRADES.find((g) => g.count === root.elements.length - 1);
+  const nextGrade = ROOT_GRADES.find(
+    (g) => g.count === root.elements.length - 1,
+  );
   const available = ELEMENT_ORDER.filter((e) => !root.elements.includes(e));
 
   return (
@@ -49,23 +63,31 @@ export default function RootRefineSection() {
       subtitle={`${grade.name} · hệ số tu vi ×${grade.multiplier}`}
     >
       <p className="text-muted-foreground mb-3 text-xs leading-relaxed">
-        Tẩy tuỷ là gột rửa dần chứ không phải gieo lại xúc xắc. Đổi một hệ thì phẩm cấp giữ nguyên;
-        bỏ bớt một hệ thì linh căn thuần hơn và hấp thu nhanh hơn, nhưng{' '}
-        <strong>mất luôn thiên phú</strong> của hệ đã bỏ.
+        Tẩy tuỷ là gột rửa dần chứ không phải gieo lại xúc xắc. Đổi một hệ thì
+        phẩm cấp giữ nguyên; bỏ bớt một hệ thì linh căn thuần hơn và hấp thu
+        nhanh hơn, nhưng <strong>mất luôn thiên phú</strong> của hệ đã bỏ.
       </p>
 
       <div className="grid gap-2.5">
         {root.elements.map((el) => {
           const meta = ELEMENTS[el];
           return (
-            <div key={el} className="flex flex-wrap items-center gap-3 rounded-xl border p-3">
+            <div
+              key={el}
+              className="flex flex-wrap items-center gap-3 rounded-xl border p-3"
+            >
               <ElementSeal element={el} className="size-10 shrink-0" />
 
               <div className="min-w-40 flex-1">
-                <h4 className="font-title text-sm font-bold" style={{ color: meta.color }}>
+                <h4
+                  className="font-title text-sm font-bold"
+                  style={{ color: meta.color }}
+                >
                   {meta.label} · {meta.perk}
                 </h4>
-                <p className="text-muted-foreground mt-0.5 text-[11px]">{meta.perkNote}</p>
+                <p className="text-muted-foreground mt-0.5 text-[11px]">
+                  {meta.perkNote}
+                </p>
               </div>
 
               <div className="flex shrink-0 gap-1.5">
@@ -96,18 +118,25 @@ export default function RootRefineSection() {
         })}
       </div>
 
-      {!canCondense && <MetaChip className="mt-3">Đơn hệ đã là tận cùng của thuần khiết</MetaChip>}
+      {!canCondense && (
+        <MetaChip className="mt-3">
+          Đơn hệ đã là tận cùng của thuần khiết
+        </MetaChip>
+      )}
 
       {/* ------------------------------------------------------- đổi một hệ */}
-      <AlertDialog open={swapFrom !== null} onOpenChange={(open) => !open && setSwapFrom(null)}>
+      <AlertDialog
+        open={swapFrom !== null}
+        onOpenChange={(open) => !open && setSwapFrom(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              Tẩy hệ {swapFrom ? ELEMENTS[swapFrom].label : ''} thành hệ nào?
+              Tẩy hệ {swapFrom ? ELEMENTS[swapFrom].label : ""} thành hệ nào?
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Tốn {REFINE_COST} linh thạch. Số hệ giữ nguyên nên vẫn là {grade.name}, chỉ đổi thiên
-              phú đi kèm.
+              Tốn {REFINE_COST} linh thạch. Số hệ giữ nguyên nên vẫn là{" "}
+              {grade.name}, chỉ đổi thiên phú đi kèm.
             </AlertDialogDescription>
           </AlertDialogHeader>
 
@@ -122,7 +151,9 @@ export default function RootRefineSection() {
                   setSwapFrom(null);
                 }}
               >
-                <span className="text-muted-foreground text-[11px]">{ELEMENTS[to].perkNote}</span>
+                <span className="text-muted-foreground text-[11px]">
+                  {ELEMENTS[to].perkNote}
+                </span>
               </ChoiceCard>
             ))}
           </div>
@@ -134,18 +165,22 @@ export default function RootRefineSection() {
       </AlertDialog>
 
       {/* ------------------------------------------------------- ngưng luyện */}
-      <AlertDialog open={dropEl !== null} onOpenChange={(open) => !open && setDropEl(null)}>
+      <AlertDialog
+        open={dropEl !== null}
+        onOpenChange={(open) => !open && setDropEl(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              Ngưng luyện, bỏ hệ {dropEl ? ELEMENTS[dropEl].label : ''}?
+              Ngưng luyện, bỏ hệ {dropEl ? ELEMENTS[dropEl].label : ""}?
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Tốn {condense} linh thạch. Linh căn lên{' '}
-              <strong>{nextGrade?.name ?? 'phẩm cao hơn'}</strong>, hệ số tu vi từ ×{grade.multiplier}{' '}
-              lên ×{nextGrade?.multiplier ?? grade.multiplier}. Đổi lại mất vĩnh viễn thiên phú{' '}
-              <strong>{dropEl ? ELEMENTS[dropEl].perk : ''}</strong>
-              {dropEl ? ` — ${ELEMENTS[dropEl].perkNote.toLowerCase()}` : ''}.
+              Tốn {condense} linh thạch. Linh căn lên{" "}
+              <strong>{nextGrade?.name ?? "phẩm cao hơn"}</strong>, hệ số tu vi
+              từ ×{grade.multiplier} lên ×
+              {nextGrade?.multiplier ?? grade.multiplier}. Đổi lại mất vĩnh viễn
+              thiên phú <strong>{dropEl ? ELEMENTS[dropEl].perk : ""}</strong>
+              {dropEl ? ` — ${ELEMENTS[dropEl].perkNote.toLowerCase()}` : ""}.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

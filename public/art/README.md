@@ -17,6 +17,7 @@ Mô tả chi tiết từng ảnh → [`docs/art-brief.md`](../../docs/art-brief.
 | `award/` | 16/16 huy hiệu | 512×512 PNG alpha · 102–132 KB |
 | `avatar/` | 4/4 ảnh đại diện | 256×256 PNG · 43–45 KB |
 | `rail/` | 11/11 icon hai cột hub | 256×256 PNG alpha · 24–34 KB |
+| `sky/` | 4/4 panorama trời cho lớp 3D | 2048×1024 webp · 71–115 KB |
 | `media/` | 5 video + 1 audio | `thien-loi` 2,0 MB · `do-kiep-chibi` 1,7 MB · `dot-pha` 1,3 MB · `phi-thang` 792 KB · `be-quan` 380 KB · `ambient.mp3` 4,1 MB |
 | `beast/` | 18 linh thú | có sẵn từ đầu |
 | `pill/` `icon/` `page/` `scene/` `media/` `ui/` | ảnh nền, icon, video | có sẵn từ đầu |
@@ -25,23 +26,10 @@ Ba file icon ứng dụng nằm ở `public/` (không phải ở đây): `favico
 `apple-touch-icon.png`, `og.jpg`. Riêng `og.jpg` do `scripts/make-og.mjs` dựng
 từ `art-src/og-bg.png` — chữ ghép bằng code nên đổi khẩu hiệu chỉ cần chạy lại.
 
-## Có thể thêm
+## Không còn thiếu gì
 
-| Thư mục | Cần | Quy cách |
-|---|---|---|
-| `elder/` | 13 chân dung tiền bối | 256×256 PNG, nền màu phẳng tối |
-| `empty/` | 5 minh hoạ trạng thái trống | 512×512 PNG alpha |
-
-App chạy hoàn chỉnh với 70 file hiện có — hai nhóm này là thêm cho dày, không
-phải sửa lỗi. `beast/` 18 · `pill/` 3 · `scene/cave.jpg` vẫn là art mượn từ
-Tiên Ma Giới, xếp mức thấp. Chi tiết ở mục C của
-[`docs/art-brief.md`](../../docs/art-brief.md).
-
-## Đã đủ
-
-Toàn bộ 70 file ảnh và video của brief đã xong. Ba file icon ứng dụng nằm ở `public/`
-(không phải ở đây): `favicon.png`, `apple-touch-icon.png`, `og.jpg` — riêng
-`og.jpg` do `scripts/make-og.mjs` dựng từ `art-src/og-bg.png`.
+121 file ảnh, video và audio đã đủ. Chỉ `media/ambient.mp3` còn là đồ mượn —
+sẽ thay bằng nhạc tổng hợp WebAudio, không phải việc art.
 
 ## Quy trình khi thả ảnh mới
 
@@ -60,6 +48,13 @@ node scripts/slice-sheet.mjs public/art/award/sheet.png first-step ten-tasks ...
 
 # các ô DÍNH LIỀN không có rãnh → phải chỉ định lưới
 node scripts/slice-sheet.mjs public/art/avatar/sheet.png --grid 2x2 avatar-1 avatar-2 avatar-3 avatar-4
+
+# ảnh ghép NỀN TRONG SUỐT, ô chạm nhau hoặc hàng cuối lệch giữa
+node scripts/slice-alpha.mjs public/art/beast/sheet.png --dry            # xem lưới dò được
+node scripts/slice-alpha.mjs public/art/beast/sheet.png --ink 120 a b c  # nâng ngưỡng nếu ô dính nhau
+
+# sheet có nung tên file dưới mỗi hình
+node scripts/strip-labels.mjs art-src/beast/sheet.png
 
 npm run art award avatar
 ```

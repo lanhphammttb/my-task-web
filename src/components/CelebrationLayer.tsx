@@ -16,6 +16,7 @@ import type { Element } from "../lib/spirit";
 import { gradeOf, rootElementLabel } from "../lib/spirit";
 import ElementSeal from "./ElementSeal";
 import BeastEmblem from "./BeastEmblem";
+import { haptic } from "../lib/celebrate";
 import { useApp } from "../store/AppStore";
 import RealmSeal from "./RealmSeal";
 import { Button } from "@/components/ui/button";
@@ -32,12 +33,18 @@ export default function CelebrationLayer() {
   /** Video mốc lớn tải được hay không; thiếu file thì chỉ mất phần động. */
   const [clipOk, setClipOk] = useState(true);
 
-  const hasClip = celebration?.kind === 'realm-up' || celebration?.kind === 'ascension';
+  const hasClip =
+    celebration?.kind === "realm-up" || celebration?.kind === "ascension";
 
   useEffect(() => {
     if (!celebration) return;
     setBadgeOk(true);
     setClipOk(true);
+    // Rung máy theo mức của khoảnh khắc: mốc càng lớn, nhịp càng dài.
+    if (celebration.kind === "ascension") haptic([60, 50, 60, 50, 180]);
+    else if (celebration.kind === "realm-up") haptic([40, 40, 120]);
+    else if (celebration.kind === "tribulation-failed") haptic(220);
+    else haptic(28);
     // Mốc nào có video thì để mở đủ 10 giây cho video chạy hết cung cảm xúc
     // (điểm nhấn của cả hai nằm ở giây 6-8); mốc thường vẫn 5 giây.
     const t = window.setTimeout(dismissCelebration, hasClip ? 10_000 : 5000);

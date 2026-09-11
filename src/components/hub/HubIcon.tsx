@@ -87,7 +87,9 @@ export default function HubIcon({
         )}
       </span>
 
-      <span className="font-title text-foreground/85 group-hover:text-gold-bright w-full text-center text-[10px] leading-tight font-bold tracking-wide drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] transition-colors">
+      {/* Chừa sẵn chiều cao hai dòng: nhãn dài như "Tu Hành Lục" xuống dòng thì
+          các icon trong cột vẫn thẳng hàng, không bị đội lệch. */}
+      <span className="font-title text-foreground/85 group-hover:text-gold-bright flex min-h-[24px] w-full items-start justify-center text-center text-[10px] leading-tight font-bold tracking-wide drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] transition-colors">
         {label}
       </span>
     </button>

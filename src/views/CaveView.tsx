@@ -260,6 +260,7 @@ export default function CaveView() {
         ) : (
           <EmptyState
             icon={PawPrint}
+            art="no-beast"
             title="Chưa có linh thú nào theo bên mình"
             hint={`Tích đủ ${SUMMON_COST} linh thạch rồi chiêu thú. Thú càng quý, thiên phú càng mạnh.`}
             className="mb-4"

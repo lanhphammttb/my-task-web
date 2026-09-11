@@ -223,6 +223,18 @@
 }
 
 @layer base {
+  /* Khoảng lùi của khu giữa hub: máy hẹp có hai hàng icon nằm dưới HUD, máy
+     rộng thì hai cột icon nằm hai bên nên không cần lùi. */
+  :root {
+    --rail-offset: 192px;
+  }
+
+  @media (min-width: 1024px) {
+    :root {
+      --rail-offset: 8px;
+    }
+  }
+
   * {
     @apply border-border outline-ring/50;
   }
@@ -521,6 +533,10 @@
   }
 
   /* Đốm sáng nhấp nháy - báo có việc cần xử lý. */
+  .world-shake {
+    animation: world-shake 0.72s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+  }
+
   .pulse-dot {
     animation: var(--animate-pulse-dot);
   }
@@ -592,6 +608,17 @@
 }
 
 /* Nền cảnh phóng rất chậm, tạo cảm giác camera sống. */
+/* Rung cả màn khi đột phá cảnh giới. Biên độ nhỏ và tắt nhanh - đủ để thân
+   thể phản ứng, không đủ để chóng mặt. */
+@keyframes world-shake {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  12% { transform: translate3d(-5px, 3px, 0) rotate(-0.25deg); }
+  28% { transform: translate3d(4px, -4px, 0) rotate(0.22deg); }
+  44% { transform: translate3d(-3px, -2px, 0) rotate(-0.15deg); }
+  62% { transform: translate3d(3px, 2px, 0) rotate(0.12deg); }
+  80% { transform: translate3d(-1px, 1px, 0); }
+}
+
 @keyframes slow-zoom {
   from { transform: scale(1.06) translate3d(0, 0, 0); }
   to { transform: scale(1.16) translate3d(-1.2%, -1.4%, 0); }

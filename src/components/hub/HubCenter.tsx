@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useCountUp } from "../../lib/useCountUp";
 import { ChevronRight, Quote, Sparkles, Zap } from "lucide-react";
 import { useApp } from "../../store/AppStore";
 import { ASCENSION_INDEX, REALMS, cultivationOf } from "../../lib/cultivation";
@@ -27,6 +28,8 @@ export default function HubCenter({ onTribulation, onFocus, onAwaken }: Props) {
   const { data } = useApp();
   const progress = progressOf(data);
   const c = cultivationOf(progress.xp);
+  const xpShown = useCountUp(progress.xp);
+  const intoShown = useCountUp(c.into);
   const key = todayKey();
   const stats = dayStats(data.tasks, data.sessions, key);
   const streak = currentStreak(data.tasks);
@@ -101,8 +104,8 @@ export default function HubCenter({ onTribulation, onFocus, onAwaken }: Props) {
             </span>
             <span className="text-muted-foreground tabular text-[10.5px]">
               {c.ascended
-                ? `${progress.xp} tu vi`
-                : `${c.into} / ${c.need} tu vi`}
+                ? `${xpShown} tu vi`
+                : `${intoShown} / ${c.need} tu vi`}
             </span>
           </span>
         </span>

@@ -1,19 +1,24 @@
-import { useState } from 'react';
-import { Leaf, Scissors, Sprout } from 'lucide-react';
-import { HERBS, HERB_ORDER, plotState } from '../../lib/field';
-import { fieldSlots, nextCave } from '../../lib/cave';
-import { stoneBalance, verifiedFocusMinutes } from '../../lib/economy';
-import { formatDuration } from '../../lib/date';
-import { useApp } from '../../store/AppStore';
-import { Meter, MetaChip, Section } from '../primitives';
-import SectionArt from '../SectionArt';
-import ChoiceCard from './ChoiceCard';
-import { Button } from '@/components/ui/button';
+import { useState } from "react";
+import { Leaf, Scissors, Sprout } from "lucide-react";
+import { HERBS, HERB_ORDER, plotState } from "../../lib/field";
+import { fieldSlots, nextCave } from "../../lib/cave";
+import { stoneBalance, verifiedFocusMinutes } from "../../lib/economy";
+import { formatDuration } from "../../lib/date";
+import { useApp } from "../../store/AppStore";
+import { Meter, MetaChip, Section } from "../primitives";
+import SectionArt from "../SectionArt";
+import ChoiceCard from "./ChoiceCard";
+import { Button } from "@/components/ui/button";
 import {
-  AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
-  AlertDialogHeader, AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { cn } from '@/lib/utils';
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { cn } from "@/lib/utils";
 
 /**
  * Linh điền.
@@ -43,13 +48,14 @@ export default function FieldSection() {
       subtitle={`${data.field.length}/${slots} ô đang có cây`}
     >
       <SectionArt
-        src="/art/encounter/linh-thao.jpg"
+        src="/art/section/linh-dien.png"
         caption="Linh điền trước cửa động"
         tone="#6fbf73"
         focus="21% 52%"
       >
-        Linh thảo hút linh khí của người trồng, nên nó lớn theo <strong>số phút bế quan</strong> chứ
-        không theo giờ giấc ngoài đời. Muốn hái thì phải ngồi xuống mà làm.
+        Linh thảo hút linh khí của người trồng, nên nó lớn theo{" "}
+        <strong>số phút bế quan</strong> chứ không theo giờ giấc ngoài đời. Muốn
+        hái thì phải ngồi xuống mà làm.
       </SectionArt>
 
       {/* ------------------------------------------------------------ ô đất */}
@@ -66,7 +72,9 @@ export default function FieldSection() {
                 className="border-border/70 text-muted-foreground hover:border-gold/50 hover:text-gold flex min-h-24 flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed transition-colors"
               >
                 <Sprout className="size-5" strokeWidth={1.75} />
-                <span className="text-xs font-medium">Ô đất trống · gieo hạt</span>
+                <span className="text-xs font-medium">
+                  Ô đất trống · gieo hạt
+                </span>
               </button>
             );
           }
@@ -80,7 +88,10 @@ export default function FieldSection() {
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <h4 className="font-title truncate text-sm font-bold" style={{ color: s.herb.tone }}>
+                  <h4
+                    className="font-title truncate text-sm font-bold"
+                    style={{ color: s.herb.tone }}
+                  >
                     {s.herb.name}
                   </h4>
                   <p className="text-muted-foreground mt-0.5 text-[11px]">
@@ -89,20 +100,23 @@ export default function FieldSection() {
                       : `Còn ${formatDuration(s.remain)} bế quan nữa`}
                   </p>
                 </div>
-                <Leaf className="size-4 shrink-0" style={{ color: s.herb.tone }} />
+                <Leaf
+                  className="size-4 shrink-0"
+                  style={{ color: s.herb.tone }}
+                />
               </div>
 
               <Meter value={s.ratio} />
 
               <Button
                 size="sm"
-                variant={s.ready ? 'default' : 'outline'}
+                variant={s.ready ? "default" : "outline"}
                 disabled={!s.ready}
                 onClick={() => harvestPlot(slot)}
                 className="gap-1.5"
               >
                 <Scissors className="size-3.5" />
-                {s.ready ? 'Hái' : `${Math.round(s.ratio * 100)}%`}
+                {s.ready ? "Hái" : `${Math.round(s.ratio * 100)}%`}
               </Button>
             </div>
           );
@@ -126,8 +140,15 @@ export default function FieldSection() {
             return (
               <MetaChip
                 key={id}
-                className={cn(n === 0 && 'opacity-45')}
-                style={n > 0 ? { borderColor: `${HERBS[id].tone}59`, color: HERBS[id].tone } : undefined}
+                className={cn(n === 0 && "opacity-45")}
+                style={
+                  n > 0
+                    ? {
+                        borderColor: `${HERBS[id].tone}59`,
+                        color: HERBS[id].tone,
+                      }
+                    : undefined
+                }
               >
                 {HERBS[id].short} × {n}
               </MetaChip>
@@ -137,12 +158,16 @@ export default function FieldSection() {
       </div>
 
       {/* ------------------------------------------------------ chọn hạt giống */}
-      <AlertDialog open={seedFor !== null} onOpenChange={(open) => !open && setSeedFor(null)}>
+      <AlertDialog
+        open={seedFor !== null}
+        onOpenChange={(open) => !open && setSeedFor(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Gieo gì vào ô này?</AlertDialogTitle>
             <AlertDialogDescription>
-              Hạt trả bằng linh thạch, cây chín bằng phút bế quan. Đang có {balance} linh thạch.
+              Hạt trả bằng linh thạch, cây chín bằng phút bế quan. Đang có{" "}
+              {balance} linh thạch.
             </AlertDialogDescription>
           </AlertDialogHeader>
 
@@ -157,7 +182,9 @@ export default function FieldSection() {
                   tone={herb.tone}
                   title={herb.name}
                   trailing={
-                    <span className="tabular text-gold text-xs">{herb.seedCost} linh thạch</span>
+                    <span className="tabular text-gold text-xs">
+                      {herb.seedCost} linh thạch
+                    </span>
                   }
                   onClick={() => {
                     if (seedFor !== null) plantSeed(seedFor, id);
@@ -165,9 +192,12 @@ export default function FieldSection() {
                   }}
                 >
                   <span className="text-muted-foreground text-[11px]">
-                    Chín sau {formatDuration(herb.needFocus)} bế quan · thu {herb.yield} nhánh
+                    Chín sau {formatDuration(herb.needFocus)} bế quan · thu{" "}
+                    {herb.yield} nhánh
                   </span>
-                  <span className="text-muted-foreground/80 text-[11px]">{herb.note}</span>
+                  <span className="text-muted-foreground/80 text-[11px]">
+                    {herb.note}
+                  </span>
                 </ChoiceCard>
               );
             })}

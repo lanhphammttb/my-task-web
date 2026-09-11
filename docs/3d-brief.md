@@ -61,20 +61,27 @@ quang bùng lên khi đột phá, xoay nhẹ theo góc nhìn.
 | Trục | Y hướng lên, mặt quay về +Z, gốc toạ độ đặt **dưới chân** |
 | Tạo hình | Bám mô tả nhân vật ở mục A6 của `art-brief.md` cho khớp bộ `avatar/` |
 
-### Ưu tiên 2 — Panorama trời tiên cảnh  ⚠️ cần tool sinh ảnh
+### ✅ Ưu tiên 2 — Panorama trời tiên cảnh — ĐÃ XONG
 
-Ảnh phẳng, không phải model. Dùng làm nền xa cho lớp 3D, thay quầng sáng đang vẽ
-bằng gradient. **Bốn tấm** là đủ cho mười cảnh giới:
+`2048×1024` webp · 71–115 KB mỗi tấm (trần là 400 KB).
 
-| File | Dùng cho cảnh giới | Nội dung |
-|---|---|---|
-| `sky/dawn.webp` | Luyện Khí, Trúc Cơ | Bình minh, mây thấp, sắc lam ngọc |
-| `sky/gold.webp` | Kim Đan, Nguyên Anh, Hoá Thần | Nắng vàng xuyên mây, ấm |
-| `sky/void.webp` | Luyện Hư, Hợp Thể | Trời đêm sâu, dải ngân hà |
-| `sky/storm.webp` | Đại Thừa, Độ Kiếp, Phi Thăng | Mây vần vũ, sắc đỏ tía, có tia sét xa |
+| File | Dùng cho cảnh giới |
+|---|---|
+| `sky/dawn.webp` | Luyện Khí, Trúc Cơ |
+| `sky/gold.webp` | Kim Đan, Nguyên Anh, Hoá Thần |
+| `sky/void.webp` | Luyện Hư, Hợp Thể |
+| `sky/storm.webp` | Đại Thừa, Độ Kiếp, Phi Thăng |
 
-Quy cách: equirectangular 2048×1024, `.webp` chất lượng 80, ≤ 400 KB mỗi tấm.
-**Không cần `.hdr` thật** — lớp này không dùng chiếu sáng PBR nặng.
+Nhận dạng ảnh ghép 2×2 (1774×887), cắt bằng `slice-sheet.mjs --grid 2x2`,
+chuẩn hoá bằng nhóm `sky` mới trong `npm run art` (định dạng webp cũng mới thêm).
+Bảng ánh xạ cảnh giới → trời nằm ở `src/lib/sky.ts`.
+
+**Không dựng thành skybox.** Thử mặt cầu `BackSide` trước và hỏng đúng như mục 2
+của tài liệu này cảnh báo: trời phủ kín đã **xoá sạch bộ tranh cảnh giới 2D**
+nằm dưới, lại sinh một đường nối cứng vắt ngang màn. Cách đang dùng là **tấm
+phẳng 210×105 đặt ở z = −88, bốn mép tan dần** (`skyPanelTexture` trong
+`scene3d/build.ts` vẽ ảnh vào canvas rồi bôi mặt nạ gradient hai chiều). Nhờ
+vậy trời hoà vào tranh chứ không thay thế tranh.
 
 ### Ưu tiên 3 — Linh thú 3D  ⚠️ cần tool chuyên dụng
 

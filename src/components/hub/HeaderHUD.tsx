@@ -5,7 +5,10 @@ import { effectiveXp, progressOf, stoneBalance } from "../../lib/economy";
 import { currentStreak } from "../../lib/stats";
 import { PILL_ORDER } from "../../lib/pills";
 import { railSrc } from "../../lib/icons";
+import { useRef } from "react";
+import { useCountUp } from "../../lib/useCountUp";
 import ArtImage from "../ArtImage";
+import { useChromeVar } from "./useChromeVar";
 
 /**
  * HUD trên cùng theo đúng bố cục của Tiên Ma Giới: cụm nhân vật bên trái
@@ -13,6 +16,9 @@ import ArtImage from "../ArtImage";
  * Lớp bọc không nhận chuột để nền cảnh phía sau vẫn kéo/thả được.
  */
 export default function HeaderHUD({ onSettings }: { onSettings: () => void }) {
+  const ref = useRef<HTMLElement>(null);
+  useChromeVar(ref, "--hud-h");
+
   const { data, audit, updateSettings } = useApp();
   const xp = effectiveXp(data);
   const c = cultivationOf(xp);
@@ -20,13 +26,18 @@ export default function HeaderHUD({ onSettings }: { onSettings: () => void }) {
   const stones = stoneBalance(data);
   const streak = currentStreak(data.tasks);
   const pills = PILL_ORDER.reduce((s, g) => s + (data.pills[g] ?? 0), 0);
+  const stonesShown = useCountUp(stones);
+  const intoShown = useCountUp(c.into);
   const isDark = data.settings.theme === "dark";
   // Ảnh đại diện đổi theo bốn mốc cảnh giới; chưa có file thì dùng ảnh chung.
   const avatarTier =
     c.realmIndex <= 1 ? 1 : c.realmIndex <= 4 ? 2 : c.realmIndex <= 7 ? 3 : 4;
 
   return (
-    <header className="pointer-events-none absolute inset-x-0 top-0 z-30 flex items-start justify-between gap-2 p-2 sm:p-3">
+    <header
+      ref={ref}
+      className="pointer-events-none absolute inset-x-0 top-0 z-30 flex items-start justify-between gap-2 p-2 sm:p-3"
+    >
       {/* ------------------------------------------------ cụm đạo nhân bên trái */}
       <div className="glass-panel pointer-events-auto flex max-w-[62vw] items-center gap-2.5 rounded-full py-1.5 pr-3.5 pl-1.5 sm:gap-3">
         <span className="relative shrink-0">
@@ -71,7 +82,7 @@ export default function HeaderHUD({ onSettings }: { onSettings: () => void }) {
               <span style={{ width: `${Math.round(c.ratio * 100)}%` }} />
             </div>
             <span className="text-muted-foreground tabular text-[9.5px] whitespace-nowrap">
-              {c.ascended ? "viên mãn" : `${c.into}/${c.need}`}
+              {c.ascended ? "viên mãn" : `${intoShown}/${c.need}`}
             </span>
           </div>
         </div>
@@ -87,7 +98,7 @@ export default function HeaderHUD({ onSettings }: { onSettings: () => void }) {
               className="size-5 object-contain"
             />
             <span className="text-gold-bright tabular text-[12px] font-bold">
-              {stones}
+              {stonesShown}
             </span>
           </span>
           <span

@@ -178,7 +178,9 @@ export default function StatsView() {
           {series.map((d) => (
             <Tooltip key={d.key}>
               <TooltipTrigger asChild>
-                <div className="flex h-full flex-1 flex-col items-center justify-end gap-1">
+                {/* min-w-0: không có nó thì số ngày bên dưới đặt sàn chiều rộng
+                    cho cả cột, 30 cột cộng lại tràn khung trên máy hẹp. */}
+                <div className="flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-1">
                   <div className="relative flex h-full w-full max-w-6 items-end justify-center">
                     <div
                       className="bg-success/55 absolute bottom-0 w-[46%] rounded-t-sm transition-[height] duration-500"
@@ -192,7 +194,7 @@ export default function StatsView() {
                     />
                   </div>
                   {days <= 30 && (
-                    <span className="text-muted-foreground tabular text-[8.5px]">
+                    <span className="text-muted-foreground tabular hidden text-[8.5px] sm:inline">
                       {parseKey(d.key).getDate()}
                     </span>
                   )}

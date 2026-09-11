@@ -1,33 +1,54 @@
-import { Check, Scroll } from 'lucide-react';
-import { TECHNIQUES, TECHNIQUE_ORDER, techniqueSwapCost } from '../../lib/techniques';
-import type { Technique } from '../../lib/techniques';
-import { stoneBalance } from '../../lib/economy';
-import { useApp } from '../../store/AppStore';
-import { MetaChip, Section } from '../primitives';
-import SectionArt from '../SectionArt';
-import { Button } from '@/components/ui/button';
+import { Check, Scroll } from "lucide-react";
 import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
-  AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
-import { cn } from '@/lib/utils';
+  TECHNIQUES,
+  TECHNIQUE_ORDER,
+  techniqueSwapCost,
+} from "../../lib/techniques";
+import type { Technique } from "../../lib/techniques";
+import { stoneBalance } from "../../lib/economy";
+import { useApp } from "../../store/AppStore";
+import { MetaChip, Section } from "../primitives";
+import SectionArt from "../SectionArt";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { cn } from "@/lib/utils";
 
 /** "+35%" hoặc "−15%" - hệ số 1.0 nghĩa là không đổi gì nên không hiện. */
 function delta(mul: number): string | null {
   if (mul === 1) return null;
-  const sign = mul > 1 ? '+' : '−';
+  const sign = mul > 1 ? "+" : "−";
   return `${sign}${Math.round(Math.abs(mul - 1) * 100)}%`;
 }
 
 /** Chip cho một mặt của công pháp; lợi thì xanh, thiệt thì đỏ. */
-function Trait({ label, mul, goodWhenHigh = true }: { label: string; mul: number; goodWhenHigh?: boolean }) {
+function Trait({
+  label,
+  mul,
+  goodWhenHigh = true,
+}: {
+  label: string;
+  mul: number;
+  goodWhenHigh?: boolean;
+}) {
   const text = delta(mul);
   if (!text) return null;
   const good = goodWhenHigh ? mul > 1 : mul < 1;
   return (
     <MetaChip
       className={cn(
-        good ? 'border-success/35 bg-success/12 text-success' : 'border-warning/35 bg-warning/12 text-warning',
+        good
+          ? "border-success/35 bg-success/12 text-success"
+          : "border-warning/35 bg-warning/12 text-warning",
       )}
     >
       {label} {text}
@@ -51,14 +72,17 @@ function TechniqueCard({
   return (
     <div
       className={cn(
-        'relative flex flex-col gap-2 rounded-xl border p-3 transition-colors',
-        active ? 'gold-border bg-muted/40' : 'border-border bg-muted/20',
+        "relative flex flex-col gap-2 rounded-xl border p-3 transition-colors",
+        active ? "gold-border bg-muted/40" : "border-border bg-muted/20",
       )}
       style={active ? undefined : { borderColor: `${t.tone}33` }}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <h4 className="font-title text-sm font-bold tracking-wide" style={{ color: t.tone }}>
+          <h4
+            className="font-title text-sm font-bold tracking-wide"
+            style={{ color: t.tone }}
+          >
             {t.name}
           </h4>
           <p className="text-muted-foreground mt-0.5 text-[11px]">{t.fit}</p>
@@ -83,8 +107,13 @@ function TechniqueCard({
       {!active && (
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <Button size="sm" variant="outline" className="mt-auto w-full" disabled={!affordable}>
-              {cost > 0 ? `Chuyển sang (${cost})` : 'Bắt đầu tu'}
+            <Button
+              size="sm"
+              variant="outline"
+              className="mt-auto w-full"
+              disabled={!affordable}
+            >
+              {cost > 0 ? `Chuyển sang (${cost})` : "Bắt đầu tu"}
             </Button>
           </AlertDialogTrigger>
           <AlertDialogContent>
@@ -93,7 +122,7 @@ function TechniqueCard({
               <AlertDialogDescription>
                 {cost > 0
                   ? `Tốn ${cost} linh thạch. Đổi công pháp không mất tu vi đã tích, nhưng từ nay tỷ giá quy đổi công sức sẽ khác đi, và lần đổi sau còn đắt hơn.`
-                  : 'Lần chọn đầu tiên miễn phí. Công pháp không cho thêm sức mạnh - nó đổi tỷ giá giữa công sức và tu vi, nên hãy chọn cái hợp với lối làm việc thật của bạn.'}
+                  : "Lần chọn đầu tiên miễn phí. Công pháp không cho thêm sức mạnh - nó đổi tỷ giá giữa công sức và tu vi, nên hãy chọn cái hợp với lối làm việc thật của bạn."}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -124,15 +153,18 @@ export default function TechniqueSection() {
       id="cave-technique"
       icon={Scroll}
       title="Công pháp"
-      subtitle={current ? `Đang tu ${current.name}` : 'Chưa chọn - lần đầu miễn phí'}
+      subtitle={
+        current ? `Đang tu ${current.name}` : "Chưa chọn - lần đầu miễn phí"
+      }
     >
       <SectionArt
-        src="/art/encounter/thien-vien.jpg"
+        src="/art/section/cong-phap.png"
         caption="Nơi truyền thụ công pháp"
         tone="#9b7fd4"
       >
-        Công pháp không cho thêm sức mạnh, nó đổi <strong>tỷ giá</strong> giữa công sức và tu vi.
-        Không có cái nào mạnh hơn cái nào — chỉ có cái hợp với cách bạn thật sự làm việc.
+        Công pháp không cho thêm sức mạnh, nó đổi <strong>tỷ giá</strong> giữa
+        công sức và tu vi. Không có cái nào mạnh hơn cái nào — chỉ có cái hợp
+        với cách bạn thật sự làm việc.
       </SectionArt>
 
       <div className="grid gap-3 sm:grid-cols-2">

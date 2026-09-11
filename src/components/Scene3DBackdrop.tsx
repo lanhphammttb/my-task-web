@@ -1,6 +1,14 @@
-import { useEffect, useRef } from 'react';
-import * as THREE from 'three';
-import { glowTexture, islandGeometry, mistTexture, pagodaGeometry, qiField, ridgeGeometry } from './scene3d/build';
+import { useEffect, useRef } from "react";
+import * as THREE from "three";
+import {
+  glowTexture,
+  islandGeometry,
+  mistTexture,
+  pagodaGeometry,
+  qiField,
+  ridgeGeometry,
+  skyPanelTexture,
+} from "./scene3d/build";
 
 /**
  * Lớp thế giới 3D chạy suốt app: núi non nhiều tầng, đảo tiên lơ lửng có tháp
@@ -20,6 +28,12 @@ interface Props {
   /** Nền sáng thì hạ độ đậm để không loè trên giấy tuyên. */
   light?: boolean;
   /**
+   * Panorama trời của cảnh giới hiện tại. Bọc mặt trong một mặt cầu rất lớn.
+   * Cố tình để bán trong suốt: lớp 3D nằm ĐÈ LÊN bộ tranh cảnh giới 2D, phủ
+   * kín là xoá luôn tranh vừa vẽ.
+   */
+  sky?: string;
+  /**
    * 0..1 - hạ xuống khi có bảng đang mở, để nền lùi hẳn ra sau và không tranh
    * chú ý với nội dung người dùng đang đọc.
    */
@@ -28,13 +42,13 @@ interface Props {
 }
 
 /** Màu mực nền của mọi bóng núi, bóng đảo. Sắc cảnh giới pha thêm lên trên. */
-const INK = new THREE.Color('#0a0c11');
+const INK = new THREE.Color("#0a0c11");
 
 /** Pha vào đèn cho ánh sáng nhạt bớt, kẻo mặt được chiếu bị nhuộm quá gắt. */
-const PALE = new THREE.Color('#ffffff');
+const PALE = new THREE.Color("#ffffff");
 
 /** Sắc vàng kim của app. Hạt linh khí ngả về đây để không lẫn vào nền tranh. */
-const GOLD = new THREE.Color('#f2d492');
+const GOLD = new THREE.Color("#f2d492");
 
 /**
  * Ba tầng núi ở ba độ sâu: tầng gần trôi nhanh hơn tầng xa, đó là chiều sâu.
@@ -44,9 +58,33 @@ const GOLD = new THREE.Color('#f2d492');
  * lọt vào khung và hiện thành bậc vuông sắc cạnh giữa lưng trời.
  */
 const RIDGES = [
-  { peaks: [0.1, 0.62, 0.3, 0.86, 0.28, 0.7, 0.2, 0.78, 0.16], w: 260, h: 17, drop: 60, y: -18.8, z: -46, o: 0.09 },
-  { peaks: [0.08, 0.46, 0.22, 0.6, 0.18, 0.5, 0.55, 0.2, 0.4], w: 200, h: 14, drop: 50, y: -13.4, z: -32, o: 0.12 },
-  { peaks: [0.06, 0.3, 0.12, 0.36, 0.1, 0.26, 0.16, 0.32, 0.08], w: 150, h: 11, drop: 40, y: -8.9, z: -19, o: 0.16 },
+  {
+    peaks: [0.1, 0.62, 0.3, 0.86, 0.28, 0.7, 0.2, 0.78, 0.16],
+    w: 260,
+    h: 17,
+    drop: 60,
+    y: -18.8,
+    z: -46,
+    o: 0.09,
+  },
+  {
+    peaks: [0.08, 0.46, 0.22, 0.6, 0.18, 0.5, 0.55, 0.2, 0.4],
+    w: 200,
+    h: 14,
+    drop: 50,
+    y: -13.4,
+    z: -32,
+    o: 0.12,
+  },
+  {
+    peaks: [0.06, 0.3, 0.12, 0.36, 0.1, 0.26, 0.16, 0.32, 0.08],
+    w: 150,
+    h: 11,
+    drop: 40,
+    y: -8.9,
+    z: -19,
+    o: 0.16,
+  },
 ];
 
 /**
@@ -76,7 +114,13 @@ interface Tinted {
   shade: number;
 }
 
-export default function Scene3DBackdrop({ color, light = false, intensity = 1, className }: Props) {
+export default function Scene3DBackdrop({
+  color,
+  light = false,
+  sky,
+  intensity = 1,
+  className,
+}: Props) {
   const host = useRef<HTMLDivElement>(null);
 
   // Cảnh giới và độ đậm đổi ngay giữa lúc cảnh đang chạy, nên nhét vào ref để
@@ -91,13 +135,18 @@ export default function Scene3DBackdrop({ color, light = false, intensity = 1, c
     const el = host.current;
     if (!el) return;
 
-    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+    const reduce =
+      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
 
     // Máy không có WebGL (hoặc bị tắt, hoặc môi trường test) thì bỏ hẳn lớp 3D
     // chứ không làm sập cả app - phía dưới vẫn còn nguyên nền tranh 2D.
     let renderer: THREE.WebGLRenderer;
     try {
-      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'low-power' });
+      renderer = new THREE.WebGLRenderer({
+        antialias: true,
+        alpha: true,
+        powerPreference: "low-power",
+      });
     } catch {
       return;
     }
@@ -105,7 +154,9 @@ export default function Scene3DBackdrop({ color, light = false, intensity = 1, c
     // Máy nhỏ gánh ít hạt và ít đảo hơn: nền đẹp mấy cũng vô nghĩa nếu gõ việc
     // vào bị giật.
     const small = window.innerWidth < 768;
-    renderer.setPixelRatio(Math.min(small ? 1.4 : 1.75, window.devicePixelRatio));
+    renderer.setPixelRatio(
+      Math.min(small ? 1.4 : 1.75, window.devicePixelRatio),
+    );
     el.appendChild(renderer.domElement);
 
     const scene = new THREE.Scene();
@@ -120,7 +171,12 @@ export default function Scene3DBackdrop({ color, light = false, intensity = 1, c
     scene.fog = fog;
 
     const tinted: Tinted[] = [];
-    const track = (mat: Tinted['mat'], base: number, mix: number, shade: number) => {
+    const track = (
+      mat: Tinted["mat"],
+      base: number,
+      mix: number,
+      shade: number,
+    ) => {
       tinted.push({ mat, base, mix, shade });
       return mat;
     };
@@ -133,8 +189,37 @@ export default function Scene3DBackdrop({ color, light = false, intensity = 1, c
     scene.add(key);
     scene.add(new THREE.AmbientLight(0xffffff, 0.1));
 
+    let disposed = false;
     const glowTex = glowTexture();
     const mistTex = mistTexture();
+
+    // --------------------------------------------------------- panorama trời
+    // Tấm phẳng đặt xa, KHÔNG phải mặt cầu bọc kín: lớp 3D đè lên tranh cảnh
+    // giới 2D nên phủ kín trời là xoá mất tranh. Bốn mép tan dần để hoà vào
+    // tranh phía dưới thay vì cắt ngang màn một đường cứng.
+    let skyTex: THREE.Texture | null = null;
+    if (sky) {
+      const img = new Image();
+      img.onload = () => {
+        if (disposed) return;
+        skyTex = skyPanelTexture(img);
+        const mat = new THREE.MeshBasicMaterial({
+          map: skyTex,
+          transparent: true,
+          depthWrite: false,
+          fog: false,
+        });
+        const panel = new THREE.Mesh(new THREE.PlaneGeometry(210, 105), mat);
+        panel.position.set(2, 12, -88);
+        panel.renderOrder = -1;
+        scene.add(panel);
+        track(mat, 0.5, 0, 1);
+        redraw.current?.();
+      };
+      // Thiếu file thì im lặng bỏ qua, thế giới vẫn chạy như cũ.
+      img.onerror = () => {};
+      img.src = sky;
+    }
 
     // ------------------------------------------------------------- sao trời
     const starCount = small ? 240 : 460;
@@ -145,14 +230,24 @@ export default function Scene3DBackdrop({ color, light = false, intensity = 1, c
       starPos[i * 3 + 2] = -62 - Math.random() * 44;
     }
     const starGeo = new THREE.BufferGeometry();
-    starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
-    const starMat = new THREE.PointsMaterial({ size: 0.36, transparent: true, depthWrite: false, fog: false });
+    starGeo.setAttribute("position", new THREE.BufferAttribute(starPos, 3));
+    const starMat = new THREE.PointsMaterial({
+      size: 0.36,
+      transparent: true,
+      depthWrite: false,
+      fog: false,
+    });
     const stars = new THREE.Points(starGeo, track(starMat, 0.45, 1, 1.25));
     scene.add(stars);
 
     // ------------------------------------------------- quầng linh khí phía xa
     const halo = new THREE.Sprite(
-      new THREE.SpriteMaterial({ map: glowTex, transparent: true, depthWrite: false, fog: false }),
+      new THREE.SpriteMaterial({
+        map: glowTex,
+        transparent: true,
+        depthWrite: false,
+        fog: false,
+      }),
     );
     halo.scale.set(78, 78, 1);
     halo.position.set(7, 13, -56);
@@ -161,10 +256,16 @@ export default function Scene3DBackdrop({ color, light = false, intensity = 1, c
 
     // ---------------------------------------------------------------- núi non
     const ridges = RIDGES.map((r, i) => {
-      const mat = new THREE.MeshLambertMaterial({ transparent: true, depthWrite: false });
+      const mat = new THREE.MeshLambertMaterial({
+        transparent: true,
+        depthWrite: false,
+      });
       // Núi xa phải sáng hơn nền chứ không tối hơn: bóng gần đen đặt trên nền
       // đêm là chìm mất tăm, còn dãy núi bắt sương mới ra được chất thuỷ mặc.
-      const mesh = new THREE.Mesh(ridgeGeometry(r.peaks, r.w, r.h, r.drop), track(mat, r.o, 0.85, 1.1));
+      const mesh = new THREE.Mesh(
+        ridgeGeometry(r.peaks, r.w, r.h, r.drop),
+        track(mat, r.o, 0.85, 1.1),
+      );
       mesh.position.set(0, r.y, r.z);
       scene.add(mesh);
       // Tầng gần trôi nhanh và xa hơn tầng xa - đó là chỗ sinh ra chiều sâu.
@@ -173,19 +274,36 @@ export default function Scene3DBackdrop({ color, light = false, intensity = 1, c
 
     // ------------------------------------------------------------- đảo tiên
     const islandSpecs = small ? ISLANDS.slice(0, 4) : ISLANDS;
-    const islandGroups: { group: THREE.Group; spec: (typeof ISLANDS)[number]; phase: number }[] = [];
+    const islandGroups: {
+      group: THREE.Group;
+      spec: (typeof ISLANDS)[number];
+      phase: number;
+    }[] = [];
 
     islandSpecs.forEach((spec, i) => {
       const group = new THREE.Group();
 
-      const rockMat = new THREE.MeshLambertMaterial({ transparent: true, flatShading: true, depthWrite: false });
-      const rock = new THREE.Mesh(islandGeometry(i + 1), track(rockMat, 0.5, 0.52, 1));
+      const rockMat = new THREE.MeshLambertMaterial({
+        transparent: true,
+        flatShading: true,
+        depthWrite: false,
+      });
+      const rock = new THREE.Mesh(
+        islandGeometry(i + 1),
+        track(rockMat, 0.5, 0.52, 1),
+      );
       rock.rotation.y = i * 1.1;
       group.add(rock);
 
       if (spec.tiers > 0) {
-        const towerMat = new THREE.MeshLambertMaterial({ transparent: true, depthWrite: false });
-        const tower = new THREE.Mesh(pagodaGeometry(spec.tiers), track(towerMat, 0.62, 0.7, 1.2));
+        const towerMat = new THREE.MeshLambertMaterial({
+          transparent: true,
+          depthWrite: false,
+        });
+        const tower = new THREE.Mesh(
+          pagodaGeometry(spec.tiers),
+          track(towerMat, 0.62, 0.7, 1.2),
+        );
         tower.scale.setScalar(0.78);
         tower.position.y = 0.2;
         tower.rotation.y = 0.4 + i * 0.3;
@@ -195,7 +313,12 @@ export default function Scene3DBackdrop({ color, light = false, intensity = 1, c
       // Hào quang bám quanh đảo: chính lớp này khiến đảo dính vào không khí chứ
       // không nổi lên như miếng dán cắt rời.
       const aura = new THREE.Sprite(
-        new THREE.SpriteMaterial({ map: glowTex, transparent: true, depthWrite: false, fog: false }),
+        new THREE.SpriteMaterial({
+          map: glowTex,
+          transparent: true,
+          depthWrite: false,
+          fog: false,
+        }),
       );
       aura.scale.set(4.6, 3.4, 1);
       aura.position.y = -0.2;
@@ -212,11 +335,19 @@ export default function Scene3DBackdrop({ color, light = false, intensity = 1, c
     const mists: THREE.Sprite[] = [];
     for (let i = 0; i < (small ? 8 : 16); i++) {
       const sprite = new THREE.Sprite(
-        new THREE.SpriteMaterial({ map: mistTex, transparent: true, depthWrite: false }),
+        new THREE.SpriteMaterial({
+          map: mistTex,
+          transparent: true,
+          depthWrite: false,
+        }),
       );
       const w = 12 + Math.random() * 16;
       sprite.scale.set(w, w * 0.42, 1);
-      sprite.position.set((Math.random() - 0.5) * 120, -4 + Math.random() * 18, -20 - Math.random() * 30);
+      sprite.position.set(
+        (Math.random() - 0.5) * 120,
+        -4 + Math.random() * 18,
+        -20 - Math.random() * 30,
+      );
       scene.add(sprite);
       mists.push(sprite);
       track(sprite.material, 0.1, 0.85, 1);
@@ -258,7 +389,8 @@ export default function Scene3DBackdrop({ color, light = false, intensity = 1, c
       aim.x = (e.clientX / window.innerWidth - 0.5) * 2;
       aim.y = (e.clientY / window.innerHeight - 0.5) * 2;
     };
-    if (!reduce) window.addEventListener('pointermove', onMove, { passive: true });
+    if (!reduce)
+      window.addEventListener("pointermove", onMove, { passive: true });
 
     // ------------------------------------------------------- nhuộm theo cảnh giới
     const targetColor = new THREE.Color();
@@ -269,7 +401,9 @@ export default function Scene3DBackdrop({ color, light = false, intensity = 1, c
     const applyMode = (isLight: boolean) => {
       // Nền giấy sáng mà cộng thêm ánh sáng thì hạt bay màu trắng xoá, không
       // thấy gì; chuyển sang pha thường và để hạt đậm hơn nền mới đọc được.
-      qi.material.blending = isLight ? THREE.NormalBlending : THREE.AdditiveBlending;
+      qi.material.blending = isLight
+        ? THREE.NormalBlending
+        : THREE.AdditiveBlending;
       qi.material.needsUpdate = true;
     };
     applyMode(lastLight);
@@ -284,7 +418,8 @@ export default function Scene3DBackdrop({ color, light = false, intensity = 1, c
       const ease = dt <= 0 ? 1 : 1 - Math.exp(-dt * 1.6);
       tint.lerp(targetColor, ease);
 
-      const wantDim = (w.light ? 0.6 : 1) * Math.max(0, Math.min(1, w.intensity));
+      const wantDim =
+        (w.light ? 0.6 : 1) * Math.max(0, Math.min(1, w.intensity));
       dim += (wantDim - dim) * (dt <= 0 ? 1 : 1 - Math.exp(-dt * 3));
 
       if (w.light !== lastLight) {
@@ -327,8 +462,10 @@ export default function Scene3DBackdrop({ color, light = false, intensity = 1, c
 
       const damp = 1 - Math.exp(-dt * 3);
       // Cộng thêm một nhịp trôi rất chậm: không ai chạm chuột thì cảnh vẫn thở.
-      camera.position.x += (aim.x * 1.6 + Math.sin(t * 0.07) * 0.9 - camera.position.x) * damp;
-      camera.position.y += (-aim.y * 1 + Math.cos(t * 0.05) * 0.5 - camera.position.y) * damp;
+      camera.position.x +=
+        (aim.x * 1.6 + Math.sin(t * 0.07) * 0.9 - camera.position.x) * damp;
+      camera.position.y +=
+        (-aim.y * 1 + Math.cos(t * 0.05) * 0.5 - camera.position.y) * damp;
       camera.lookAt(0, 0, -28);
 
       stars.rotation.z = t * 0.004;
@@ -340,7 +477,8 @@ export default function Scene3DBackdrop({ color, light = false, intensity = 1, c
       for (const it of islandGroups) {
         // Đảo dập dềnh và xoay rất chậm quanh trục đứng: đủ để mắt bắt được
         // rằng đây là khối có bề dày, không phải hình cắt dán.
-        it.group.position.y = it.spec.y + Math.sin(t * 0.28 + it.phase) * it.spec.bob;
+        it.group.position.y =
+          it.spec.y + Math.sin(t * 0.28 + it.phase) * it.spec.bob;
         it.group.rotation.y = Math.sin(t * 0.05 + it.phase) * 0.25;
       }
 
@@ -374,21 +512,24 @@ export default function Scene3DBackdrop({ color, light = false, intensity = 1, c
       still();
     } else {
       raf = requestAnimationFrame(frame);
-      document.addEventListener('visibilitychange', onVisibility);
+      document.addEventListener("visibilitychange", onVisibility);
     }
 
     return () => {
       cancelAnimationFrame(raf);
       redraw.current = null;
       ro.disconnect();
-      window.removeEventListener('pointermove', onMove);
-      document.removeEventListener('visibilitychange', onVisibility);
+      window.removeEventListener("pointermove", onMove);
+      document.removeEventListener("visibilitychange", onVisibility);
+      disposed = true;
       glowTex.dispose();
       mistTex.dispose();
+      skyTex?.dispose();
       scene.traverse((o) => {
         const mesh = o as THREE.Mesh;
         mesh.geometry?.dispose?.();
-        const mat = mesh.material as THREE.Material | THREE.Material[] | undefined;
+        const mat = mesh.material as
+          THREE.Material | THREE.Material[] | undefined;
         if (Array.isArray(mat)) mat.forEach((x) => x.dispose());
         else mat?.dispose?.();
       });
