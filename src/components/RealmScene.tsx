@@ -1,7 +1,7 @@
-import { REALMS } from '../lib/cultivation';
-import ArtImage from './ArtImage';
-import { REALM_SLUG } from './hub/HubScene';
-import { cn } from '@/lib/utils';
+import { REALMS } from "../lib/cultivation";
+import ArtImage from "./ArtImage";
+import { REALM_SLUG, SCENE_FALLBACK } from "./hub/HubScene";
+import { cn } from "@/lib/utils";
 
 /**
  * Tranh cảnh giới. Dùng art thật trong public/art/scene, phủ thêm một lớp màu
@@ -12,21 +12,29 @@ import { cn } from '@/lib/utils';
 
 interface Props {
   realmIndex: number;
-  variant?: 'hero' | 'thumb';
+  variant?: "hero" | "thumb";
   className?: string;
   /** Độ mờ của lớp phủ màu cảnh giới */
   tint?: number;
 }
 
-export default function RealmScene({ realmIndex, variant = 'hero', className, tint = 0.28 }: Props) {
+export default function RealmScene({
+  realmIndex,
+  variant = "hero",
+  className,
+  tint = 0.28,
+}: Props) {
   const i = Math.max(0, Math.min(REALMS.length - 1, realmIndex));
   const realm = REALMS[i];
 
   return (
-    <div className={cn('relative h-full w-full overflow-hidden', className)} aria-hidden>
+    <div
+      className={cn("relative h-full w-full overflow-hidden", className)}
+      aria-hidden
+    >
       <ArtImage
         src={`/art/realm/${REALM_SLUG[i]}.jpg`}
-        fallback="/art/scene/main.jpg"
+        fallback={SCENE_FALLBACK}
         alt=""
         loading="lazy"
         className="h-full w-full object-cover"
@@ -38,7 +46,7 @@ export default function RealmScene({ realmIndex, variant = 'hero', className, ti
       />
       {/* Hạ sáng nền tranh để chữ và vòng tiến độ đè lên vẫn đọc được */}
       <div className="bg-background/45 absolute inset-0" />
-      {variant === 'hero' && (
+      {variant === "hero" && (
         <div className="from-card absolute inset-0 bg-gradient-to-t via-transparent to-transparent" />
       )}
     </div>

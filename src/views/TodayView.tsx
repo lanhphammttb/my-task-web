@@ -1,29 +1,52 @@
-import { useMemo } from 'react';
-import { AnimatePresence } from 'motion/react';
+import { useMemo } from "react";
+import { AnimatePresence } from "motion/react";
 import {
-  AlertTriangle, CalendarCheck2, CalendarPlus, Check, ChevronLeft, ChevronRight, Crosshair,
-  Flag, Gem, Hourglass, Lightbulb, ListChecks, PartyPopper, Play, Quote, ScrollText, Target, Trophy,
+  AlertTriangle,
+  CalendarCheck2,
+  CalendarPlus,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Crosshair,
+  Flag,
+  Gem,
+  Hourglass,
+  Lightbulb,
+  ListChecks,
+  PartyPopper,
+  Play,
+  Quote,
+  ScrollText,
+  Target,
+  Trophy,
   Wand2,
-} from 'lucide-react';
-import type { Task } from '../types';
+} from "lucide-react";
+import type { Task } from "../types";
 import {
-  addDays, countdown, dateKey, formatDuration, longDate, parseKey, relativeDay, todayKey,
-} from '../lib/date';
-import { dayStats, sortTasks, tasksOn } from '../lib/stats';
-import { nudge } from '../lib/motivation';
-import { aphorismOfDay } from '../lib/elders';
-import { questStates } from '../lib/quests';
-import { ROOT_GRADES } from '../lib/spirit';
-import { cultivationOf } from '../lib/cultivation';
-import { effectiveXp } from '../lib/economy';
-import { useApp } from '../store/AppStore';
-import ProgressRing from '../components/ProgressRing';
-import RealmScene from '../components/RealmScene';
-import QuickAdd from '../components/QuickAdd';
-import TaskCard from '../components/TaskCard';
-import { EmptyState, Meter, MetaChip, Section } from '../components/primitives';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+  addDays,
+  countdown,
+  dateKey,
+  formatDuration,
+  longDate,
+  parseKey,
+  relativeDay,
+  todayKey,
+} from "../lib/date";
+import { dayStats, sortTasks, tasksOn } from "../lib/stats";
+import { nudge } from "../lib/motivation";
+import { aphorismOfDay } from "../lib/elders";
+import { questStates } from "../lib/quests";
+import { ROOT_GRADES } from "../lib/spirit";
+import { cultivationOf } from "../lib/cultivation";
+import { effectiveXp } from "../lib/economy";
+import { useApp } from "../store/AppStore";
+import ProgressRing from "../components/ProgressRing";
+import RealmScene from "../components/RealmScene";
+import QuickAdd from "../components/QuickAdd";
+import TaskCard from "../components/TaskCard";
+import { EmptyState, Meter, MetaChip, Section } from "../components/primitives";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface Props {
   date: string;
@@ -32,20 +55,34 @@ interface Props {
   onFocus: (t: Task) => void;
 }
 
-export default function TodayView({ date, onDateChange, onEdit, onFocus }: Props) {
+export default function TodayView({
+  date,
+  onDateChange,
+  onEdit,
+  onFocus,
+}: Props) {
   const { data, pushOverdueToToday, awaken } = useApp();
   const isToday = date === todayKey();
 
-  const list = useMemo(() => sortTasks(tasksOn(data.tasks, date)), [data.tasks, date]);
-  const stats = useMemo(() => dayStats(data.tasks, data.sessions, date), [data.tasks, data.sessions, date]);
+  const list = useMemo(
+    () => sortTasks(tasksOn(data.tasks, date)),
+    [data.tasks, date],
+  );
+  const stats = useMemo(
+    () => dayStats(data.tasks, data.sessions, date),
+    [data.tasks, data.sessions, date],
+  );
   const overdue = useMemo(
-    () => sortTasks(data.tasks.filter((t) => t.status !== 'done' && t.date < todayKey())),
+    () =>
+      sortTasks(
+        data.tasks.filter((t) => t.status !== "done" && t.date < todayKey()),
+      ),
     [data.tasks],
   );
 
-  const doing = list.filter((t) => t.status === 'doing');
-  const todo = list.filter((t) => t.status === 'todo');
-  const done = list.filter((t) => t.status === 'done');
+  const doing = list.filter((t) => t.status === "doing");
+  const todo = list.filter((t) => t.status === "todo");
+  const done = list.filter((t) => t.status === "done");
   const pending = [...doing, ...todo];
   const remainMin = pending.reduce((s, t) => s + t.estimateMin, 0);
   const top3 = pending.slice(0, 3);
@@ -69,12 +106,19 @@ export default function TodayView({ date, onDateChange, onEdit, onFocus }: Props
         </Button>
         <div className="min-w-0 flex-1">
           <h2 className="truncate text-lg font-bold tracking-tight">
-            {isToday ? 'Hôm nay' : relativeDay(date)}
+            {isToday ? "Hôm nay" : relativeDay(date)}
           </h2>
-          <p className="text-muted-foreground text-xs">{longDate(parseKey(date))}</p>
+          <p className="text-muted-foreground text-xs">
+            {longDate(parseKey(date))}
+          </p>
         </div>
         {!isToday && (
-          <Button variant="outline" size="sm" className="gap-1.5" onClick={() => onDateChange(todayKey())}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5"
+            onClick={() => onDateChange(todayKey())}
+          >
             <CalendarCheck2 className="size-3.5" /> Về hôm nay
           </Button>
         )}
@@ -93,12 +137,16 @@ export default function TodayView({ date, onDateChange, onEdit, onFocus }: Props
         <Section tone="accent" icon={Wand2} title="Chưa khai quang linh căn">
           <div className="flex flex-wrap items-center gap-4">
             <p className="text-muted-foreground min-w-56 flex-1 text-xs leading-relaxed">
-              Người tu nào cũng phải khai quang một lần để biết mình mang hệ gì. Linh căn quyết định
-              tốc độ hấp thu tu vi và các thiên phú đi theo suốt đường tu.
+              Người tu nào cũng phải khai quang một lần để biết mình mang hệ gì.
+              Linh căn quyết định tốc độ hấp thu tu vi và các thiên phú đi theo
+              suốt đường tu.
             </p>
             <div className="flex flex-wrap gap-1.5">
               {ROOT_GRADES.map((g) => (
-                <MetaChip key={g.name} style={{ color: g.tone, borderColor: `${g.tone}55` }}>
+                <MetaChip
+                  key={g.name}
+                  style={{ color: g.tone, borderColor: `${g.tone}55` }}
+                >
                   {Math.round(g.chance * 100)}% {g.name}
                 </MetaChip>
               ))}
@@ -113,10 +161,10 @@ export default function TodayView({ date, onDateChange, onEdit, onFocus }: Props
       {/* ------------------------------------------------------- tổng quan */}
       <section
         className={cn(
-          'relative overflow-hidden rounded-2xl border p-5',
+          "relative overflow-hidden rounded-2xl border p-5",
           perfect
-            ? 'border-success/40 bg-gradient-to-br from-success/12 to-card'
-            : 'border-primary/25 bg-gradient-to-br from-primary/12 to-card',
+            ? "border-success/40 bg-gradient-to-br from-success/12 to-card"
+            : "border-primary/25 bg-gradient-to-br from-primary/12 to-card",
         )}
       >
         {/* Tranh cảnh giới làm nền mờ để màn hình chính cũng có hình */}
@@ -131,13 +179,14 @@ export default function TodayView({ date, onDateChange, onEdit, onFocus }: Props
             size={126}
             label={`${stats.done}/${stats.total}`}
             caption="nhiệm vụ xong"
-            color={perfect ? 'var(--success)' : undefined}
+            color={perfect ? "var(--success)" : undefined}
           />
           <div className="min-w-0 flex-1 space-y-4">
             {perfect ? (
               <p className="text-success flex items-start gap-2 text-sm font-semibold">
                 <PartyPopper className="mt-0.5 size-4 shrink-0" />
-Nhật khoá viên mãn! Danh sách đã sạch, đạo tâm vững thêm một phần.
+                Nhật khoá viên mãn! Danh sách đã sạch, đạo tâm vững thêm một
+                phần.
               </p>
             ) : (
               <p className="flex items-start gap-2 text-sm font-semibold">
@@ -161,10 +210,13 @@ Nhật khoá viên mãn! Danh sách đã sạch, đạo tâm vững thêm một 
                   <Crosshair className="size-3" /> Nhập định
                 </div>
                 <div className="tabular mt-0.5 mb-1.5 text-sm font-semibold">
-                  {formatDuration(stats.focusMin)} / {formatDuration(dailyFocusTarget)}
+                  {formatDuration(stats.focusMin)} /{" "}
+                  {formatDuration(dailyFocusTarget)}
                 </div>
                 <Meter
-                  value={dailyFocusTarget ? stats.focusMin / dailyFocusTarget : 0}
+                  value={
+                    dailyFocusTarget ? stats.focusMin / dailyFocusTarget : 0
+                  }
                   barClassName="bg-success"
                 />
               </div>
@@ -172,7 +224,9 @@ Nhật khoá viên mãn! Danh sách đã sạch, đạo tâm vững thêm một 
                 <div className="text-muted-foreground flex items-center gap-1.5 text-[11px]">
                   <Hourglass className="size-3" /> Còn phải làm
                 </div>
-                <div className="tabular mt-0.5 mb-1.5 text-sm font-semibold">{formatDuration(remainMin)}</div>
+                <div className="tabular mt-0.5 mb-1.5 text-sm font-semibold">
+                  {formatDuration(remainMin)}
+                </div>
                 <Meter value={remainMin / 480} barClassName="bg-warning" />
               </div>
             </div>
@@ -181,7 +235,9 @@ Nhật khoá viên mãn! Danh sách đã sạch, đạo tâm vững thêm một 
               <Quote className="text-gold mr-1 mb-0.5 inline size-3" />
               <span className="italic">{aphorism.text}</span>
               <cite className="mt-1 block text-[11px] not-italic">
-                <span className="text-gold/90 font-medium">— {aphorism.elder}</span>
+                <span className="text-gold/90 font-medium">
+                  — {aphorism.elder}
+                </span>
                 <span className="opacity-70"> · {aphorism.title}</span>
               </cite>
             </blockquote>
@@ -209,21 +265,32 @@ Nhật khoá viên mãn! Danh sách đã sạch, đạo tâm vững thêm một 
             <li
               key={q.id}
               className={cn(
-                'rounded-lg border p-3 transition-colors',
-                q.done ? 'border-success/40 bg-success/[0.08]' : 'border-border bg-surface/50',
+                "rounded-lg border p-3 transition-colors",
+                q.done
+                  ? "border-success/40 bg-success/[0.08]"
+                  : "border-border bg-surface/50",
               )}
             >
               <div className="flex items-start gap-2">
                 <span
                   className={cn(
-                    'mt-0.5 grid size-4 shrink-0 place-items-center rounded-full border',
-                    q.done ? 'border-success bg-success text-white' : 'border-muted-foreground/40',
+                    "mt-0.5 grid size-4 shrink-0 place-items-center rounded-full border",
+                    q.done
+                      ? "border-success bg-success text-white"
+                      : "border-muted-foreground/40",
                   )}
                 >
                   {q.done && <Check className="size-2.5" strokeWidth={4} />}
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className={cn('block text-xs font-medium', q.done && 'text-success')}>{q.label}</span>
+                  <span
+                    className={cn(
+                      "block text-xs font-medium",
+                      q.done && "text-success",
+                    )}
+                  >
+                    {q.label}
+                  </span>
                   <span className="text-muted-foreground tabular text-[11px]">
                     {q.current}/{q.target} · thưởng {q.reward} linh thạch
                   </span>
@@ -251,7 +318,13 @@ Nhật khoá viên mãn! Danh sách đã sạch, đạo tâm vững thêm một 
           <AnimatePresence initial={false}>
             <div className="space-y-2">
               {overdue.slice(0, 5).map((t) => (
-                <TaskCard key={t.id} task={t} onEdit={onEdit} onFocus={onFocus} showDate />
+                <TaskCard
+                  key={t.id}
+                  task={t}
+                  onEdit={onEdit}
+                  onFocus={onFocus}
+                  showDate
+                />
               ))}
             </div>
           </AnimatePresence>
@@ -278,18 +351,29 @@ Nhật khoá viên mãn! Danh sách đã sạch, đạo tâm vững thêm một 
                     {i + 1}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <strong className="block truncate text-sm font-semibold">{t.title}</strong>
+                    <strong className="block truncate text-sm font-semibold">
+                      {t.title}
+                    </strong>
                     <span className="text-muted-foreground flex flex-wrap items-center gap-x-2 text-[11px]">
                       <span>{formatDuration(t.estimateMin)}</span>
                       {t.startTime && <span>· bắt đầu {t.startTime}</span>}
                       {cd.label && (
-                        <span className={cn('inline-flex items-center gap-1', cd.level === 'late' && 'text-destructive')}>
+                        <span
+                          className={cn(
+                            "inline-flex items-center gap-1",
+                            cd.level === "late" && "text-destructive",
+                          )}
+                        >
                           · <Flag className="size-2.5" /> {cd.label}
                         </span>
                       )}
                     </span>
                   </div>
-                  <Button size="sm" className="shrink-0 gap-1.5" onClick={() => onFocus(t)}>
+                  <Button
+                    size="sm"
+                    className="shrink-0 gap-1.5"
+                    onClick={() => onFocus(t)}
+                  >
                     <Play className="size-3.5" /> Làm ngay
                   </Button>
                 </li>
@@ -308,6 +392,7 @@ Nhật khoá viên mãn! Danh sách đã sạch, đạo tâm vững thêm một 
         {list.length === 0 ? (
           <EmptyState
             icon={CalendarPlus}
+            art="no-task"
             title="Chưa có nhiệm vụ nào cho ngày này"
             hint="Dùng ô thêm nhanh phía trên để lên kế hoạch ngay. Ba việc là đủ cho một ngày tốt."
           />
@@ -319,7 +404,12 @@ Nhật khoá viên mãn! Danh sách đã sạch, đạo tâm vững thêm một 
                   <GroupLabel>Đang làm</GroupLabel>
                   <div className="space-y-2">
                     {doing.map((t) => (
-                      <TaskCard key={t.id} task={t} onEdit={onEdit} onFocus={onFocus} />
+                      <TaskCard
+                        key={t.id}
+                        task={t}
+                        onEdit={onEdit}
+                        onFocus={onFocus}
+                      />
                     ))}
                   </div>
                 </div>
@@ -329,7 +419,12 @@ Nhật khoá viên mãn! Danh sách đã sạch, đạo tâm vững thêm một 
                   <GroupLabel>Cần làm</GroupLabel>
                   <div className="space-y-2">
                     {todo.map((t) => (
-                      <TaskCard key={t.id} task={t} onEdit={onEdit} onFocus={onFocus} />
+                      <TaskCard
+                        key={t.id}
+                        task={t}
+                        onEdit={onEdit}
+                        onFocus={onFocus}
+                      />
                     ))}
                   </div>
                 </div>
@@ -354,6 +449,8 @@ Nhật khoá viên mãn! Danh sách đã sạch, đạo tâm vững thêm một 
 
 function GroupLabel({ children }: { children: React.ReactNode }) {
   return (
-    <h4 className="text-muted-foreground mb-2 text-[11px] font-bold tracking-wider uppercase">{children}</h4>
+    <h4 className="text-muted-foreground mb-2 text-[11px] font-bold tracking-wider uppercase">
+      {children}
+    </h4>
   );
 }

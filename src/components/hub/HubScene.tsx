@@ -1,22 +1,22 @@
-import { REALMS } from '../../lib/cultivation';
-import ArtImage from '../ArtImage';
-import { cn } from '@/lib/utils';
+import { REALMS } from "../../lib/cultivation";
+import ArtImage from "../ArtImage";
+import { cn } from "@/lib/utils";
 
 /**
  * Tên file nền riêng cho từng cảnh giới. Thả ảnh vào `public/art/realm/` theo
  * đúng tên này là web tự dùng; chưa có thì lùi về bộ art dùng chung bên dưới.
  */
 export const REALM_SLUG = [
-  '01-luyen-khi',
-  '02-truc-co',
-  '03-kim-dan',
-  '04-nguyen-anh',
-  '05-hoa-than',
-  '06-luyen-hu',
-  '07-hop-the',
-  '08-dai-thua',
-  '09-do-kiep',
-  '10-phi-thang',
+  "01-luyen-khi",
+  "02-truc-co",
+  "03-kim-dan",
+  "04-nguyen-anh",
+  "05-hoa-than",
+  "06-luyen-hu",
+  "07-hop-the",
+  "08-dai-thua",
+  "09-do-kiep",
+  "10-phi-thang",
 ];
 
 /**
@@ -26,31 +26,24 @@ export const REALM_SLUG = [
  * thể (quan trọng khi màn hình dọc), trục Y theo chỗ đặt điểm nhìn.
  */
 const REALM_FOCUS = [
-  '62% 50%', // Luyện Khí - đệ tử ngồi thiền bên phải
-  '62% 58%', // Trúc Cơ - đài bát quái nằm thấp
-  '38% 50%', // Kim Đan - lò đan bên trái
-  '62% 55%', // Nguyên Anh - nguyên anh và mặt nước
-  '38% 50%', // Hoá Thần - cây tùng bên trái, biển mây
-  '62% 50%', // Luyện Hư - cổng đá bên phải
-  '38% 50%', // Hợp Thể - dãy điện bên trái
-  '50% 50%', // Đại Thừa - đối xứng hai bên
-  '58% 66%', // Độ Kiếp - đài đá hứng lôi nằm sát đáy
-  '58% 45%', // Phi Thăng - cổng trời trên cao bên phải
+  "62% 50%", // Luyện Khí - đệ tử ngồi thiền bên phải
+  "62% 58%", // Trúc Cơ - đài bát quái nằm thấp
+  "38% 50%", // Kim Đan - lò đan bên trái
+  "62% 55%", // Nguyên Anh - nguyên anh và mặt nước
+  "38% 50%", // Hoá Thần - cây tùng bên trái, biển mây
+  "62% 50%", // Luyện Hư - cổng đá bên phải
+  "38% 50%", // Hợp Thể - dãy điện bên trái
+  "50% 50%", // Đại Thừa - đối xứng hai bên
+  "58% 66%", // Độ Kiếp - đài đá hứng lôi nằm sát đáy
+  "58% 45%", // Phi Thăng - cổng trời trên cao bên phải
 ];
 
-/** Bộ nền dùng chung, đóng vai trò ảnh lùi khi chưa có ảnh riêng. */
-const REALM_BG = [
-  '/art/page/sect.jpg', // Luyện Khí
-  '/art/page/bicanh.jpg', // Trúc Cơ
-  '/art/page/bicanh.jpg', // Kim Đan
-  '/art/page/uminh.jpg', // Nguyên Anh
-  '/art/page/bicanh.jpg', // Hoá Thần
-  '/art/page/hub.jpg', // Luyện Hư
-  '/art/scene/main.jpg', // Hợp Thể
-  '/art/page/bone.jpg', // Đại Thừa
-  '/art/page/tower.jpg', // Độ Kiếp
-  '/art/page/bone.jpg', // Phi Thăng
-];
+/**
+ * Ảnh lùi dùng chung cho mọi chỗ cần nền cảnh. Bộ art đã đủ nên nó gần như
+ * không bao giờ hiện; giữ lại một tấm để nếu thiếu file thì vẫn có gì đó thay
+ * vì một mảng đen, mà không phải đóng gói cả bộ ảnh dự phòng vào bản build.
+ */
+export const SCENE_FALLBACK = "/art/scene/cave.jpg";
 
 /** Toạ độ hạt linh khí - cố định để lần render nào cũng như nhau. */
 const MOTES = [
@@ -78,51 +71,72 @@ interface Props {
  * bụi sao và một dải sương trôi ngang. Đây là thứ tạo cảm giác "đang ở trong
  * game" thay vì "đang xem một trang quản lý công việc".
  */
-export default function HubScene({ realmIndex, override, overrideFallback, className }: Props) {
+export default function HubScene({
+  realmIndex,
+  override,
+  overrideFallback,
+  className,
+}: Props) {
   const i = Math.max(0, Math.min(REALMS.length - 1, realmIndex));
   const realm = REALMS[i];
   const src = override ?? `/art/realm/${REALM_SLUG[i]}.jpg`;
-  const fallback = override ? overrideFallback : REALM_BG[i];
+  const fallback = override ? overrideFallback : SCENE_FALLBACK;
 
   return (
-    <div className={cn('pointer-events-none fixed inset-0 -z-20 overflow-hidden', className)} aria-hidden>
+    <div
+      className={cn(
+        "pointer-events-none fixed inset-0 -z-20 overflow-hidden",
+        className,
+      )}
+      aria-hidden
+    >
       <ArtImage
         src={src}
         fallback={fallback}
         alt=""
         className="animate-slow-zoom h-full w-full object-cover"
         style={{
-          objectPosition: override ? '50% 50%' : REALM_FOCUS[i],
-          opacity: 'calc(1 - var(--scene-dim))',
+          objectPosition: override ? "50% 50%" : REALM_FOCUS[i],
+          opacity: "calc(1 - var(--scene-dim))",
           // Ép tương phản theo từng chế độ: đêm thì hạ sáng, ngày thì giữ nguyên.
-          filter: 'var(--scene-filter)',
+          filter: "var(--scene-filter)",
         }}
       />
 
       {/* Màn tối phủ đều: giữ nền luôn chìm dưới HUD và các bảng */}
       <div
         className="absolute inset-0"
-        style={{ background: 'color-mix(in oklab, var(--background) 22%, transparent)' }}
+        style={{
+          background: "color-mix(in oklab, var(--background) 22%, transparent)",
+        }}
       />
 
       {/* Nhuộm sắc cảnh giới để mười bậc nhìn vào là thấy khác nhau ngay */}
-      <div className="absolute inset-0 mix-blend-overlay" style={{ background: realm.color, opacity: 0.22 }} />
+      <div
+        className="absolute inset-0 mix-blend-overlay"
+        style={{ background: realm.color, opacity: 0.22 }}
+      />
 
       {/* Vignette: tối bốn cạnh để HUD và bảng nổi lên trên */}
       <div
         className="absolute inset-0"
         style={{
           background:
-            'radial-gradient(102% 80% at 50% 44%, transparent 0%, color-mix(in oklab, var(--background) 48%, transparent) 52%, var(--background) 98%)',
+            "radial-gradient(102% 80% at 50% 44%, transparent 0%, color-mix(in oklab, var(--background) 48%, transparent) 52%, var(--background) 98%)",
         }}
       />
       <div
         className="absolute inset-x-0 top-0 h-48"
-        style={{ background: 'linear-gradient(to bottom, var(--background), transparent)' }}
+        style={{
+          background:
+            "linear-gradient(to bottom, var(--background), transparent)",
+        }}
       />
       <div
         className="absolute inset-x-0 bottom-0 h-64"
-        style={{ background: 'linear-gradient(to top, var(--background), transparent)' }}
+        style={{
+          background: "linear-gradient(to top, var(--background), transparent)",
+        }}
       />
 
       {/* Bụi sao trôi rất chậm */}
@@ -140,8 +154,8 @@ export default function HubScene({ realmIndex, override, overrideFallback, class
             left: `${m.x}%`,
             width: m.size,
             height: m.size,
-            background: 'var(--gold-bright)',
-            boxShadow: '0 0 6px var(--gold-glow)',
+            background: "var(--gold-bright)",
+            boxShadow: "0 0 6px var(--gold-glow)",
             animation: `mote ${m.dur}s linear ${m.delay}s infinite`,
           }}
         />

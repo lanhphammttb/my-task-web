@@ -54,7 +54,7 @@ export default function SectSection() {
       title="Tông môn"
       subtitle={`${rank.name} · ${data.contribution} cống hiến`}
     >
-      <SectionArt src="/art/page/sect.jpg" caption="Sơn môn" tone="#7fb7a8">
+      <SectionArt src="/art/realm/01-luyen-khi.jpg" caption="Sơn môn" tone="#7fb7a8">
         Cống hiến đổi lấy danh phận, danh phận mở ra sứ mệnh nặng hơn. Đây là chỗ duy nhất bạn{' '}
         <strong>hứa trước rồi phải chịu trách nhiệm</strong> — nhận việc là cọc bị khoá lại thật.
       </SectionArt>

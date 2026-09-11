@@ -1,16 +1,31 @@
-import { useMemo, useState } from 'react';
-import { CalendarCheck2, ChevronLeft, ChevronRight, Circle, CircleCheck, GripVertical, Plus } from 'lucide-react';
-import type { Task } from '../types';
+import { useMemo, useState } from "react";
 import {
-  addDays, dateKey, formatDuration, monthLabel, parseKey, todayKey, weekDays, weekdayShort,
-} from '../lib/date';
-import { isOverdue, sortTasks } from '../lib/stats';
-import { PRIORITY_UI } from '../lib/ui';
-import { useApp } from '../store/AppStore';
-import { Meter } from '../components/primitives';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { cn } from '@/lib/utils';
+  CalendarCheck2,
+  ChevronLeft,
+  ChevronRight,
+  Circle,
+  CircleCheck,
+  GripVertical,
+  Plus,
+} from "lucide-react";
+import type { Task } from "../types";
+import {
+  addDays,
+  dateKey,
+  formatDuration,
+  monthLabel,
+  parseKey,
+  todayKey,
+  weekDays,
+  weekdayShort,
+} from "../lib/date";
+import { isOverdue, sortTasks } from "../lib/stats";
+import { PRIORITY_UI } from "../lib/ui";
+import { useApp } from "../store/AppStore";
+import { Meter } from "../components/primitives";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 
 interface Props {
   anchor: string;
@@ -19,12 +34,17 @@ interface Props {
   onOpenDay: (d: string) => void;
 }
 
-export default function WeekView({ anchor, onAnchorChange, onEdit, onOpenDay }: Props) {
+export default function WeekView({
+  anchor,
+  onAnchorChange,
+  onEdit,
+  onOpenDay,
+}: Props) {
   const { data, moveTask, toggleDone, addTask } = useApp();
   const [dragId, setDragId] = useState<string | null>(null);
   const [hoverDay, setHoverDay] = useState<string | null>(null);
   const [composing, setComposing] = useState<string | null>(null);
-  const [text, setText] = useState('');
+  const [text, setText] = useState("");
 
   const days = useMemo(
     () => weekDays(parseKey(anchor), data.settings.weekStartsOn),
@@ -40,11 +60,11 @@ export default function WeekView({ anchor, onAnchorChange, onEdit, onOpenDay }: 
   }, [data.tasks, days]);
 
   const all = days.flatMap((d) => byDay.get(dateKey(d)) ?? []);
-  const weekDone = all.filter((t) => t.status === 'done').length;
+  const weekDone = all.filter((t) => t.status === "done").length;
 
   const commit = (key: string) => {
     if (text.trim()) addTask({ title: text.trim(), date: key });
-    setText('');
+    setText("");
     setComposing(null);
   };
 
@@ -61,14 +81,19 @@ export default function WeekView({ anchor, onAnchorChange, onEdit, onOpenDay }: 
         </Button>
         <div className="min-w-0 flex-1">
           <h2 className="text-lg font-bold tracking-tight">
-            {dateKey(days[0]).slice(8)}/{dateKey(days[0]).slice(5, 7)} – {dateKey(days[6]).slice(8)}/
-            {dateKey(days[6]).slice(5, 7)}
+            {dateKey(days[0]).slice(8)}/{dateKey(days[0]).slice(5, 7)} –{" "}
+            {dateKey(days[6]).slice(8)}/{dateKey(days[6]).slice(5, 7)}
           </h2>
           <p className="text-muted-foreground text-xs">
             {monthLabel(parseKey(anchor))} · hoàn thành {weekDone}/{all.length}
           </p>
         </div>
-        <Button variant="outline" size="sm" className="gap-1.5" onClick={() => onAnchorChange(todayKey())}>
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-1.5"
+          onClick={() => onAnchorChange(todayKey())}
+        >
           <CalendarCheck2 className="size-3.5" /> Tuần này
         </Button>
         <Button
@@ -82,15 +107,18 @@ export default function WeekView({ anchor, onAnchorChange, onEdit, onOpenDay }: 
       </div>
 
       <p className="text-muted-foreground hidden items-center gap-1.5 text-xs lg:flex">
-        <GripVertical className="size-3.5" /> Kéo thả thẻ để dời nhiệm vụ sang ngày khác · nhấp đúp để sửa
+        <GripVertical className="size-3.5" /> Kéo thả thẻ để dời nhiệm vụ sang
+        ngày khác · nhấp đúp để sửa
       </p>
 
       <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-7">
         {days.map((d) => {
           const key = dateKey(d);
           const list = byDay.get(key) ?? [];
-          const done = list.filter((t) => t.status === 'done').length;
-          const load = list.filter((t) => t.status !== 'done').reduce((s, t) => s + t.estimateMin, 0);
+          const done = list.filter((t) => t.status === "done").length;
+          const load = list
+            .filter((t) => t.status !== "done")
+            .reduce((s, t) => s + t.estimateMin, 0);
           const isTd = key === todayKey();
 
           return (
@@ -107,29 +135,49 @@ export default function WeekView({ anchor, onAnchorChange, onEdit, onOpenDay }: 
                 setHoverDay(null);
               }}
               className={cn(
-                'flex flex-col rounded-xl border p-2.5 transition-colors lg:min-h-[340px]',
-                isTd ? 'border-primary bg-primary/[0.06]' : 'border-border bg-card',
-                hoverDay === key && 'border-primary bg-primary/12 ring-primary/25 ring-2',
+                "flex flex-col rounded-xl border p-2.5 transition-colors lg:min-h-[340px]",
+                isTd
+                  ? "border-primary bg-primary/[0.06]"
+                  : "border-border bg-card",
+                hoverDay === key &&
+                  "border-primary bg-primary/12 ring-primary/25 ring-2",
               )}
             >
-              <button onClick={() => onOpenDay(key)} className="mb-2 flex w-full items-start justify-between text-left">
+              <button
+                onClick={() => onOpenDay(key)}
+                className="mb-2 flex w-full items-start justify-between text-left"
+              >
                 <div>
                   <span className="text-muted-foreground block text-[10.5px] font-semibold tracking-wide uppercase">
                     {weekdayShort(d)}
                   </span>
-                  <strong className={cn('tabular text-xl leading-none', isTd && 'text-primary')}>{d.getDate()}</strong>
+                  <strong
+                    className={cn(
+                      "tabular text-xl leading-none",
+                      isTd && "text-primary",
+                    )}
+                  >
+                    {d.getDate()}
+                  </strong>
                 </div>
                 <div className="text-right">
                   <span className="text-muted-foreground tabular block text-xs">
                     {done}/{list.length}
                   </span>
                   {load > 0 && (
-                    <span className="text-muted-foreground/80 tabular block text-[10px]">{formatDuration(load)}</span>
+                    <span className="text-muted-foreground/80 tabular block text-[10px]">
+                      {formatDuration(load)}
+                    </span>
                   )}
                 </div>
               </button>
 
-              <Meter value={list.length ? done / list.length : 0} height={3} barClassName="bg-success" className="mb-2.5" />
+              <Meter
+                value={list.length ? done / list.length : 0}
+                height={3}
+                barClassName="bg-success"
+                className="mb-2.5"
+              />
 
               <div className="flex flex-1 flex-col gap-1.5">
                 {list.map((t) => (
@@ -141,10 +189,12 @@ export default function WeekView({ anchor, onAnchorChange, onEdit, onOpenDay }: 
                     onDoubleClick={() => onEdit(t)}
                     title={`${t.title} — nhấp đúp để sửa`}
                     className={cn(
-                      'group flex cursor-grab items-start gap-1.5 rounded-lg border border-l-[3px] px-2 py-1.5 text-xs leading-snug transition-colors active:cursor-grabbing',
-                      'border-border bg-surface/70 hover:bg-surface',
-                      t.status === 'done' && 'text-muted-foreground line-through opacity-60',
-                      isOverdue(t) && 'border-destructive/40 bg-destructive/[0.07]',
+                      "group flex cursor-grab items-start gap-1.5 rounded-lg border border-l-[3px] px-2 py-1.5 text-xs leading-snug transition-colors active:cursor-grabbing",
+                      "border-border bg-surface/70 hover:bg-surface",
+                      t.status === "done" &&
+                        "text-muted-foreground line-through opacity-60",
+                      isOverdue(t) &&
+                        "border-destructive/40 bg-destructive/[0.07]",
                     )}
                     style={{ borderLeftColor: PRIORITY_UI[t.priority].cssVar }}
                   >
@@ -156,7 +206,7 @@ export default function WeekView({ anchor, onAnchorChange, onEdit, onOpenDay }: 
                       aria-label="Đánh dấu hoàn thành"
                       className="hover:text-success mt-px shrink-0"
                     >
-                      {t.status === 'done' ? (
+                      {t.status === "done" ? (
                         <CircleCheck className="text-success size-3.5" />
                       ) : (
                         <Circle className="text-muted-foreground size-3.5" />
@@ -166,8 +216,10 @@ export default function WeekView({ anchor, onAnchorChange, onEdit, onOpenDay }: 
                         khiến "14:00Review" thành một từ dài rồi bị cắt giữa chữ. */}
                     <span className="min-w-0 break-words">
                       {t.startTime && (
-                        <span className="text-muted-foreground tabular mr-1">{t.startTime}</span>
-                      )}{' '}
+                        <span className="text-muted-foreground tabular mr-1">
+                          {t.startTime}
+                        </span>
+                      )}{" "}
                       {t.title}
                     </span>
                   </div>
@@ -180,9 +232,9 @@ export default function WeekView({ anchor, onAnchorChange, onEdit, onOpenDay }: 
                     onChange={(e) => setText(e.target.value)}
                     onBlur={() => commit(key)}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter') commit(key);
-                      if (e.key === 'Escape') {
-                        setText('');
+                      if (e.key === "Enter") commit(key);
+                      if (e.key === "Escape") {
+                        setText("");
                         setComposing(null);
                       }
                     }}

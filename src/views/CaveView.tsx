@@ -9,7 +9,9 @@ import {
 import type { Beast, BeastRarity } from '../lib/beasts';
 import { ELEMENTS, REROLL_COST, ROOT_GRADES, gradeOf } from '../lib/spirit';
 import { stoneBreakdown, xpBreakdown } from '../lib/economy';
+import { railSrc } from '../lib/icons';
 import { useApp } from '../store/AppStore';
+import ArtImage from '../components/ArtImage';
 import BeastEmblem from '../components/BeastEmblem';
 import ElementSeal from '../components/ElementSeal';
 import { EmptyState, Meter, MetaChip, Section } from '../components/primitives';
@@ -58,7 +60,11 @@ export default function CaveView() {
       <Section id="cave-stone" icon={Gem} title="Túi linh thạch" tone="accent">
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex items-center gap-3">
-            <img src="/art/icon/stone.png" alt="" className="size-14 object-contain drop-shadow-lg" />
+            <ArtImage
+              src={railSrc('linh-thach')}
+              alt=""
+              className="size-14 object-contain drop-shadow-lg"
+            />
             <div className="flex items-baseline gap-2">
               <span className="font-heading tabular text-gold text-4xl font-bold">{stones.balance}</span>
               <span className="text-muted-foreground text-xs">linh thạch</span>
@@ -205,7 +211,7 @@ export default function CaveView() {
         subtitle={`Đã thu phục ${owned.length}/${BEASTS.length}`}
         action={
           <Button size="sm" className="gap-1.5" onClick={doSummon} disabled={stones.balance < SUMMON_COST}>
-            <img src="/art/icon/summon.png" alt="" className="size-4 object-contain" /> Chiêu thú ({SUMMON_COST})
+            <ArtImage src={railSrc('chieu-thu')} alt="" className="size-4 object-contain" /> Chiêu thú ({SUMMON_COST})
           </Button>
         }
       >

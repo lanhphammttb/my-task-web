@@ -50,7 +50,7 @@ export default function SectionArt({
         >
           <ArtImage
             src={src}
-            fallback={fallback ?? '/art/page/hub.jpg'}
+            fallback={fallback}
             alt=""
             className="h-full w-full object-cover"
             style={{ objectPosition: focus ?? '50% 50%' }}

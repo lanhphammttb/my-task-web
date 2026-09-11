@@ -67,7 +67,7 @@ export default function ExpeditionSection() {
       title="Thám hiểm"
       subtitle={state ? `Đang ở ${state.site.name}` : 'Chưa lên đường'}
     >
-      <SectionArt src="/art/page/bicanh.jpg" caption="Cửa bí cảnh" tone="#5aa9c9">
+      <SectionArt src="/art/encounter/hang-dong.jpg" caption="Cửa bí cảnh" tone="#5aa9c9">
         Kỳ ngộ là chuyện trời cho, tự đến chứ không tìm được. Thám hiểm là mặt còn lại — mình chọn
         nơi đến và chọn mức liều. Đoàn về sau <strong>số nhiệm vụ</strong> bạn hoàn thành, không
         phải sau mấy tiếng đồng hồ.
@@ -79,7 +79,7 @@ export default function ExpeditionSection() {
           <div className="relative h-28">
             <ArtImage
               src={state.site.image}
-              fallback="/art/page/bicanh.jpg"
+              fallback="/art/scene/cave.jpg"
               alt=""
               className="h-full w-full object-cover opacity-70"
             />

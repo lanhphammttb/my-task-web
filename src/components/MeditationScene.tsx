@@ -1,5 +1,5 @@
-import { useEffect, useRef } from 'react';
-import { cn } from '@/lib/utils';
+import { useEffect, useRef, useState } from "react";
+import { cn } from "@/lib/utils";
 
 /**
  * Cảnh bế quan. Khi đồng hồ chạy thì phát video tu luyện và nhạc nền; lúc dừng
@@ -14,10 +14,17 @@ interface Props {
   className?: string;
 }
 
-export default function MeditationScene({ running, resting = false, ambient = true, className }: Props) {
-  const c = resting ? 'var(--success)' : 'var(--jade)';
+export default function MeditationScene({
+  running,
+  resting = false,
+  ambient = true,
+  className,
+}: Props) {
+  const c = resting ? "var(--success)" : "var(--jade)";
   const audioRef = useRef<HTMLAudioElement>(null);
   const showVideo = running && ambient;
+  /** Video tải lỗi thì lùi về ảnh tĩnh động phủ, không lùi sang video khác. */
+  const [videoOk, setVideoOk] = useState(true);
 
   useEffect(() => {
     const el = audioRef.current;
@@ -33,14 +40,16 @@ export default function MeditationScene({ running, resting = false, ambient = tr
   }, [showVideo]);
 
   return (
-    <div className={cn('relative h-full w-full overflow-hidden', className)}>
-      {showVideo ? (
+    <div className={cn("relative h-full w-full overflow-hidden", className)}>
+      {showVideo && videoOk ? (
         <video
-          src="/art/media/tu.mp4"
+          // Video chibi của chính app - cùng nhân vật với chibi trên hub.
+          src="/art/media/be-quan.mp4"
           autoPlay
           muted
           loop
           playsInline
+          onError={() => setVideoOk(false)}
           className="h-full w-full object-cover object-[center_28%]"
         />
       ) : (
@@ -52,12 +61,20 @@ export default function MeditationScene({ running, resting = false, ambient = tr
       )}
 
       {/* Nhuộm tông theo trạng thái: nhập định xanh ngọc, điều tức xanh lá */}
-      <div className="absolute inset-0 mix-blend-overlay" style={{ background: c, opacity: 0.16 }} />
+      <div
+        className="absolute inset-0 mix-blend-overlay"
+        style={{ background: c, opacity: 0.16 }}
+      />
       <div className="from-card/75 absolute inset-x-0 bottom-0 h-1/4 bg-gradient-to-t to-transparent" />
 
       {/* Vòng linh khí và hạt sáng chỉ chạy khi đồng hồ đang đếm */}
       {running && (
-        <svg viewBox="0 0 400 250" className="absolute inset-0 h-full w-full" preserveAspectRatio="none" aria-hidden>
+        <svg
+          viewBox="0 0 400 250"
+          className="absolute inset-0 h-full w-full"
+          preserveAspectRatio="none"
+          aria-hidden
+        >
           <g fill="none" stroke={c} strokeWidth="1.2" opacity="0.75">
             {[0, 1, 2].map((i) => (
               <ellipse
@@ -67,7 +84,7 @@ export default function MeditationScene({ running, resting = false, ambient = tr
                 rx="44"
                 ry="13"
                 style={{
-                  transformOrigin: '200px 196px',
+                  transformOrigin: "200px 196px",
                   animation: `qi-wave 3.6s ease-out ${i * 1.2}s infinite`,
                 }}
               />
@@ -81,7 +98,9 @@ export default function MeditationScene({ running, resting = false, ambient = tr
               r={i % 2 ? 1.8 : 1.2}
               fill={c}
               opacity="0.7"
-              style={{ animation: `mote ${4 + (i % 3)}s linear ${i * 0.45}s infinite` }}
+              style={{
+                animation: `mote ${4 + (i % 3)}s linear ${i * 0.45}s infinite`,
+              }}
             />
           ))}
         </svg>

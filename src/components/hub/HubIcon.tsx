@@ -1,8 +1,11 @@
-import { cn } from '@/lib/utils';
+import type { RailIcon } from "../../lib/icons";
+import { railSrc } from "../../lib/icons";
+import ArtImage from "../ArtImage";
+import { cn } from "@/lib/utils";
 
 interface Props {
-  /** Ảnh icon trong public/art/icon */
-  icon: string;
+  /** Tên icon; đường dẫn và đường lùi do lib/icons quyết định. */
+  icon: RailIcon;
   label: string;
   onClick: () => void;
   /** Con số nhỏ góc phải (số việc, số linh thú...) */
@@ -10,7 +13,7 @@ interface Props {
   /** Chấm sáng nhấp nháy khi có việc cần xử lý */
   alert?: boolean;
   active?: boolean;
-  size?: 'sm' | 'md';
+  size?: "sm" | "md";
   className?: string;
 }
 
@@ -19,44 +22,62 @@ interface Props {
  * hào quang vàng toả ra khi rê chuột, icon phóng to nhẹ, có chấm báo và số đếm.
  */
 export default function HubIcon({
-  icon, label, onClick, badge, alert, active, size = 'md', className,
+  icon,
+  label,
+  onClick,
+  badge,
+  alert,
+  active,
+  size = "md",
+  className,
 }: Props) {
-  const box = size === 'sm' ? 'size-11' : 'size-14';
+  const box = size === "sm" ? "size-11" : "size-14";
 
   return (
     <button
       type="button"
       onClick={onClick}
       aria-label={label}
-      className={cn('group relative flex w-16 flex-col items-center gap-1 outline-none', className)}
+      className={cn(
+        "group relative flex w-16 flex-col items-center gap-1 outline-none",
+        className,
+      )}
     >
       {/* Hào quang vàng phía sau icon */}
       <span
         className={cn(
-          'absolute top-0 left-1/2 -translate-x-1/2 rounded-full blur-md transition-opacity duration-300',
+          "absolute top-0 left-1/2 -translate-x-1/2 rounded-full blur-md transition-opacity duration-300",
           box,
-          active ? 'opacity-90' : 'opacity-0 group-hover:opacity-80 group-focus-visible:opacity-80',
+          active
+            ? "opacity-90"
+            : "opacity-0 group-hover:opacity-80 group-focus-visible:opacity-80",
         )}
-        style={{ background: 'radial-gradient(circle, var(--gold-glow) 0%, transparent 70%)' }}
+        style={{
+          background:
+            "radial-gradient(circle, var(--gold-glow) 0%, transparent 70%)",
+        }}
       />
 
       <span
         className={cn(
-          'glass-panel relative grid place-items-center rounded-xl transition-transform duration-300',
-          'group-hover:scale-110 group-focus-visible:scale-110 group-active:scale-95',
+          "glass-panel relative grid place-items-center rounded-xl transition-transform duration-300",
+          "group-hover:scale-110 group-focus-visible:scale-110 group-active:scale-95",
           box,
-          active && 'gold-border',
+          active && "gold-border",
         )}
       >
-        <img
-          src={icon}
+        <ArtImage
+          src={railSrc(icon)}
           alt=""
-          className={cn('drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]', size === 'sm' ? 'size-7' : 'size-9')}
+          className={cn(
+            "object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]",
+            size === "sm" ? "size-7" : "size-9",
+          )}
         />
         {alert && (
           <span
             className="pulse-dot absolute -top-1 -right-1 size-2.5 rounded-full"
-            style={{ background: 'var(--gold-bright)' }}
+            style={{ background: "var(--gold-bright)" }}
           />
         )}
         {badge !== undefined && badge !== 0 && (

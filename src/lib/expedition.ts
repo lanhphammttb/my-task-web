@@ -98,7 +98,7 @@ export const SITES: Record<SiteId, Site> = {
     needTasks: 6,
     cost: 60,
     risk: 'rủi ro',
-    image: '/art/page/tower.jpg',
+    image: '/art/encounter/thien-vien.jpg',
     tone: '#5aa9c9',
     note: 'Toà tháp đá bỏ hoang, mỗi tầng một cấm chế. Người ta đồn tầng trên cùng còn nguyên.',
     outcomes: [
@@ -143,7 +143,7 @@ export const SITES: Record<SiteId, Site> = {
     needTasks: 10,
     cost: 130,
     risk: 'nguy hiểm',
-    image: '/art/page/uminh.jpg',
+    image: '/art/encounter/ma-tu.jpg',
     tone: '#9b7fd4',
     note: 'Vùng đất không thấy mặt trời, âm khí đặc như sương. Vào được thì có thứ hiếm, ra được mới tính.',
     outcomes: [
@@ -191,7 +191,7 @@ export const SITES: Record<SiteId, Site> = {
     needTasks: 16,
     cost: 260,
     risk: 'tuyệt địa',
-    image: '/art/page/bone.jpg',
+    image: '/art/encounter/tan-hon.jpg',
     tone: '#cf3f2f',
     note: 'Xương trắng chất thành gò, không một ngọn cỏ. Mười người vào thì bảy người không ra. Ba người còn lại đổi đời.',
     outcomes: [

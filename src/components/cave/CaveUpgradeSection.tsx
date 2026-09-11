@@ -58,7 +58,7 @@ export default function CaveUpgradeSection() {
         ) : null
       }
     >
-      <SectionArt src="/art/encounter/hang-dong.jpg" caption={cur.name} tone="#cbb994">
+      <SectionArt src="/art/scene/cave.jpg" caption={cur.name} tone="#cbb994">
         {cur.note}
       </SectionArt>
 

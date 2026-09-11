@@ -17,7 +17,7 @@ import EncounterDialog from './components/EncounterDialog';
 import TaskCard from './components/TaskCard';
 import TaskEditorDialog from './components/TaskEditorDialog';
 import { EmptyState } from './components/primitives';
-import HubScene from './components/hub/HubScene';
+import HubScene, { SCENE_FALLBACK } from './components/hub/HubScene';
 import HeaderHUD from './components/hub/HeaderHUD';
 import HubCenter from './components/hub/HubCenter';
 import HubIcon from './components/hub/HubIcon';
@@ -44,8 +44,6 @@ interface PanelMeta {
   subtitle: string;
   /** Ảnh riêng của bảng - thả vào public/art/banner/ theo đúng tên này. */
   banner: string;
-  /** Ảnh dùng tạm khi chưa có ảnh riêng. */
-  fallback: string;
 }
 
 const PANEL: Record<ViewKey, PanelMeta> = {
@@ -53,49 +51,41 @@ const PANEL: Record<ViewKey, PanelMeta> = {
     title: 'Nhật Khoá',
     subtitle: 'Việc phải xong trước khi mặt trời lặn',
     banner: '/art/banner/today.jpg',
-    fallback: '/art/page/hub.jpg',
   },
   week: {
     title: 'Tuần Khoá',
     subtitle: 'Bảy ngày trước mặt, liệu sức mà chia',
     banner: '/art/banner/week.jpg',
-    fallback: '/art/page/sect.jpg',
   },
   month: {
     title: 'Nguyệt Khoá',
     subtitle: 'Một tháng trải ra, thấy ngay chỗ nào còn hổng',
     banner: '/art/banner/month.jpg',
-    fallback: '/art/page/bicanh.jpg',
   },
   goals: {
     title: 'Đại Nguyện',
     subtitle: 'Mục tiêu dài hạn - gốc rễ của mọi nhật khoá',
     banner: '/art/banner/goals.jpg',
-    fallback: '/art/page/tower.jpg',
   },
   focus: {
     title: 'Bế Quan',
     subtitle: 'Nhập định, dồn toàn bộ tâm trí vào một việc',
     banner: '/art/banner/focus.jpg',
-    fallback: '/art/page/cave.jpg',
   },
   cave: {
     title: 'Động Phủ',
     subtitle: 'Linh căn, công pháp, linh điền, lò đan và đàn linh thú',
     banner: '/art/banner/cave.jpg',
-    fallback: '/art/page/cave.jpg',
   },
   awards: {
     title: 'Tiên Lộ',
     subtitle: 'Chín cảnh giới và những kỳ ngộ đã mở',
     banner: '/art/banner/awards.jpg',
-    fallback: '/art/scene/main.jpg',
   },
   stats: {
     title: 'Tu Hành Lục',
     subtitle: 'Sổ chép đường tu - số liệu không biết nói dối',
     banner: '/art/banner/stats.jpg',
-    fallback: '/art/page/bone.jpg',
   },
 };
 
@@ -211,7 +201,6 @@ function Shell() {
       <HubScene
         realmIndex={c.realmIndex}
         override={view ? PANEL[view].banner : undefined}
-        overrideFallback={view ? PANEL[view].fallback : undefined}
       />
       {/* Lớp 3D phủ lên nền ảnh, tô theo màu cảnh giới đang tu */}
       <Suspense fallback={null}>
@@ -229,28 +218,28 @@ function Shell() {
       {/* ----------------------------------------------------- hai cột icon */}
       <SideRail side="left" label="Hoạt động tu luyện" collapsed={panelOpen}>
         <HubIcon
-          icon="/art/icon/technique.png"
+          icon="be-quan"
           label="Bế Quan"
           active={view === 'focus'}
           alert={stats.focusMin < (data.settings.dailyFocusTarget || 60)}
           onClick={() => toggle('focus')}
         />
         <HubIcon
-          icon="/art/icon/daily_tasks.png"
+          icon="nhat-khoa"
           label="Tông Khoá"
           badge={questsLeft}
           active={view === 'today' && anchor === 'quests'}
           onClick={() => open('today', 'quests')}
         />
         <HubIcon
-          icon="/art/icon/daopath.png"
+          icon="tien-lo"
           label="Tiên Lộ"
           badge={unlocked}
           active={view === 'awards'}
           onClick={() => toggle('awards')}
         />
         <HubIcon
-          icon="/art/icon/ranking.png"
+          icon="thong-ke"
           label="Tu Hành Lục"
           active={view === 'stats'}
           onClick={() => toggle('stats')}
@@ -259,21 +248,21 @@ function Shell() {
 
       <SideRail side="right" label="Đạo thể và tài nguyên" collapsed={panelOpen}>
         <HubIcon
-          icon="/art/icon/linhcan.png"
+          icon="linh-can"
           label="Linh Căn"
           alert={!data.root}
           active={view === 'cave' && anchor === 'cave-root'}
           onClick={() => open('cave', 'cave-root')}
         />
         <HubIcon
-          icon="/art/icon/pet.png"
+          icon="linh-thu"
           label="Linh Thú"
           badge={beastCount}
           active={view === 'cave' && anchor === 'cave-beast'}
           onClick={() => open('cave', 'cave-beast')}
         />
         <HubIcon
-          icon="/art/icon/alchemy.png"
+          icon="dan-duong"
           label="Đan Đường"
           badge={pills}
           alert={progress.readyForTribulation && pills === 0}
@@ -281,7 +270,7 @@ function Shell() {
           onClick={() => open('cave', 'cave-pill')}
         />
         <HubIcon
-          icon="/art/icon/sect.png"
+          icon="dong-phu"
           label="Động Phủ"
           active={view === 'cave' && !anchor}
           onClick={() => toggle('cave')}
@@ -313,12 +302,13 @@ function Shell() {
             title={`Tra cứu “${query}”`}
             subtitle={`${results.length} nhiệm vụ khớp`}
             banner="/art/banner/today.jpg"
-            bannerFallback="/art/page/hub.jpg"
+            bannerFallback={SCENE_FALLBACK}
             onClose={() => setQuery('')}
           >
             {results.length === 0 ? (
               <EmptyState
                 icon={SearchX}
+                art="no-result"
                 title="Không tìm thấy nhiệm vụ nào"
                 hint="Thử từ khoá ngắn hơn, hoặc tìm theo nhãn."
               />
@@ -339,7 +329,7 @@ function Shell() {
             title={PANEL[view].title}
             subtitle={PANEL[view].subtitle}
             banner={PANEL[view].banner}
-            bannerFallback={PANEL[view].fallback}
+            bannerFallback={SCENE_FALLBACK}
             anchor={anchor}
             onClose={closePanel}
           >
