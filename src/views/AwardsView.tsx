@@ -13,6 +13,8 @@ import ProgressRing from '../components/ProgressRing';
 import RealmSeal from '../components/RealmSeal';
 import RealmScene from '../components/RealmScene';
 import { Meter, Section, StatTile } from '../components/primitives';
+import ExpeditionSection from '../components/ExpeditionSection';
+import SectSection from '../components/SectSection';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -38,13 +40,12 @@ export default function AwardsView({ onTribulation }: { onTribulation: () => voi
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-4">
-      <div>
-        <h2 className="text-lg font-bold tracking-tight">Tiên Lộ</h2>
-        <p className="text-muted-foreground text-xs">
-          Mỗi nhiệm vụ hoàn thành là một phần tu vi. Đường từ Luyện Khí tới Phi Thăng được xây bằng
-          những ngày bình thường.
-        </p>
-      </div>
+      {/* Không lặp lại tiêu đề "Tiên Lộ" ở đây: bảng phủ đã có sẵn một h1 đúng
+          chữ ấy ngay phía trên, để thêm h2 nữa là bộ đọc màn hình đọc hai lần. */}
+      <p className="text-muted-foreground text-xs">
+        Mỗi nhiệm vụ hoàn thành là một phần tu vi. Đường từ Luyện Khí tới Phi Thăng được xây bằng
+        những ngày bình thường.
+      </p>
 
       {/* ------------------------------------------------- thẻ cảnh giới */}
       <section
@@ -173,6 +174,13 @@ export default function AwardsView({ onTribulation }: { onTribulation: () => voi
           ))}
         </ol>
       </Section>
+
+      {/* Tông môn trước, thám hiểm sau: danh phận rồi mới tới chuyện đi lại. */}
+      <SectSection />
+
+      {/* Thám hiểm đặt ngay trên kỳ ngộ: một bên là cơ duyên tự đến, một bên
+          là mình chủ động đi tìm - để cạnh nhau thì đọc ra ngay là một cặp. */}
+      <ExpeditionSection />
 
       {/* ------------------------------------------------------- kỳ ngộ */}
       <Section icon={Trophy} title={`Kỳ ngộ đã mở (${unlocked.length}/${all.length})`}>

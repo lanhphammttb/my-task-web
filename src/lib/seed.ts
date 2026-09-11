@@ -1,6 +1,6 @@
 import type { AppData, Task } from '../types';
 import { addDays, dateKey } from './date';
-import { DEFAULT_SETTINGS, uid } from './storage';
+import { DEFAULT_SETTINGS, emptyHerbs, uid } from './storage';
 
 const at = (offset: number) => dateKey(addDays(new Date(), offset));
 const iso = (offset: number, time: string) => `${at(offset)}T${time}:00`;
@@ -70,6 +70,12 @@ export function seedData(): AppData {
     settings: { ...DEFAULT_SETTINGS },
     // Không gán sẵn linh căn: để người dùng tự khai quang ở lần mở đầu tiên.
     beasts: [],
+    // Cũng không chọn sẵn công pháp - đó là lựa chọn định hình cả lối tu.
+    techniqueSwaps: 0,
+    caveLevel: 1,
+    field: [],
+    herbs: emptyHerbs(),
+    contribution: 0,
     stonesSpent: 0,
     pills: { ha: 0, trung: 0, thuong: 0 },
     tuViPenalty: 0,

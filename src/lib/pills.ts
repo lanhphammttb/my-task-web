@@ -1,3 +1,5 @@
+import type { HerbId } from './field';
+
 /**
  * Đan dược độ kiếp. Muốn vượt từ cảnh giới này sang cảnh giới kế thì phải nuốt
  * một viên; phẩm càng cao thì cơ hội càng lớn. Đây là chỗ linh thạch có ý
@@ -50,6 +52,60 @@ export const PILLS: Record<PillGrade, Pill> = {
 };
 
 export const PILL_ORDER: PillGrade[] = ['ha', 'trung', 'thuong'];
+
+// ---------------------------------------------------------------- luyện đan
+
+/**
+ * Đơn thuốc. Trước đây đan dược chỉ có mỗi nút Mua - "Đan Đường" mang tiếng là
+ * đan đường nhưng thực chất là cái quầy hàng. Giờ muốn có đan phải tự trồng
+ * linh thảo rồi tự nổi lửa, và **có thể hỏng** - đó mới là luyện đan.
+ */
+export interface Recipe {
+  grade: PillGrade;
+  herbs: Partial<Record<HerbId, number>>;
+  /** Củi lửa và phụ liệu, tính bằng linh thạch */
+  stones: number;
+  /** Tỷ lệ thành công gốc, chưa cộng tay nghề */
+  base: number;
+}
+
+export const RECIPES: Record<PillGrade, Recipe> = {
+  ha: { grade: 'ha', herbs: { thanh_diep: 2 }, stones: 8, base: 0.85 },
+  trung: { grade: 'trung', herbs: { thanh_diep: 3, huyet_tinh: 2 }, stones: 25, base: 0.62 },
+  thuong: {
+    grade: 'thuong',
+    herbs: { huyet_tinh: 3, kim_tuy: 2, tu_van: 1 },
+    stones: 70,
+    base: 0.42,
+  },
+};
+
+/**
+ * Chợ chỉ còn bán hạ phẩm, và bán đắt. Giữ lại một đường mua để người mới hoặc
+ * người vừa hết sạch linh thảo không bị chặn đứng trước cửa độ kiếp; còn trung
+ * và thượng phẩm thì bắt buộc phải tự luyện.
+ */
+export const MARKET_GRADES: PillGrade[] = ['ha'];
+
+/** Linh căn hệ Hoả giữ lửa giỏi hơn hẳn - cộng thẳng vào tay nghề. */
+export const FIRE_ROOT_BONUS = 0.1;
+
+export function refineChance(grade: PillGrade, caveBonus: number, fireRoot: boolean): number {
+  const raw = RECIPES[grade].base + caveBonus + (fireRoot ? FIRE_ROOT_BONUS : 0);
+  return Math.min(0.95, Math.max(0.05, raw));
+}
+
+/**
+ * Hỏng lò vẫn còn vớt vát: một nửa số lần sẽ ra được đan phẩm thấp hơn một bậc.
+ * Hạ phẩm hỏng thì mất trắng - đằng nào cũng đã là đáy.
+ */
+export function consolationGrade(grade: PillGrade): PillGrade | null {
+  if (grade === 'thuong') return 'trung';
+  if (grade === 'trung') return 'ha';
+  return null;
+}
+
+export const CONSOLATION_CHANCE = 0.5;
 
 /**
  * Mỗi lần thất bại cộng thêm 10% cơ hội cho lần sau (tối đa +40%). Người bền

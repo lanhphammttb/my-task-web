@@ -152,5 +152,57 @@ export function rollRoot(rand: () => number = Math.random, now = new Date()): Sp
   return { elements: picked, rolledAt: now.toISOString() };
 }
 
-/** Chi phí Tẩy Tuỷ Đan để khai quang lại, tính bằng linh thạch. */
+/** Chi phí khai quang lại từ đầu - xúc xắc, có thể ra tệ hơn. */
 export const REROLL_COST = 40;
+
+// ------------------------------------------------------------- tẩy tuỷ thật
+
+/**
+ * Tẩy tuỷ đúng nghĩa là gột rửa dần, không phải gieo lại xúc xắc.
+ *
+ * Trước đây chỗ này chỉ có `rollRoot` thay sạch linh căn - roll trúng Thiên
+ * Linh Căn rồi lỡ tay bấm lần nữa là mất trắng, mà chẳng có cách nào sửa đúng
+ * một hệ mình không ưng. Hai phép dưới đây cho người tu quyền định hình linh
+ * căn của mình: đổi hệ thì giữ nguyên phẩm cấp, ngưng luyện thì bỏ bớt một hệ
+ * để lên phẩm.
+ */
+
+/** Đổi một hệ sang hệ khác. Số hệ giữ nguyên nên phẩm cấp không đổi. */
+export const REFINE_COST = 90;
+
+/** Không ai xuống dưới một hệ được - đơn hệ đã là tận cùng của thuần khiết. */
+export const MIN_ROOT_ELEMENTS = 1;
+
+/**
+ * Giá ngưng luyện, tính theo số hệ **hiện có**. Càng thuần thì mỗi bước càng
+ * đắt: từ Ngũ xuống Tứ chỉ 160, nhưng từ Song lên Thiên phải 640.
+ */
+export function condenseCost(count: number): number {
+  return 160 * (6 - Math.max(MIN_ROOT_ELEMENTS + 1, Math.min(5, count)));
+}
+
+/**
+ * Đổi hệ `from` thành hệ `to`. Trả về `null` nếu không hợp lệ - `from` không có
+ * trong linh căn, hoặc `to` đã có rồi (ngũ hành không trùng nhau được).
+ */
+export function refineRoot(root: SpiritRoot, from: Element, to: Element): SpiritRoot | null {
+  if (!root.elements.includes(from)) return null;
+  if (root.elements.includes(to)) return null;
+  const elements = root.elements
+    .map((e) => (e === from ? to : e))
+    .sort((a, b) => ELEMENT_ORDER.indexOf(a) - ELEMENT_ORDER.indexOf(b));
+  return { ...root, elements };
+}
+
+/**
+ * Bỏ hệ `drop` khỏi linh căn, đổi lại phẩm cấp lên một bậc.
+ *
+ * Đây là đánh đổi thật chứ không phải nâng cấp thuần tuý: hệ số tu vi tăng
+ * nhưng mất luôn thiên phú của hệ vừa bỏ. Ngũ Linh Căn hưởng trọn năm thiên
+ * phú, Thiên Linh Căn hấp thu nhanh nhất mà chỉ có một.
+ */
+export function condenseRoot(root: SpiritRoot, drop: Element): SpiritRoot | null {
+  if (!root.elements.includes(drop)) return null;
+  if (root.elements.length <= MIN_ROOT_ELEMENTS) return null;
+  return { ...root, elements: root.elements.filter((e) => e !== drop) };
+}

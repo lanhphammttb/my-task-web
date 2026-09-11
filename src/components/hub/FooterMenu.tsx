@@ -1,14 +1,23 @@
 import { useState } from 'react';
-import { CalendarDays, CalendarRange, LayoutGrid, Plus, Search, Target, X } from 'lucide-react';
+import { Moon, Mountain, Orbit, Plus, Search, Sun, X } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { ViewKey } from '../../types';
 import { cn } from '@/lib/utils';
 
+/**
+ * Bốn bậc thời khoá.
+ *
+ * Trước đây chỗ này ghi "Hôm nay / Tuần / Tháng / Mục tiêu" - giọng ứng dụng
+ * lịch, chọi hẳn với cột hai bên vốn nói Bế Quan, Linh Căn, Đan Đường. Chữ
+ * "khoá" (課) là bài tập thầy giao phải làm trong ngày, nên gọi thế thì cái lịch
+ * thôi không còn là lịch: nó thành thời khoá tông môn giao xuống. Bộ Nhật ·
+ * Tuần · Nguyệt song song nhau nên bậc thời gian vẫn đọc ra ngay.
+ */
 export const FOOTER_TABS: { key: ViewKey; icon: LucideIcon; label: string }[] = [
-  { key: 'today', icon: CalendarDays, label: 'Hôm nay' },
-  { key: 'week', icon: CalendarRange, label: 'Tuần' },
-  { key: 'month', icon: LayoutGrid, label: 'Tháng' },
-  { key: 'goals', icon: Target, label: 'Mục tiêu' },
+  { key: 'today', icon: Sun, label: 'Nhật Khoá' },
+  { key: 'week', icon: Orbit, label: 'Tuần Khoá' },
+  { key: 'month', icon: Moon, label: 'Nguyệt Khoá' },
+  { key: 'goals', icon: Mountain, label: 'Đại Nguyện' },
 ];
 
 interface Props {
@@ -62,18 +71,31 @@ export default function FooterMenu({ view, onSelect, onNew, query, onQuery }: Pr
                 aria-label={t.label}
                 aria-current={active ? 'page' : undefined}
                 className={cn(
-                  'group relative flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-xl px-1 py-1.5 transition-colors',
+                  'group relative flex min-w-0 flex-1 flex-col items-center gap-1 rounded-xl px-1 py-1 transition-colors',
                   active ? 'text-gold-bright' : 'text-foreground/70 hover:text-gold',
                 )}
               >
-                {active && (
-                  <span
-                    className="absolute inset-x-2 -top-2 h-0.5 rounded-full"
-                    style={{ background: 'var(--gold-bright)', boxShadow: '0 0 8px var(--gold-glow)' }}
-                  />
-                )}
-                <t.icon className={cn('size-5 transition-transform group-hover:scale-110', active && 'scale-110')} />
-                <span className="font-title truncate text-[10px] font-bold tracking-wide">{t.label}</span>
+                {/* Hào quang vàng phía sau - mượn nguyên cách vẽ của HubIcon để
+                    thanh dưới và hai cột bên đọc ra là cùng một bộ HUD. */}
+                <span
+                  className={cn(
+                    'absolute top-1 left-1/2 size-9 -translate-x-1/2 rounded-full blur-md transition-opacity duration-300',
+                    active ? 'opacity-90' : 'opacity-0 group-hover:opacity-80 group-focus-visible:opacity-80',
+                  )}
+                  style={{ background: 'radial-gradient(circle, var(--gold-glow) 0%, transparent 70%)' }}
+                />
+                <span
+                  className={cn(
+                    'glass-panel relative grid size-9 place-items-center rounded-xl transition-transform duration-300',
+                    'group-hover:scale-110 group-focus-visible:scale-110 group-active:scale-95',
+                    active && 'gold-border',
+                  )}
+                >
+                  <t.icon className="size-4.5 drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]" />
+                </span>
+                <span className="font-title truncate text-[10px] leading-tight font-bold tracking-wide">
+                  {t.label}
+                </span>
               </button>
             );
           })}

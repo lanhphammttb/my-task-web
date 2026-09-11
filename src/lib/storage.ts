@@ -1,4 +1,13 @@
 import type { AppData, Settings } from '../types';
+import type { HerbId } from './field';
+
+/** Túi linh thảo rỗng. Luôn đủ cả bốn khoá để chỗ nào cũng cộng trừ được thẳng. */
+export const emptyHerbs = (): Record<HerbId, number> => ({
+  thanh_diep: 0,
+  huyet_tinh: 0,
+  kim_tuy: 0,
+  tu_van: 0,
+});
 
 const KEY = 'my-task-planner/v1';
 
@@ -21,6 +30,11 @@ export const emptyData = (): AppData => ({
   sessions: [],
   settings: { ...DEFAULT_SETTINGS },
   beasts: [],
+  techniqueSwaps: 0,
+  caveLevel: 1,
+  field: [],
+  herbs: emptyHerbs(),
+  contribution: 0,
   stonesSpent: 0,
   pills: { ha: 0, trung: 0, thuong: 0 },
   tuViPenalty: 0,
@@ -46,6 +60,15 @@ export function loadData(): AppData {
       root: parsed.root,
       beasts: parsed.beasts ?? [],
       activeBeastId: parsed.activeBeastId,
+      technique: parsed.technique,
+      techniqueSwaps: parsed.techniqueSwaps ?? 0,
+      // Hồ sơ cũ chưa có động phủ thì coi như đang ở bậc đầu, không phải bậc 0.
+      caveLevel: parsed.caveLevel ?? 1,
+      field: parsed.field ?? [],
+      herbs: { ...emptyHerbs(), ...(parsed.herbs ?? {}) },
+      expedition: parsed.expedition,
+      contribution: parsed.contribution ?? 0,
+      mission: parsed.mission,
       stonesSpent: parsed.stonesSpent ?? 0,
       pills: { ha: 0, trung: 0, thuong: 0, ...(parsed.pills ?? {}) },
       tuViPenalty: parsed.tuViPenalty ?? 0,
@@ -95,6 +118,14 @@ export function readFile(file: File): Promise<AppData> {
           root: parsed.root,
           beasts: parsed.beasts ?? [],
           activeBeastId: parsed.activeBeastId,
+          technique: parsed.technique,
+          techniqueSwaps: parsed.techniqueSwaps ?? 0,
+          caveLevel: parsed.caveLevel ?? 1,
+          field: parsed.field ?? [],
+          herbs: { ...emptyHerbs(), ...(parsed.herbs ?? {}) },
+          expedition: parsed.expedition,
+          contribution: parsed.contribution ?? 0,
+          mission: parsed.mission,
           stonesSpent: parsed.stonesSpent ?? 0,
           pills: { ha: 0, trung: 0, thuong: 0, ...(parsed.pills ?? {}) },
           tuViPenalty: parsed.tuViPenalty ?? 0,

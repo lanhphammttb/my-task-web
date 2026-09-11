@@ -5,7 +5,7 @@ import {
 import { appendEntry, auditData, dropEntries, rebuildLedger, verifiedTotals } from '../lib/integrity';
 import { stoneBreakdown, xpBreakdown } from '../lib/economy';
 import type { AppData, Task } from '../types';
-import { DEFAULT_SETTINGS } from '../lib/storage';
+import { emptyData } from '../lib/storage';
 import { addDays, dateKey } from '../lib/date';
 
 const at = (offset: number) => dateKey(addDays(new Date(), offset));
@@ -27,25 +27,9 @@ function task(over: Partial<Task> & { id: string }): Task {
   };
 }
 
+/** Dựng từ `emptyData()` để thêm trường vào AppData không làm gãy test. */
 function appData(over: Partial<AppData> = {}): AppData {
-  return {
-    version: 1,
-    tasks: [],
-    goals: [],
-    sessions: [],
-    settings: { ...DEFAULT_SETTINGS },
-    beasts: [],
-    stonesSpent: 0,
-    pills: { ha: 0, trung: 0, thuong: 0 },
-    tuViPenalty: 0,
-    gateRealm: 9,
-    failStreak: 0,
-    encounterXp: 0,
-    stonesBonus: 0,
-    ledger: [],
-    lastSeenAt: new Date().toISOString(),
-    ...over,
-  };
+  return { ...emptyData(), gateRealm: 9, ...over };
 }
 
 describe('chặn hoàn thành không hợp lý', () => {

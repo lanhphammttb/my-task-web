@@ -50,50 +50,50 @@ interface PanelMeta {
 
 const PANEL: Record<ViewKey, PanelMeta> = {
   today: {
-    title: 'Nhật khoá hôm nay',
+    title: 'Nhật Khoá',
     subtitle: 'Việc phải xong trước khi mặt trời lặn',
     banner: '/art/banner/today.jpg',
     fallback: '/art/page/hub.jpg',
   },
   week: {
-    title: 'Kế hoạch tuần',
-    subtitle: 'Bảy ngày trước mắt, xếp việc cho khỏi dồn',
+    title: 'Tuần Khoá',
+    subtitle: 'Bảy ngày trước mặt, liệu sức mà chia',
     banner: '/art/banner/week.jpg',
     fallback: '/art/page/sect.jpg',
   },
   month: {
-    title: 'Kế hoạch tháng',
-    subtitle: 'Nhìn cả tháng để biết chỗ nào đang trống',
+    title: 'Nguyệt Khoá',
+    subtitle: 'Một tháng trải ra, thấy ngay chỗ nào còn hổng',
     banner: '/art/banner/month.jpg',
     fallback: '/art/page/bicanh.jpg',
   },
   goals: {
-    title: 'Đại nguyện',
+    title: 'Đại Nguyện',
     subtitle: 'Mục tiêu dài hạn - gốc rễ của mọi nhật khoá',
     banner: '/art/banner/goals.jpg',
     fallback: '/art/page/tower.jpg',
   },
   focus: {
-    title: 'Bế quan',
+    title: 'Bế Quan',
     subtitle: 'Nhập định, dồn toàn bộ tâm trí vào một việc',
     banner: '/art/banner/focus.jpg',
     fallback: '/art/page/cave.jpg',
   },
   cave: {
-    title: 'Động phủ',
-    subtitle: 'Linh thạch, linh căn, đan dược và linh thú',
+    title: 'Động Phủ',
+    subtitle: 'Linh căn, công pháp, linh điền, lò đan và đàn linh thú',
     banner: '/art/banner/cave.jpg',
     fallback: '/art/page/cave.jpg',
   },
   awards: {
-    title: 'Tiên lộ',
+    title: 'Tiên Lộ',
     subtitle: 'Chín cảnh giới và những kỳ ngộ đã mở',
     banner: '/art/banner/awards.jpg',
     fallback: '/art/scene/main.jpg',
   },
   stats: {
-    title: 'Thống kê',
-    subtitle: 'Số liệu không biết nói dối',
+    title: 'Tu Hành Lục',
+    subtitle: 'Sổ chép đường tu - số liệu không biết nói dối',
     banner: '/art/banner/stats.jpg',
     fallback: '/art/page/bone.jpg',
   },
@@ -218,6 +218,8 @@ function Shell() {
         <Scene3DBackdrop
           color={c.realm.color}
           light={!isDark}
+          // Mở bảng ra là thế giới lùi lại một bước, nhường mắt cho nội dung.
+          intensity={panelOpen ? 0.38 : 1}
           className="pointer-events-none fixed inset-0 -z-10"
         />
       </Suspense>
@@ -235,7 +237,7 @@ function Shell() {
         />
         <HubIcon
           icon="/art/icon/daily_tasks.png"
-          label="Nhật Khoá"
+          label="Tông Khoá"
           badge={questsLeft}
           active={view === 'today' && anchor === 'quests'}
           onClick={() => open('today', 'quests')}
@@ -249,7 +251,7 @@ function Shell() {
         />
         <HubIcon
           icon="/art/icon/ranking.png"
-          label="Thống Kê"
+          label="Tu Hành Lục"
           active={view === 'stats'}
           onClick={() => toggle('stats')}
         />

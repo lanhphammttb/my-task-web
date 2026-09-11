@@ -6,15 +6,24 @@ import { GOAL_COLORS } from '../types';
 import { addDays, dateKey, parseKey, todayKey } from '../lib/date';
 import { loadData, saveData, uid } from '../lib/storage';
 import { seedData } from '../lib/seed';
-import { effectiveXp, stoneBalance } from '../lib/economy';
+import { effectiveXp, stoneBalance, verifiedFocusMinutes, verifiedTaskCount } from '../lib/economy';
 import { cultivationOf, realmLabel } from '../lib/cultivation';
 import { ACHIEVEMENTS, isPerfectDay, unlockedIds } from '../lib/achievements';
 import { FEED_COST, FEED_GAIN, DUPLICATE_FEED, SUMMON_COST, summonBeast } from '../lib/beasts';
 import type { Beast } from '../lib/beasts';
-import { REROLL_COST, rollRoot } from '../lib/spirit';
-import type { SpiritRoot } from '../lib/spirit';
-import { PILLS, tribulationChance } from '../lib/pills';
+import { ELEMENTS, REFINE_COST, REROLL_COST, condenseCost, condenseRoot, refineRoot, rollRoot } from '../lib/spirit';
+import type { Element, SpiritRoot } from '../lib/spirit';
+import { CONSOLATION_CHANCE, PILLS, RECIPES, consolationGrade, refineChance, tribulationChance } from '../lib/pills';
 import type { PillGrade } from '../lib/pills';
+import { TECHNIQUES, techniqueSwapCost } from '../lib/techniques';
+import type { TechniqueId } from '../lib/techniques';
+import { HERBS, HERB_ORDER, hasHerbs, plotState } from '../lib/field';
+import type { HerbId } from '../lib/field';
+import { caveRefineBonus, fieldSlots, nextCave } from '../lib/cave';
+import { SITES, expeditionState, rollSiteOutcome } from '../lib/expedition';
+import { MISSIONS, dueDateOf, missionState, rankOf } from '../lib/sect';
+import type { Mission, MissionId } from '../lib/sect';
+import type { SiteId, SiteOutcome } from '../lib/expedition';
 import { progressOf, tribulationLoss } from '../lib/economy';
 import { ASCENSION_INDEX, REALMS } from '../lib/cultivation';
 import { ENCOUNTER_CHANCE, pickEncounter, rollOutcome } from '../lib/encounters';
@@ -38,6 +47,27 @@ export type Celebration =
   | { kind: 'tribulation-failed'; loss: number; nextChance: number; realm: string }
   | { kind: 'perfect-day'; count: number }
   | { kind: 'achievement'; id: string; title: string; description: string };
+
+/** Kết quả kết toán một sứ mệnh tông môn. */
+export interface MissionResult {
+  met: boolean;
+  mission: Mission;
+  /** Cống hiến nhận thêm, 0 nếu trượt */
+  contribution: number;
+  /** Linh thạch thu về, gồm cả phần cọc trả lại. 0 nếu trượt */
+  stones: number;
+  /** Lên bậc mới hay không */
+  rankedUp: boolean;
+}
+
+/** Kết quả một mẻ đan: hỏng vẫn có thể vớt được phẩm thấp hơn một bậc. */
+export interface RefineResult {
+  success: boolean;
+  /** Viên thực nhận, hoặc `null` nếu cháy sạch */
+  got: PillGrade | null;
+  /** Tỷ lệ đã dùng để bốc - hiện lại cho người dùng đối chiếu */
+  chance: number;
+}
 
 interface Ctx {
   data: AppData;
@@ -74,6 +104,28 @@ interface Ctx {
   feedBeast: (id: string) => boolean;
   setActiveBeast: (id?: string) => void;
   buyPill: (grade: PillGrade, qty?: number) => boolean;
+  /** Chọn hoặc đổi công pháp. Lần chọn đầu miễn phí, đổi thì mỗi lần một đắt. */
+  pickTechnique: (id: TechniqueId) => boolean;
+  /** Gieo hạt vào một ô linh điền. */
+  plantSeed: (slot: number, herb: HerbId) => boolean;
+  /** Hái ô đã chín. Chưa đủ phút bế quan thì không hái được. */
+  harvestPlot: (slot: number) => boolean;
+  /** Luyện đan: tốn linh thảo và củi lửa, và có thể hỏng lò. */
+  refinePill: (grade: PillGrade) => RefineResult | null;
+  /** Tẩy tuỷ: đổi một hệ trong linh căn sang hệ khác, phẩm cấp giữ nguyên. */
+  refineRootElement: (from: Element, to: Element) => boolean;
+  /** Ngưng luyện: bỏ bớt một hệ để linh căn thuần hơn, đổi lại mất thiên phú. */
+  condenseRootElement: (drop: Element) => boolean;
+  /** Nâng bậc động phủ: mở thêm ô linh điền và tăng tay nghề luyện đan. */
+  upgradeCave: () => boolean;
+  /** Lên đường tới một bí cảnh. Mỗi lúc chỉ đi được một nơi. */
+  startExpedition: (site: SiteId) => boolean;
+  /** Đón đoàn về và bốc kết quả. Chưa đủ nhiệm vụ thì chưa về được. */
+  resolveExpedition: () => SiteOutcome | null;
+  /** Nhận một sứ mệnh tông môn, đặt cọc linh thạch. */
+  acceptMission: (id: MissionId) => boolean;
+  /** Kết toán sứ mệnh: đạt thì lấy cọc và thưởng, chưa đạt thì mất cọc. */
+  settleMission: () => MissionResult | null;
   /** Độ kiếp: nuốt đan, bốc xác suất. Trả về true nếu vượt qua. */
   attemptTribulation: (grade: PillGrade) => boolean | null;
   updateSettings: (patch: Partial<Settings>) => void;
@@ -568,6 +620,316 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [data, patch, notify],
   );
 
+  // --------------------------------------------------------------- công pháp
+
+  const pickTechnique = useCallback<Ctx['pickTechnique']>(
+    (id) => {
+      if (data.technique === id) return false;
+      // Lần chọn đầu miễn phí. Không ai đáng bị phạt vì chưa biết mình hợp lối
+      // nào; nhưng đổi tới đổi lui thì phải trả giá, kẻo công pháp thành cái
+      // nút bật tắt theo tâm trạng chứ không còn là một cam kết.
+      const cost = data.technique ? techniqueSwapCost(data.techniqueSwaps) : 0;
+      if (cost > 0 && stoneBalance(data) < cost) {
+        notify(`Không đủ linh thạch để đổi công pháp (cần ${cost})`, 'warn');
+        return false;
+      }
+      patch((d) => ({
+        ...d,
+        technique: id,
+        techniqueSwaps: d.technique ? d.techniqueSwaps + 1 : d.techniqueSwaps,
+        stonesSpent: d.stonesSpent + cost,
+      }));
+      notify(
+        cost > 0
+          ? `Đã chuyển sang ${TECHNIQUES[id].name} (-${cost} linh thạch)`
+          : `Bắt đầu tu ${TECHNIQUES[id].name}`,
+      );
+      return true;
+    },
+    [data, patch, notify],
+  );
+
+  // --------------------------------------------------------------- linh điền
+
+  const plantSeed = useCallback<Ctx['plantSeed']>(
+    (slot, herb) => {
+      if (slot < 0 || slot >= fieldSlots(data.caveLevel)) return false;
+      if (data.field.some((pl) => pl.slot === slot)) {
+        notify('Ô đất này đang có cây', 'warn');
+        return false;
+      }
+      const cost = HERBS[herb].seedCost;
+      if (stoneBalance(data) < cost) {
+        notify(`Không đủ linh thạch mua hạt (cần ${cost})`, 'warn');
+        return false;
+      }
+      // Ghi lại mốc phút bế quan ngay lúc gieo - cây lớn tới đâu là lấy tổng
+      // phút hiện tại trừ đi con số này, nên không có bộ đếm nào để chỉnh.
+      const plantedAtFocus = verifiedFocusMinutes(data);
+      patch((d) => ({
+        ...d,
+        stonesSpent: d.stonesSpent + cost,
+        field: [...d.field, { slot, herb, plantedAtFocus, plantedAt: new Date().toISOString() }],
+      }));
+      notify(
+        `Đã gieo ${HERBS[herb].name}. Cần ${HERBS[herb].needFocus} phút bế quan nữa mới hái được.`,
+      );
+      return true;
+    },
+    [data, patch, notify],
+  );
+
+  const harvestPlot = useCallback<Ctx['harvestPlot']>(
+    (slot) => {
+      const plot = data.field.find((pl) => pl.slot === slot);
+      if (!plot) return false;
+      const state = plotState(plot, verifiedFocusMinutes(data));
+      if (!state.ready) {
+        notify(`Còn ${state.remain} phút bế quan nữa cây mới chín`, 'warn');
+        return false;
+      }
+      patch((d) => ({
+        ...d,
+        field: d.field.filter((pl) => pl.slot !== slot),
+        herbs: { ...d.herbs, [plot.herb]: (d.herbs[plot.herb] ?? 0) + state.herb.yield },
+      }));
+      notify(`Hái được ${state.herb.yield} nhánh ${state.herb.name}`);
+      return true;
+    },
+    [data, patch, notify],
+  );
+
+  // --------------------------------------------------------------- luyện đan
+
+  const refinePill = useCallback<Ctx['refinePill']>(
+    (grade) => {
+      const recipe = RECIPES[grade];
+      if (!hasHerbs(data.herbs, recipe.herbs)) {
+        notify('Không đủ linh thảo cho đơn thuốc này', 'warn');
+        return null;
+      }
+      if (stoneBalance(data) < recipe.stones) {
+        notify(`Không đủ linh thạch mua củi lửa (cần ${recipe.stones})`, 'warn');
+        return null;
+      }
+
+      const fireRoot = !!data.root?.elements.includes('hoa');
+      const chance = refineChance(grade, caveRefineBonus(data.caveLevel), fireRoot);
+      const success = Math.random() < chance;
+      // Cháy lò vẫn còn vớt vát được phẩm thấp hơn một bậc - trồng cả chục
+      // tiếng bế quan mà mất trắng cả mẻ thì cay quá.
+      const salvage = success
+        ? null
+        : Math.random() < CONSOLATION_CHANCE
+          ? consolationGrade(grade)
+          : null;
+      const got = success ? grade : salvage;
+
+      patch((d) => {
+        const herbs = { ...d.herbs };
+        for (const id of HERB_ORDER) herbs[id] = Math.max(0, herbs[id] - (recipe.herbs[id] ?? 0));
+        return {
+          ...d,
+          stonesSpent: d.stonesSpent + recipe.stones,
+          herbs,
+          pills: got ? { ...d.pills, [got]: d.pills[got] + 1 } : d.pills,
+        };
+      });
+
+      if (success) notify(`Đan thành! Thu được một viên ${PILLS[grade].name}`);
+      else if (got) notify(`Lò cháy quá tay, chỉ vớt được một viên ${PILLS[got].name}`, 'warn');
+      else notify('Hỏng lò, cả mẻ thành tro', 'warn');
+
+      return { success, got, chance };
+    },
+    [data, patch, notify],
+  );
+
+  // ----------------------------------------------------------------- tẩy tuỷ
+
+  const refineRootElement = useCallback<Ctx['refineRootElement']>(
+    (from, to) => {
+      if (!data.root) return false;
+      const next = refineRoot(data.root, from, to);
+      if (!next) {
+        notify('Không đổi được: hệ này không có trong linh căn, hoặc hệ kia đã có rồi', 'warn');
+        return false;
+      }
+      if (stoneBalance(data) < REFINE_COST) {
+        notify(`Không đủ linh thạch (cần ${REFINE_COST})`, 'warn');
+        return false;
+      }
+      patch((d) => ({ ...d, root: next, stonesSpent: d.stonesSpent + REFINE_COST }));
+      notify(`Đã tẩy hệ ${ELEMENTS[from].label} thành ${ELEMENTS[to].label}`);
+      return true;
+    },
+    [data, patch, notify],
+  );
+
+  const condenseRootElement = useCallback<Ctx['condenseRootElement']>(
+    (drop) => {
+      if (!data.root) return false;
+      const next = condenseRoot(data.root, drop);
+      if (!next) {
+        notify('Không bỏ được hệ này', 'warn');
+        return false;
+      }
+      const cost = condenseCost(data.root.elements.length);
+      if (stoneBalance(data) < cost) {
+        notify(`Không đủ linh thạch (cần ${cost})`, 'warn');
+        return false;
+      }
+      patch((d) => ({ ...d, root: next, stonesSpent: d.stonesSpent + cost }));
+      // Linh căn đổi phẩm cấp là chuyện lớn, cho hiện lớp ăn mừng như khai quang.
+      setQueue((q) => [...q, { kind: 'awaken', root: next }]);
+      return true;
+    },
+    [data, patch, notify],
+  );
+
+  // ---------------------------------------------------------------- động phủ
+
+  const upgradeCave = useCallback<Ctx['upgradeCave']>(() => {
+    const next = nextCave(data.caveLevel);
+    if (!next) {
+      notify('Động phủ đã ở bậc cao nhất', 'warn');
+      return false;
+    }
+    if (stoneBalance(data) < next.cost) {
+      notify(`Không đủ linh thạch (cần ${next.cost})`, 'warn');
+      return false;
+    }
+    patch((d) => ({ ...d, caveLevel: d.caveLevel + 1, stonesSpent: d.stonesSpent + next.cost }));
+    notify(`Động phủ đã mở rộng thành ${next.name}`);
+    return true;
+  }, [data, patch, notify]);
+
+  // ---------------------------------------------------------------- tông môn
+
+  const acceptMission = useCallback<Ctx['acceptMission']>(
+    (id) => {
+      if (data.mission) {
+        notify('Đang gánh một sứ mệnh chưa xong', 'warn');
+        return false;
+      }
+      const mission = MISSIONS[id];
+      const rank = rankOf(data.contribution);
+      if (rank.level < mission.minRank) {
+        notify(`Chưa đủ bậc để nhận sứ mệnh này`, 'warn');
+        return false;
+      }
+      if (stoneBalance(data) < mission.stake) {
+        notify(`Không đủ linh thạch đặt cọc (cần ${mission.stake})`, 'warn');
+        return false;
+      }
+
+      patch((d) => ({
+        ...d,
+        // Cọc đi vào mục đã tiêu: nó bị khoá lại thật, xong việc mới trả về.
+        stonesSpent: d.stonesSpent + mission.stake,
+        mission: {
+          id,
+          startTasks: verifiedTaskCount(d),
+          startFocus: verifiedFocusMinutes(d),
+          acceptedAt: new Date().toISOString(),
+          dueAt: dueDateOf(mission),
+          stake: mission.stake,
+        },
+      }));
+      notify(`Đã nhận ${mission.name}. Cọc ${mission.stake} linh thạch, hạn ${mission.days} ngày.`);
+      return true;
+    },
+    [data, patch, notify],
+  );
+
+  const settleMission = useCallback<Ctx['settleMission']>(() => {
+    if (!data.mission) return null;
+    const state = missionState(
+      data.mission,
+      verifiedTaskCount(data),
+      verifiedFocusMinutes(data),
+    );
+    const { mission, met } = state;
+    const stake = data.mission.stake;
+    const before = rankOf(data.contribution).level;
+    const after = rankOf(data.contribution + (met ? mission.contribution : 0)).level;
+
+    patch((d) => ({
+      ...d,
+      mission: undefined,
+      contribution: d.contribution + (met ? mission.contribution : 0),
+      // Đạt thì trả lại cọc và cộng thưởng; trượt thì cọc ở nguyên bên đã tiêu.
+      stonesBonus: d.stonesBonus + (met ? stake + mission.reward : 0),
+    }));
+
+    if (met) notify(`Hoàn thành ${mission.name}: +${mission.contribution} cống hiến`);
+    else notify(`Trượt ${mission.name}, mất ${stake} linh thạch tiền cọc`, 'warn');
+
+    return {
+      met,
+      mission,
+      contribution: met ? mission.contribution : 0,
+      stones: met ? stake + mission.reward : 0,
+      rankedUp: after > before,
+    };
+  }, [data, patch, notify]);
+
+  // --------------------------------------------------------------- thám hiểm
+
+  const startExpedition = useCallback<Ctx['startExpedition']>(
+    (siteId) => {
+      if (data.expedition) {
+        notify('Đang có một chuyến chưa về', 'warn');
+        return false;
+      }
+      const site = SITES[siteId];
+      if (stoneBalance(data) < site.cost) {
+        notify(`Không đủ linh thạch lên đường (cần ${site.cost})`, 'warn');
+        return false;
+      }
+      // Mốc đo đường về là số nhiệm vụ đã xác thực ngay lúc này. Đoàn về sau
+      // đúng `needTasks` việc nữa - đo bằng việc đã xong chứ không bằng đồng hồ.
+      const startedAtTasks = verifiedTaskCount(data);
+      patch((d) => ({
+        ...d,
+        stonesSpent: d.stonesSpent + site.cost,
+        expedition: { site: siteId, startedAtTasks, startedAt: new Date().toISOString() },
+      }));
+      notify(`Đã lên đường tới ${site.name}. Xong ${site.needTasks} nhiệm vụ nữa là đoàn về.`);
+      return true;
+    },
+    [data, patch, notify],
+  );
+
+  const resolveExpedition = useCallback<Ctx['resolveExpedition']>(() => {
+    if (!data.expedition) return null;
+    const state = expeditionState(data.expedition, verifiedTaskCount(data));
+    if (!state.ready) {
+      notify(`Còn ${state.remain} nhiệm vụ nữa đoàn mới về`, 'warn');
+      return null;
+    }
+
+    const outcome = rollSiteOutcome(state.site);
+    patch((d) => {
+      const herbs = { ...d.herbs };
+      for (const [id, n] of Object.entries(outcome.herbs ?? {})) {
+        const key = id as keyof typeof herbs;
+        herbs[key] = Math.max(0, (herbs[key] ?? 0) + (n ?? 0));
+      }
+      return {
+        ...d,
+        expedition: undefined,
+        herbs,
+        // Thu hoạch đi vào đúng hai kênh đã có sẵn cho cơ duyên, nên hồ sơ công
+        // việc thật vẫn không bị đụng tới lần nào.
+        stonesBonus: d.stonesBonus + (outcome.stones ?? 0),
+        encounterXp: d.encounterXp + (outcome.xp ?? 0),
+        pills: outcome.pill ? { ...d.pills, [outcome.pill]: d.pills[outcome.pill] + 1 } : d.pills,
+      };
+    });
+    return outcome;
+  }, [data, patch, notify]);
+
   /**
    * Độ kiếp. Thành công thì mở cửa cảnh giới kế; thất bại thì hao tổn một nửa
    * tu vi đã tích trong cảnh giới này nhưng KHÔNG bao giờ tụt xuống cảnh giới
@@ -653,6 +1015,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
       root: d.root, beasts: d.beasts, activeBeastId: d.activeBeastId, stonesSpent: 0,
       pills: d.pills, tuViPenalty: 0, gateRealm: 0, failStreak: 0,
       encounterXp: 0, stonesBonus: 0, ledger: [], lastSeenAt: new Date().toISOString(),
+      technique: d.technique, techniqueSwaps: d.techniqueSwaps, caveLevel: d.caveLevel,
+      herbs: d.herbs,
+      // Linh điền và chuyến thám hiểm đều phải dọn: cả hai đo bằng lịch sử làm
+      // việc, mà lịch sử ấy vừa bị xoá sạch nên mọi mốc đã ghi thành vô nghĩa.
+      field: [],
+      expedition: undefined,
+      // Cống hiến là danh phận đã gây dựng nên giữ lại; còn sứ mệnh đang gánh
+      // thì đo bằng lịch sử vừa bị xoá sạch nên phải bỏ.
+      contribution: d.contribution,
+      mission: undefined,
     }));
     notify('Đã xoá toàn bộ dữ liệu', 'warn');
   }, [notify]);
@@ -714,11 +1086,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
       data, audit, resealLedger, celebration, dismissCelebration, encounter, resolveEncounter, dismissEncounter, notify, addTask, updateTask, removeTask, setStatus, toggleDone, moveTask,
       duplicateTask, toggleSubtask, pushOverdueToToday, clearDone, addGoal, updateGoal, removeGoal,
       logSession, awaken, rerollRoot, summon, feedBeast, setActiveBeast, buyPill, attemptTribulation,
+      pickTechnique, plantSeed, harvestPlot, refinePill, refineRootElement, condenseRootElement, upgradeCave,
+      startExpedition, resolveExpedition, acceptMission, settleMission,
       updateSettings, replaceAll, loadSample, resetAll,
     }),
     [data, audit, resealLedger, celebration, dismissCelebration, encounter, resolveEncounter, dismissEncounter, notify, addTask, updateTask, removeTask, setStatus, toggleDone, moveTask,
       duplicateTask, toggleSubtask, pushOverdueToToday, clearDone, addGoal, updateGoal, removeGoal,
       logSession, awaken, rerollRoot, summon, feedBeast, setActiveBeast, buyPill, attemptTribulation,
+      pickTechnique, plantSeed, harvestPlot, refinePill, refineRootElement, condenseRootElement, upgradeCave,
+      startExpedition, resolveExpedition, acceptMission, settleMission,
       updateSettings, replaceAll, loadSample, resetAll],
   );
 

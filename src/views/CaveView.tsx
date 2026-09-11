@@ -8,7 +8,6 @@ import {
 } from '../lib/beasts';
 import type { Beast, BeastRarity } from '../lib/beasts';
 import { ELEMENTS, REROLL_COST, ROOT_GRADES, gradeOf } from '../lib/spirit';
-import { PILLS, PILL_ORDER } from '../lib/pills';
 import { stoneBreakdown, xpBreakdown } from '../lib/economy';
 import { useApp } from '../store/AppStore';
 import BeastEmblem from '../components/BeastEmblem';
@@ -19,6 +18,11 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
   AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import TechniqueSection from '../components/cave/TechniqueSection';
+import FieldSection from '../components/cave/FieldSection';
+import AlchemySection from '../components/cave/AlchemySection';
+import RootRefineSection from '../components/cave/RootRefineSection';
+import CaveUpgradeSection from '../components/cave/CaveUpgradeSection';
 import { cn } from '@/lib/utils';
 
 /**
@@ -26,7 +30,7 @@ import { cn } from '@/lib/utils';
  * Đây là phần "chơi" của app - nhưng mọi nguồn lực đều đến từ việc làm thật.
  */
 export default function CaveView() {
-  const { data, awaken, rerollRoot, summon, feedBeast, setActiveBeast, buyPill } = useApp();
+  const { data, awaken, rerollRoot, summon, feedBeast, setActiveBeast } = useApp();
   const [revealed, setRevealed] = useState<Beast | null>(null);
 
   const stones = useMemo(() => stoneBreakdown(data), [data]);
@@ -44,13 +48,11 @@ export default function CaveView() {
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-4">
-      <div>
-        <h2 className="text-lg font-bold tracking-tight">Động Phủ</h2>
-        <p className="text-muted-foreground text-xs">
-          Linh căn quyết định tốc độ hấp thu, linh thú đi theo trợ đạo. Linh thạch chỉ đến từ việc
-          bạn thật sự làm xong.
-        </p>
-      </div>
+      {/* Tiêu đề "Động Phủ" đã nằm ở h1 của bảng phủ, không lặp lại lần nữa. */}
+      <p className="text-muted-foreground text-xs">
+        Linh căn quyết định tốc độ hấp thu, công pháp quyết định lối tu, linh điền nuôi thuốc cho lò
+        đan. Linh thạch chỉ đến từ việc bạn thật sự làm xong.
+      </p>
 
       {/* ------------------------------------------------------ túi linh thạch */}
       <Section id="cave-stone" icon={Gem} title="Túi linh thạch" tone="accent">
@@ -186,46 +188,14 @@ export default function CaveView() {
         )}
       </Section>
 
-      {/* ---------------------------------------------------------- đan đường */}
-      <Section
-        id="cave-pill"
-        icon={Wand2}
-        title="Đan Đường"
-        subtitle="Độ Kiếp Đan - thứ duy nhất chống nổi thiên lôi khi vượt cảnh giới"
-      >
-        <div className="grid gap-3 sm:grid-cols-3">
-          {PILL_ORDER.map((g) => {
-            const pill = PILLS[g];
-            const afford = stones.balance >= pill.cost;
-            return (
-              <div key={g} className="border-border bg-surface/60 flex flex-col gap-2.5 rounded-xl border p-3">
-                <div className="flex items-center gap-3">
-                  <img src={pill.image} alt="" className="size-14 shrink-0 object-contain" />
-                  <div className="min-w-0">
-                    <strong className="text-gold block text-xs font-semibold">{pill.short}</strong>
-                    <span className="text-success tabular block text-[11px] font-bold">
-                      {Math.round(pill.chance * 100)}% thành công
-                    </span>
-                    <span className="text-muted-foreground tabular block text-[11px]">
-                      đang có {data.pills[g]} viên
-                    </span>
-                  </div>
-                </div>
-                <p className="text-muted-foreground text-[11px] leading-snug">{pill.note}</p>
-                <Button
-                  size="sm"
-                  variant={afford ? 'default' : 'outline'}
-                  className="mt-auto h-8 gap-1.5 text-xs"
-                  disabled={!afford}
-                  onClick={() => buyPill(g)}
-                >
-                  <Gem className="size-3.5" /> Mua ({pill.cost})
-                </Button>
-              </div>
-            );
-          })}
-        </div>
-      </Section>
+      {/* Công pháp, linh điền, tẩy tuỷ, đan đường và bậc động phủ đều là mục
+          riêng - mỗi cái một tệp trong components/cave/, để tệp này không phình
+          thành hai nghìn dòng. */}
+      <TechniqueSection />
+      <RootRefineSection />
+      <FieldSection />
+      <AlchemySection />
+      <CaveUpgradeSection />
 
       {/* ---------------------------------------------------------- linh thú */}
       <Section

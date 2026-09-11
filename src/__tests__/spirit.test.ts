@@ -10,7 +10,7 @@ import { realmStart } from '../lib/cultivation';
 import { rebuildLedger } from '../lib/integrity';
 import { questStates, questsFor } from '../lib/quests';
 import type { AppData, Task } from '../types';
-import { DEFAULT_SETTINGS } from '../lib/storage';
+import { emptyData } from '../lib/storage';
 import { addDays, dateKey } from '../lib/date';
 
 const at = (offset: number) => dateKey(addDays(new Date(), offset));
@@ -37,24 +37,7 @@ function task(over: Partial<Task> & { id: string }): Task {
  * vì tu vi bị kẹp theo sổ đã xác thực. Truyền `ledger` để cố tình làm lệch.
  */
 function appData(over: Partial<AppData> = {}): AppData {
-  const data: AppData = {
-    version: 1,
-    tasks: [],
-    goals: [],
-    sessions: [],
-    settings: { ...DEFAULT_SETTINGS },
-    beasts: [],
-    stonesSpent: 0,
-    pills: { ha: 0, trung: 0, thuong: 0 },
-    tuViPenalty: 0,
-    gateRealm: 9,
-    failStreak: 0,
-    encounterXp: 0,
-    stonesBonus: 0,
-    ledger: [],
-    lastSeenAt: new Date().toISOString(),
-    ...over,
-  };
+  const data: AppData = { ...emptyData(), gateRealm: 9, ...over };
   return over.ledger ? data : { ...data, ledger: rebuildLedger(data) };
 }
 

@@ -3,7 +3,7 @@
 Web app tu tiên, giao diện **vàng kim trên đen nâu**. Mọi chữ và thành phần UI do
 web vẽ đè lên → ảnh chỉ là **nền và minh hoạ**.
 
-**Tình trạng: 55/55 đã xong. Bộ art đã đủ.**
+**Tình trạng: 55/55 đợt 1 đã xong. Đợt 2 cần thêm 4 icon — xem mục D cuối trang.**
 
 | Nhóm | Tình trạng |
 |---|---|
@@ -289,8 +289,6 @@ chạy lại, không cần vẽ lại tranh.
 
 ---
 
-# C. Còn thiếu — 29 file
-
 # C. Phụ lục — prompt tiếng Anh
 
 **Chỉ dùng khi đặt qua tool sinh ảnh. Gửi cho người vẽ thì bỏ hẳn phần này.**
@@ -342,3 +340,27 @@ Tổng `public/art` 22,8 MB, trong đó 8,6 MB là ba file media (`tu.mp4`,
 
 Việc còn lại duy nhất liên quan đến ảnh: khi deploy, đổi `og:image` trong
 `index.html` thành URL tuyệt đối.
+
+Phần tài nguyên cho **thế giới 3D** (model, HDRI, texture, âm thanh) nằm ở tài
+liệu riêng: [`docs/3d-brief.md`](3d-brief.md).
+
+---
+
+# D. Đợt 2 — 4 icon cho thanh thời khoá
+
+Thanh tab dưới cùng vừa đổi tên từ "Hôm nay / Tuần / Tháng / Mục tiêu" sang
+**Nhật Khoá · Tuần Khoá · Nguyệt Khoá · Đại Nguyện**, và được cho khung ngọc
+giống hệt hai cột icon bên rìa. Nhưng **cả 12 tranh trong `public/art/icon/` đã
+dùng hết**, không còn cái nào rảnh, nên bốn tab này đang tạm dùng icon nét của
+thư viện — nhìn vẫn lệch hẳn so với tranh vẽ tay xung quanh.
+
+| File cần vẽ | Biểu tượng | Ghi chú |
+|---|---|---|
+| `icon/nhat_khoa.png` | Mặt trời mọc sau rặng núi | "Nhật" là mặt trời — bám sát mặt chữ |
+| `icon/tuan_khoa.png` | Chòm thất tinh, bảy sao nối nhau | Bảy sao ứng với bảy ngày |
+| `icon/nguyet_khoa.png` | Trăng tròn sau tầng mây | "Nguyệt" là mặt trăng |
+| `icon/dai_nguyen.png` | Ngọn núi cao có đường mòn dẫn lên đỉnh | Đại nguyện là đích xa phải trèo |
+
+Quy cách y hệt bộ `icon/` đợt 1: nền trong suốt, chủ thể chiếm gần hết khung,
+bóng ngoài rõ ràng, **không có chữ**. Xuất PNG lớn nhất tool cho, `npm run art`
+tự cắt và nén.

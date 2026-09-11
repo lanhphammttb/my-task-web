@@ -27,15 +27,15 @@ describe('Ứng dụng web', () => {
 
   it('mở bảng Hôm nay từ thanh tab và thấy dữ liệu mẫu', async () => {
     render(<App />);
-    openPanel('Hôm nay');
+    openPanel('Nhật Khoá');
 
-    expect(await screen.findByRole('heading', { name: 'Nhật khoá hôm nay' })).toBeDefined();
+    expect(await screen.findByRole('heading', { name: 'Nhật Khoá' })).toBeDefined();
     expect((await screen.findAllByText('Chốt tài liệu bàn giao module thanh toán')).length).toBeGreaterThan(0);
   });
 
   it('thêm nhiệm vụ qua ô thêm nhanh và lưu vào localStorage', async () => {
     render(<App />);
-    openPanel('Hôm nay');
+    openPanel('Nhật Khoá');
 
     const input = await screen.findByPlaceholderText(/Thêm nhanh nhiệm vụ/);
     fireEvent.change(input, { target: { value: 'Nhiệm vụ kiểm thử !cao @08:15 ~45 #test' } });
@@ -50,7 +50,7 @@ describe('Ứng dụng web', () => {
 
   it('đánh dấu hoàn thành làm tăng số việc đã xong', async () => {
     render(<App />);
-    openPanel('Hôm nay');
+    openPanel('Nhật Khoá');
 
     const before = JSON.parse(localStorage.getItem('my-task-planner/v1') ?? '{"tasks":[]}');
     const doneBefore = before.tasks.filter((t: { status: string }) => t.status === 'done').length;
@@ -66,15 +66,15 @@ describe('Ứng dụng web', () => {
   it('chuyển được sang bảng Tháng, Mục tiêu và Thống kê', async () => {
     render(<App />);
 
-    openPanel('Tháng');
-    expect(await screen.findByRole('heading', { name: 'Kế hoạch tháng' })).toBeDefined();
+    openPanel('Nguyệt Khoá');
+    expect(await screen.findByRole('heading', { name: 'Nguyệt Khoá' })).toBeDefined();
 
-    openPanel('Mục tiêu');
-    expect(await screen.findByRole('heading', { name: 'Đại nguyện' })).toBeDefined();
+    openPanel('Đại Nguyện');
+    expect(await screen.findByRole('heading', { name: 'Đại Nguyện' })).toBeDefined();
     expect((await screen.findAllByText('Bàn giao dự án Q3')).length).toBeGreaterThan(0);
 
-    openPanel('Thống Kê');
-    expect(await screen.findByRole('heading', { name: 'Thống kê' })).toBeDefined();
+    openPanel('Tu Hành Lục');
+    expect(await screen.findByRole('heading', { name: 'Tu Hành Lục' })).toBeDefined();
     expect(await screen.findByText('Tỷ lệ hoàn thành')).toBeDefined();
   });
 
@@ -82,7 +82,7 @@ describe('Ứng dụng web', () => {
     render(<App />);
     openPanel('Tiên Lộ');
 
-    expect(await screen.findByRole('heading', { name: 'Tiên lộ' })).toBeDefined();
+    expect(await screen.findByRole('heading', { name: 'Tiên Lộ' })).toBeDefined();
     // Bậc thang phải liệt kê đủ từ cảnh giới đầu tới đích phi thăng.
     expect((await screen.findAllByText('Luyện Khí')).length).toBeGreaterThan(0);
     expect(await screen.findByText('Phi Thăng')).toBeDefined();
@@ -95,7 +95,7 @@ describe('Ứng dụng web', () => {
     render(<App />);
     openPanel('Linh Thú');
 
-    expect(await screen.findByRole('heading', { name: 'Động phủ' })).toBeDefined();
+    expect(await screen.findByRole('heading', { name: 'Động Phủ' })).toBeDefined();
     expect(await screen.findByText('Linh thú')).toBeDefined();
     expect(document.getElementById('cave-beast')).not.toBeNull();
   });
@@ -112,7 +112,7 @@ describe('Ứng dụng web', () => {
 
   it('không cho hoàn thành nhiệm vụ của ngày mai, không bung hiệu ứng', async () => {
     render(<App />);
-    openPanel('Hôm nay');
+    openPanel('Nhật Khoá');
 
     // Sang ngày mai rồi thử tick một nhiệm vụ ở đó.
     fireEvent.click(await screen.findByRole('button', { name: 'Ngày sau' }));
@@ -131,7 +131,7 @@ describe('Ứng dụng web', () => {
 
   it('nhiệm vụ hôm nay vẫn hoàn thành được và được ghi vào sổ', async () => {
     render(<App />);
-    openPanel('Hôm nay');
+    openPanel('Nhật Khoá');
 
     const before = JSON.parse(localStorage.getItem('my-task-planner/v1') ?? '{}');
     const beforeLedger = before.ledger.length;

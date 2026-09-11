@@ -5,6 +5,9 @@ import { currentStreak } from './stats';
 import { beastById, beastLevel } from './beasts';
 import type { OwnedBeast } from './beasts';
 import { gradeOf } from './spirit';
+import { techniqueMuls } from './techniques';
+import { rankOf } from './sect';
+import { FAIL_LOSS_RATIO } from './pills';
 import { questStones } from './quests';
 import { ASCENSION_INDEX, realmStart } from './cultivation';
 import { verifiedTotals } from './integrity';
@@ -20,8 +23,10 @@ const taskXp = (t: Task) => 10 * PRIORITY_META[t.priority].weight;
 const beatDeadline = (t: Task) => !!t.deadline && !!t.completedAt && t.completedAt <= t.deadline;
 
 export interface XpBreakdown {
-  /** Tu vi gốc từ nhiệm vụ và bế quan */
+  /** Tu vi gốc từ nhiệm vụ và bế quan, chưa đổi tỷ giá theo công pháp */
   base: number;
+  /** Chênh lệch do công pháp - có thể âm, vì công pháp nào cũng có chỗ đánh đổi */
+  techniqueBonus: number;
   /** Cộng thêm từ thiên phú ngũ hành */
   elementBonus: number;
   /** Cộng thêm từ linh thú đang mang theo */
@@ -46,19 +51,48 @@ function beastPercent(data: AppData, kind: string): number {
   return beast.perkPerLevel * beastLevel(owned.fed);
 }
 
+/**
+ * Số nhiệm vụ đã hoàn thành và đã được sổ ghi xác thực. Chuyến thám hiểm đo
+ * đường về bằng con số này, nên nó phải là con số đã kẹp.
+ */
+export function verifiedTaskCount(data: AppData): number {
+  return Math.min(
+    data.tasks.filter((t) => t.status === 'done').length,
+    verifiedTotals(data).taskCount,
+  );
+}
+
+/**
+ * Tổng số phút bế quan đã được sổ ghi xác thực. Linh điền đo cây lớn bằng con
+ * số này, nên nó phải là con số đã kẹp - không thì nhồi phiên giả là có thuốc.
+ */
+export function verifiedFocusMinutes(data: AppData): number {
+  return Math.min(
+    data.sessions.reduce((s, x) => s + x.minutes, 0),
+    verifiedTotals(data).sessionMinutes,
+  );
+}
+
 export function xpBreakdown(data: AppData): XpBreakdown {
   const done = data.tasks.filter((t) => t.status === 'done');
 
   // Chống gian lận: tu vi không bao giờ vượt quá phần đã được sổ ghi xác thực.
   // Người dùng bình thường có sổ khớp hoàn toàn nên không bị ảnh hưởng gì.
   const verified = verifiedTotals(data);
-  const taskBase = Math.min(done.reduce((sum, t) => sum + taskXp(t), 0), verified.taskXp);
+  const rawTaskBase = Math.min(done.reduce((sum, t) => sum + taskXp(t), 0), verified.taskXp);
   const focusMinutes = Math.min(
     data.sessions.reduce((s, x) => s + x.minutes, 0),
     verified.sessionMinutes,
   );
   const focusBase = Math.floor(focusMinutes / 5);
-  const base = taskBase + focusBase;
+  const base = rawTaskBase + focusBase;
+
+  // ---------------------------------------------------------- công pháp
+  // Công pháp không cho thêm sức mạnh, nó đổi tỷ giá: Thuỷ Vân ăn bế quan mà
+  // nhả nhiệm vụ, Kim Cang thì ngược lại. Cố ý áp lên đúng hai nguồn gốc chứ
+  // không áp lên thiên phú, để người dùng nhẩm ra được ngay mình lời chỗ nào.
+  const mul = techniqueMuls(data.technique);
+  const techniqueBonus = rawTaskBase * (mul.taskMul - 1) + focusBase * (mul.focusMul - 1);
 
   const urgentBase = done.filter((t) => t.priority === 'urgent').reduce((s, t) => s + taskXp(t), 0);
   const deadlineBase = done.filter(beatDeadline).reduce((s, t) => s + taskXp(t), 0);
@@ -83,11 +117,12 @@ export function xpBreakdown(data: AppData): XpBreakdown {
   // Cơ duyên là quà của trời, cộng thẳng chứ không nhân theo linh căn.
   const total = Math.max(
     0,
-    Math.floor((base + elementBonus + beastBonus) * multiplier) + data.encounterXp,
+    Math.floor((base + techniqueBonus + elementBonus + beastBonus) * multiplier) + data.encounterXp,
   );
 
   return {
     base,
+    techniqueBonus: Math.round(techniqueBonus),
     elementBonus: Math.round(elementBonus),
     beastBonus: Math.round(beastBonus),
     encounterXp: data.encounterXp,
@@ -145,11 +180,16 @@ export function progressOf(data: AppData): Progress {
 /** Tu vi thực nhận sau mọi thiên phú - đây là con số dùng để xét cảnh giới. */
 export const effectiveXp = (data: AppData) => progressOf(data).xp;
 
-/** Tu vi sẽ mất nếu độ kiếp thất bại: một nửa phần đã tích trong cảnh giới này. */
+/**
+ * Tu vi sẽ mất nếu độ kiếp thất bại: một nửa phần đã tích trong cảnh giới này,
+ * nhân thêm hệ số của công pháp. Hậu Thổ đỡ đòn giỏi, Phá Chấp thì mất rất đau
+ * - đó chính là cái giá của tu vi tăng thêm mà nó cho.
+ */
 export function tribulationLoss(data: AppData): number {
   const p = progressOf(data);
   const floor = realmStart(p.gateRealm);
-  return Math.floor(Math.max(0, p.net - floor) * 0.5);
+  const lossMul = techniqueMuls(data.technique).lossMul;
+  return Math.floor(Math.max(0, p.net - floor) * FAIL_LOSS_RATIO * lossMul);
 }
 
 export interface StoneBreakdown {
@@ -160,6 +200,8 @@ export interface StoneBreakdown {
   /** Linh thạch thưởng từ kỳ ngộ */
   fromEncounters: number;
   beastPercent: number;
+  /** Phần trăm cộng thêm nhờ bậc trong tông môn */
+  rankPercent: number;
   earned: number;
   spent: number;
   balance: number;
@@ -178,10 +220,19 @@ export function stoneBreakdown(data: AppData): StoneBreakdown {
   const fromQuests = questStones(data);
   const pct = beastPercent(data, 'stonePct');
   // Thiên phú linh thú chỉ nhân phần kiếm được từ công việc; thưởng kỳ ngộ
-  // là quà rời nên cộng thẳng vào sau.
+  // là quà rời nên cộng thẳng vào sau. Công pháp cũng chỉ đụng vào phần kiếm
+  // được - Hậu Thổ tích của giỏi, Phá Chấp thì đổi hết của lấy tu vi.
+  const stoneMul = techniqueMuls(data.technique).stoneMul;
+  // Bậc trong tông môn cũng chỉ ăn vào phần kiếm được từ công việc, giống thiên
+  // phú linh thú - phần thưởng rời không nhân theo.
+  const rankPct = rankOf(data.contribution).stonePct;
   const earned =
-    Math.floor((fromTasks + fromSessions + fromPerfectDays + fromQuests) * (1 + pct / 100)) +
-    data.stonesBonus;
+    Math.floor(
+      (fromTasks + fromSessions + fromPerfectDays + fromQuests) *
+        (1 + pct / 100) *
+        (1 + rankPct / 100) *
+        stoneMul,
+    ) + data.stonesBonus;
   const spent = data.stonesSpent;
   return {
     fromTasks,
@@ -190,6 +241,7 @@ export function stoneBreakdown(data: AppData): StoneBreakdown {
     fromQuests,
     fromEncounters: data.stonesBonus,
     beastPercent: pct,
+    rankPercent: rankPct,
     earned,
     spent,
     balance: Math.max(0, earned - spent),

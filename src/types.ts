@@ -1,9 +1,13 @@
 /** Kiểu dữ liệu dùng chung cho toàn bộ ứng dụng. */
 
 import type { OwnedBeast } from './lib/beasts';
+import type { Expedition } from './lib/expedition';
+import type { FieldPlot, HerbId } from './lib/field';
 import type { LedgerEntry } from './lib/integrity';
 import type { PillGrade } from './lib/pills';
+import type { ActiveMission } from './lib/sect';
 import type { SpiritRoot } from './lib/spirit';
+import type { TechniqueId } from './lib/techniques';
 
 export type Priority = 'low' | 'medium' | 'high' | 'urgent';
 export type Status = 'todo' | 'doing' | 'done';
@@ -89,6 +93,22 @@ export interface AppData {
   beasts: OwnedBeast[];
   /** Linh thú đang mang theo, thiên phú của nó mới có tác dụng */
   activeBeastId?: string;
+  /** Công pháp đang tu - đổi tỷ giá giữa công sức và tu vi, chưa chọn thì để trống */
+  technique?: TechniqueId;
+  /** Số lần đã đổi công pháp. Lần chọn đầu miễn phí, mỗi lần đổi sau một đắt hơn */
+  techniqueSwaps: number;
+  /** Bậc động phủ - quyết định số ô linh điền và tay nghề luyện đan */
+  caveLevel: number;
+  /** Linh điền: các ô đang có cây. Ô trống thì không nằm trong mảng này */
+  field: FieldPlot[];
+  /** Linh thảo đã hái, đếm theo loại */
+  herbs: Record<HerbId, number>;
+  /** Chuyến thám hiểm đang đi. Mỗi lúc chỉ đi được một nơi */
+  expedition?: Expedition;
+  /** Cống hiến tích luỹ cho tông môn - quyết định bậc đệ tử */
+  contribution: number;
+  /** Sứ mệnh đang nhận. Mỗi lúc chỉ gánh được một cái */
+  mission?: ActiveMission;
   /** Linh thạch đã tiêu (số dư = kiếm được - đã tiêu) */
   stonesSpent: number;
   /** Đan dược đang có, theo phẩm cấp */
