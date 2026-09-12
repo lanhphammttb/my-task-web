@@ -1,5 +1,9 @@
 import type { AppData, Settings } from '../types';
+import { HERBS } from './field';
 import type { HerbId } from './field';
+import { SITES } from './expedition';
+import { MISSIONS } from './sect';
+import { TECHNIQUES } from './techniques';
 
 /** Túi linh thảo rỗng. Luôn đủ cả bốn khoá để chỗ nào cũng cộng trừ được thẳng. */
 export const emptyHerbs = (): Record<HerbId, number> => ({
@@ -46,12 +50,56 @@ export const emptyData = (): AppData => ({
   lastSeenAt: new Date().toISOString(),
 });
 
+/**
+ * Gỡ khỏi dữ liệu mọi thứ trỏ tới id không còn tồn tại.
+ *
+ * Hai đường sinh ra chuyện này: người dùng nhập một file JSON tự sửa (app có
+ * chức năng nhập, mà `readFile` gần như không kiểm gì), và chính ta đổi tên
+ * một loại linh thảo hay một sứ mệnh ở bản sau - lúc ấy mọi bản lưu cũ đều
+ * mang id đã chết.
+ *
+ * Phải dọn ngay tại đây chứ không chỉ chặn ở giao diện: ô đất hỏng mà để lại
+ * thì nó chiếm chỗ vĩnh viễn (gieo lại không được vì ô đang "có cây"), còn sứ
+ * mệnh hỏng thì chặn luôn việc nhận sứ mệnh mới.
+ *
+ * Chỗ nào người dùng đã bỏ tiền thì hoàn lại: mất sứ mệnh vì ta đổi bảng không
+ * phải lỗi của họ.
+ */
+function dropDeadIds(d: AppData): AppData {
+  let refund = 0;
+
+  const field = d.field.filter((plot) => plot.herb in HERBS);
+
+  let mission = d.mission;
+  if (mission && !(mission.id in MISSIONS)) {
+    refund += mission.stake;
+    mission = undefined;
+  }
+
+  let expedition = d.expedition;
+  if (expedition && !(expedition.site in SITES)) {
+    // Phí lên đường đã tiêu rồi nhưng chuyến đi không bao giờ về được nữa.
+    expedition = undefined;
+  }
+
+  const technique = d.technique && d.technique in TECHNIQUES ? d.technique : undefined;
+
+  return {
+    ...d,
+    field,
+    mission,
+    expedition,
+    technique,
+    stonesBonus: d.stonesBonus + refund,
+  };
+}
+
 export function loadData(): AppData {
   try {
     const raw = localStorage.getItem(KEY);
     if (!raw) return emptyData();
     const parsed = JSON.parse(raw) as Partial<AppData>;
-    return {
+    return dropDeadIds({
       version: 1,
       tasks: parsed.tasks ?? [],
       goals: parsed.goals ?? [],
@@ -78,7 +126,7 @@ export function loadData(): AppData {
       stonesBonus: parsed.stonesBonus ?? 0,
       ledger: parsed.ledger ?? [],
       lastSeenAt: parsed.lastSeenAt ?? new Date().toISOString(),
-    };
+    });
   } catch {
     return emptyData();
   }
@@ -109,8 +157,9 @@ export function readFile(file: File): Promise<AppData> {
       try {
         const parsed = JSON.parse(String(reader.result)) as Partial<AppData>;
         if (!Array.isArray(parsed.tasks)) throw new Error('Tệp không đúng định dạng');
-        resolve({
-          version: 1,
+        resolve(
+          dropDeadIds({
+            version: 1,
           tasks: parsed.tasks,
           goals: parsed.goals ?? [],
           sessions: parsed.sessions ?? [],
@@ -135,7 +184,8 @@ export function readFile(file: File): Promise<AppData> {
           stonesBonus: parsed.stonesBonus ?? 0,
           ledger: parsed.ledger ?? [],
           lastSeenAt: parsed.lastSeenAt ?? new Date().toISOString(),
-        });
+          }),
+        );
       } catch (err) {
         reject(err);
       }

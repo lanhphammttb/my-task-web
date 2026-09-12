@@ -684,6 +684,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const plot = data.field.find((pl) => pl.slot === slot);
       if (!plot) return false;
       const state = plotState(plot, verifiedFocusMinutes(data));
+      if (!state) {
+        // Loại linh thảo không còn tồn tại - dọn ô đất đi, nếu không người
+        // dùng kẹt vĩnh viễn với một ô không hái được mà cũng không gieo lại được.
+        patch((d) => ({ ...d, field: d.field.filter((pl) => pl.slot !== slot) }));
+        notify('Ô đất mang loại linh thảo không còn tồn tại, đã dọn đi', 'warn');
+        return false;
+      }
       if (!state.ready) {
         notify(`Còn ${state.remain} phút bế quan nữa cây mới chín`, 'warn');
         return false;
@@ -849,6 +856,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
       verifiedTaskCount(data),
       verifiedFocusMinutes(data),
     );
+    if (!state) {
+      // Sứ mệnh không còn tồn tại trong bảng - gỡ ra và trả lại cọc. Người
+      // dùng không có lỗi gì ở đây, không được phạt họ vì ta đổi bảng.
+      const refund = data.mission.stake;
+      patch((d) => ({ ...d, mission: undefined, stonesBonus: d.stonesBonus + refund }));
+      notify('Sứ mệnh này không còn nữa, đã hoàn lại tiền cọc', 'warn');
+      return null;
+    }
     const { mission, met } = state;
     const stake = data.mission.stake;
     const before = rankOf(data.contribution).level;
@@ -904,6 +919,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const resolveExpedition = useCallback<Ctx['resolveExpedition']>(() => {
     if (!data.expedition) return null;
     const state = expeditionState(data.expedition, verifiedTaskCount(data));
+    if (!state) {
+      // Bí cảnh không còn tồn tại - kết thúc chuyến đi và hoàn phí lên đường.
+      const refund = SITES[data.expedition.site]?.cost ?? 0;
+      patch((d) => ({ ...d, expedition: undefined, stonesBonus: d.stonesBonus + refund }));
+      notify('Bí cảnh này không còn nữa, đã kết thúc chuyến đi', 'warn');
+      return null;
+    }
     if (!state.ready) {
       notify(`Còn ${state.remain} nhiệm vụ nữa đoàn mới về`, 'warn');
       return null;

@@ -80,6 +80,10 @@ export default function FieldSection() {
           }
 
           const s = plotState(plot, totalFocus);
+          // Ô mang loại linh thảo không còn tồn tại: bỏ qua chứ không dựng.
+          // Lúc nạp dữ liệu đã dọn sẵn nên gần như không bao giờ tới đây, giữ
+          // lại chỉ để một ô hỏng không kéo sập cả màn hình.
+          if (!s) return null;
           return (
             <div
               key={slot}

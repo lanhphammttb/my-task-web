@@ -98,8 +98,17 @@ export interface PlotState {
   remain: number;
 }
 
-export function plotState(plot: FieldPlot, totalFocus: number): PlotState {
+/**
+ * Trả `null` nếu ô đất mang loại linh thảo không còn tồn tại.
+ *
+ * Dữ liệu lưu có thể chứa id đã chết: app cho nhập file JSON mà gần như không
+ * kiểm gì, và sau này đổi tên một loại thảo dược là mọi bản lưu cũ đều hỏng.
+ * Hàm này chạy trong lúc dựng giao diện, nên tra hụt mà ném lỗi thì mất trắng
+ * cả màn hình chứ không phải mỗi ô đất.
+ */
+export function plotState(plot: FieldPlot, totalFocus: number): PlotState | null {
   const herb = HERBS[plot.herb];
+  if (!herb) return null;
   // Kẹp về 0: sổ ghi có thể hạ tổng phút xuống nếu phát hiện dữ liệu bị sửa,
   // lúc ấy cây coi như vừa gieo chứ không được âm.
   const grown = Math.max(0, totalFocus - plot.plantedAtFocus);

@@ -254,8 +254,10 @@ export interface ExpeditionState {
   remain: number;
 }
 
-export function expeditionState(e: Expedition, taskCount: number): ExpeditionState {
+/** Trả `null` nếu chuyến đi trỏ tới một bí cảnh không còn tồn tại. */
+export function expeditionState(e: Expedition, taskCount: number): ExpeditionState | null {
   const site = SITES[e.site];
+  if (!site) return null;
   // Kẹp về 0 như linh điền: sổ ghi có thể hạ số nhiệm vụ đã xác thực xuống nếu
   // phát hiện dữ liệu bị sửa, lúc ấy chuyến đi coi như vừa khởi hành.
   const done = Math.max(0, taskCount - e.startedAtTasks);

@@ -22,6 +22,23 @@ import type { SpiritRoot } from '../lib/spirit';
 
 const at = (offset: number) => dateKey(addDays(new Date(), offset));
 
+/**
+ * Ba hàm trạng thái trả `null` khi gặp id không còn tồn tại. Trong tệp này mọi
+ * id đều hợp lệ nên không bao giờ null - bọc lại cho các bài đọc gọn, và nếu
+ * có ngày nào null thật thì bài sẽ đỏ ngay chứ không lặng lẽ bỏ qua.
+ */
+function must<T>(v: T | null, what: string): T {
+  if (v === null) throw new Error(`${what} trả null với dữ liệu hợp lệ`);
+  return v;
+}
+
+const plotAt = (...a: Parameters<typeof plotState>) => must(plotState(...a), 'plotState');
+const tripAt = (...a: Parameters<typeof expeditionState>) =>
+  must(expeditionState(...a), 'expeditionState');
+const missionAt = (...a: Parameters<typeof missionState>) =>
+  must(missionState(...a), 'missionState');
+
+
 function task(over: Partial<Task> & { id: string }): Task {
   return {
     title: over.id,
@@ -117,7 +134,7 @@ describe('linh điền', () => {
   });
 
   it('cây lớn theo phút bế quan tích được kể từ lúc gieo', () => {
-    const s = plotState(plot(), 130);
+    const s = plotAt(plot(), 130);
     expect(s.grown).toBe(30);
     expect(s.need).toBe(HERBS.thanh_diep.needFocus);
     expect(s.ready).toBe(false);
@@ -125,7 +142,7 @@ describe('linh điền', () => {
   });
 
   it('đủ phút thì chín', () => {
-    const s = plotState(plot(), 100 + HERBS.thanh_diep.needFocus);
+    const s = plotAt(plot(), 100 + HERBS.thanh_diep.needFocus);
     expect(s.ready).toBe(true);
     expect(s.ratio).toBe(1);
     expect(s.remain).toBe(0);
@@ -134,7 +151,7 @@ describe('linh điền', () => {
   it('tổng phút tụt xuống thì cây về 0 chứ không âm', () => {
     // Sổ ghi có thể hạ tổng phút nếu phát hiện dữ liệu bị sửa. Lúc ấy cây coi
     // như vừa gieo, không được ra số âm rồi tính ra tỷ lệ quái đản.
-    const s = plotState(plot({ plantedAtFocus: 500 }), 10);
+    const s = plotAt(plot({ plantedAtFocus: 500 }), 10);
     expect(s.grown).toBe(0);
     expect(s.ratio).toBe(0);
     expect(s.ready).toBe(false);
@@ -222,7 +239,7 @@ describe('thám hiểm', () => {
   });
 
   it('đoàn về theo số nhiệm vụ xong kể từ lúc lên đường', () => {
-    const s = expeditionState(trip(), 14);
+    const s = tripAt(trip(), 14);
     expect(s.done).toBe(4);
     expect(s.need).toBe(SITES.co_thap.needTasks);
     expect(s.ready).toBe(false);
@@ -230,13 +247,13 @@ describe('thám hiểm', () => {
   });
 
   it('đủ nhiệm vụ thì đoàn về', () => {
-    const s = expeditionState(trip(), 10 + SITES.co_thap.needTasks);
+    const s = tripAt(trip(), 10 + SITES.co_thap.needTasks);
     expect(s.ready).toBe(true);
     expect(s.ratio).toBe(1);
   });
 
   it('số nhiệm vụ tụt xuống thì coi như vừa khởi hành, không ra số âm', () => {
-    const s = expeditionState(trip({ startedAtTasks: 99 }), 3);
+    const s = tripAt(trip({ startedAtTasks: 99 }), 3);
     expect(s.done).toBe(0);
     expect(s.ratio).toBe(0);
   });
@@ -315,7 +332,7 @@ describe('tông môn', () => {
   });
 
   it('đo phần làm được kể từ lúc nhận, không tính công cũ', () => {
-    const s = missionState(mission(), 17, 100, before);
+    const s = missionAt(mission(), 17, 100, before);
     expect(s.doneTasks).toBe(12);
     expect(s.doneFocus).toBe(0);
   });
@@ -324,7 +341,7 @@ describe('tông môn', () => {
     // Toạ Quan đòi cả nhiệm vụ lẫn bế quan: xong hết việc mà chưa ngồi đủ thì
     // vẫn chưa phục mệnh được.
     const m = MISSIONS.toa_quan;
-    const s = missionState(
+    const s = missionAt(
       mission({ id: 'toa_quan', startTasks: 0, startFocus: 0 }),
       m.tasks,
       0,
@@ -336,7 +353,7 @@ describe('tông môn', () => {
 
   it('đạt đủ mọi chỉ tiêu thì phục mệnh được', () => {
     const m = MISSIONS.toa_quan;
-    const s = missionState(
+    const s = missionAt(
       mission({ id: 'toa_quan', startTasks: 0, startFocus: 0 }),
       m.tasks,
       m.focus,
@@ -347,7 +364,7 @@ describe('tông môn', () => {
   });
 
   it('quá hạn mà chưa đạt thì tính là trượt', () => {
-    const s = missionState(mission(), 6, 100, after);
+    const s = missionAt(mission(), 6, 100, after);
     expect(s.met).toBe(false);
     expect(s.expired).toBe(true);
     expect(s.msLeft).toBeLessThan(0);
@@ -355,13 +372,13 @@ describe('tông môn', () => {
 
   it('đã đạt rồi thì quá hạn cũng không bị coi là trượt', () => {
     // Làm xong trước hạn nhưng mở app muộn mới bấm phục mệnh - không được phạt.
-    const s = missionState(mission(), 5 + MISSIONS.tuan_son.tasks, 100, after);
+    const s = missionAt(mission(), 5 + MISSIONS.tuan_son.tasks, 100, after);
     expect(s.met).toBe(true);
     expect(s.expired).toBe(false);
   });
 
   it('số đã xác thực tụt xuống thì coi như vừa nhận, không ra số âm', () => {
-    const s = missionState(mission({ startTasks: 99, startFocus: 999 }), 3, 10, before);
+    const s = missionAt(mission({ startTasks: 99, startFocus: 999 }), 3, 10, before);
     expect(s.doneTasks).toBe(0);
     expect(s.doneFocus).toBe(0);
   });

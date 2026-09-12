@@ -253,7 +253,7 @@ function Shell() {
     : null;
   const pathAlert =
     (!!mission && (mission.met || mission.msLeft < DAY_MS)) ||
-    (!!data.expedition && expeditionState(data.expedition, taskCount).ready);
+    (!!data.expedition && !!expeditionState(data.expedition, taskCount)?.ready);
 
   return (
     <div

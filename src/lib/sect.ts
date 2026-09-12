@@ -209,8 +209,9 @@ export function missionState(
   taskCount: number,
   focusMinutes: number,
   now: Date = new Date(),
-): MissionState {
+): MissionState | null {
   const mission = MISSIONS[active.id];
+  if (!mission) return null;
   // Kẹp về 0 như mọi chỗ khác: sổ ghi có thể hạ số đã xác thực xuống nếu phát
   // hiện dữ liệu bị sửa, lúc ấy coi như vừa nhận sứ mệnh chứ không được âm.
   const doneTasks = Math.max(0, taskCount - active.startTasks);
