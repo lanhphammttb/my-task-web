@@ -43,6 +43,7 @@ import { useApp } from "../store/AppStore";
 import ProgressRing from "../components/ProgressRing";
 import RealmScene from "../components/RealmScene";
 import QuickAdd from "../components/QuickAdd";
+import ChestRow from "../components/ChestRow";
 import TaskCard from "../components/TaskCard";
 import { EmptyState, Meter, MetaChip, Section } from "../components/primitives";
 import { Button } from "@/components/ui/button";
@@ -265,6 +266,10 @@ export default function TodayView({
       </section>
 
       <QuickAdd date={date} />
+
+      {/* Hòm đặt ngay trên nhật khoá tông môn: cả hai đều là phần thưởng của
+          ngày hôm nay, để cạnh nhau thì đọc ra là một cụm. */}
+      <ChestRow date={date} />
 
       {/* ------------------------------------------------ nhật khoá tông môn */}
       <Section

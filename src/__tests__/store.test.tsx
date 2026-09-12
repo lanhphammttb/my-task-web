@@ -9,6 +9,7 @@ import { RECIPES } from '../lib/pills';
 import { MISSIONS } from '../lib/sect';
 import { SITES } from '../lib/expedition';
 import { CAVE_LEVELS } from '../lib/cave';
+import { todayKey } from '../lib/date';
 import { techniqueSwapCost } from '../lib/techniques';
 import type { AppData, Goal, Task } from '../types';
 
@@ -439,5 +440,95 @@ describe('thám hiểm', () => {
       r.result.current.data.stonesBonus > 500 ||
       r.result.current.data.encounterXp > 0;
     expect(gainedSomething).toBe(true);
+  });
+});
+
+describe('hòm kỳ ngộ', () => {
+  beforeEach(() => localStorage.clear());
+
+  /** Nhiệm vụ đã xong trong HÔM NAY - mốc hòm chỉ xét ngày hiện tại. */
+  const doneToday = (n: number): Task[] =>
+    Array.from({ length: n }, (_, i) => ({
+      id: `today${i}`,
+      title: `việc ${i}`,
+      note: '',
+      date: todayKey(),
+      priority: 'low',
+      status: 'done',
+      tags: [],
+      estimateMin: 30,
+      focusMin: 0,
+      subtasks: [],
+      recurrence: 'none',
+      createdAt: `${todayKey()}T08:00:00`,
+      completedAt: `${todayKey()}T09:00:00`,
+    }));
+
+  it('chưa đạt mốc thì không mở được, và không có gì đổi', () => {
+    seed({ stonesBonus: 100 });
+    const r = mount();
+    const before = r.result.current.data;
+
+    let out: unknown = 'chưa gọi';
+    act(() => {
+      out = r.result.current.openChest('first');
+    });
+
+    expect(out).toBeNull();
+    expect(r.result.current.data.chestsOpened).toHaveLength(0);
+    expect(r.result.current.data.stonesBonus).toBe(before.stonesBonus);
+  });
+
+  it('xong một việc thì mở được, và thứ moi ra được cộng vào thật', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0); // luôn ra món đầu bảng
+    seed({ stonesBonus: 100, tasks: doneToday(1) });
+    const r = mount();
+
+    let label: string | undefined;
+    act(() => {
+      label = r.result.current.openChest('first')?.loot.label;
+    });
+
+    expect(label).toBeTruthy();
+    expect(r.result.current.data.chestsOpened).toHaveLength(1);
+    // Món đầu bảng hòm gỗ là túi đá vụn - phải thấy linh thạch tăng lên.
+    expect(r.result.current.data.stonesBonus).toBeGreaterThan(100);
+  });
+
+  it('mở hai lần cùng một hòm thì lần sau không được gì nữa', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    seed({ stonesBonus: 100, tasks: doneToday(1) });
+    const r = mount();
+
+    act(() => {
+      r.result.current.openChest('first');
+    });
+    const afterFirst = r.result.current.data.stonesBonus;
+
+    let second: unknown = 'chưa gọi';
+    act(() => {
+      second = r.result.current.openChest('first');
+    });
+
+    expect(second).toBeNull();
+    expect(r.result.current.data.chestsOpened).toHaveLength(1);
+    expect(r.result.current.data.stonesBonus).toBe(afterFirst);
+  });
+
+  it('mốc chưa tới thì vẫn khoá, dù mốc thấp hơn đã mở', () => {
+    seed({ stonesBonus: 100, tasks: doneToday(1) });
+    const r = mount();
+
+    act(() => {
+      r.result.current.openChest('first');
+    });
+
+    let out: unknown = 'chưa gọi';
+    act(() => {
+      out = r.result.current.openChest('five');
+    });
+
+    expect(out).toBeNull();
+    expect(r.result.current.data.chestsOpened).toHaveLength(1);
   });
 });

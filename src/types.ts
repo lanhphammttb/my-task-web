@@ -109,6 +109,13 @@ export interface AppData {
   contribution: number;
   /** Sứ mệnh đang nhận. Mỗi lúc chỉ gánh được một cái */
   mission?: ActiveMission;
+  /**
+   * Hòm kỳ ngộ đã mở, ghi theo khoá `ngày:mốc`.
+   *
+   * Chỉ lưu danh sách đã mở, còn hòm nào đang có thì suy ra từ số liệu công
+   * việc trong ngày - nhờ vậy không có bộ đếm nào để chỉnh.
+   */
+  chestsOpened: string[];
   /** Linh thạch đã tiêu (số dư = kiếm được - đã tiêu) */
   stonesSpent: number;
   /** Đan dược đang có, theo phẩm cấp */

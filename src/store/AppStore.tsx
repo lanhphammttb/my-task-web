@@ -9,6 +9,7 @@ import { seedData } from '../lib/seed';
 import { effectiveXp, stoneBalance, verifiedFocusMinutes, verifiedTaskCount } from '../lib/economy';
 import { cultivationOf, realmLabel } from '../lib/cultivation';
 import { ACHIEVEMENTS, isPerfectDay, unlockedIds } from '../lib/achievements';
+import { dayStats } from '../lib/stats';
 import { FEED_COST, FEED_GAIN, DUPLICATE_FEED, SUMMON_COST, summonBeast } from '../lib/beasts';
 import type { Beast } from '../lib/beasts';
 import { ELEMENTS, REFINE_COST, REROLL_COST, condenseCost, condenseRoot, refineRoot, rollRoot } from '../lib/spirit';
@@ -22,6 +23,8 @@ import type { HerbId } from '../lib/field';
 import { caveRefineBonus, fieldSlots, nextCave } from '../lib/cave';
 import { SITES, expeditionState, rollSiteOutcome } from '../lib/expedition';
 import { MISSIONS, dueDateOf, missionState, rankOf } from '../lib/sect';
+import { chestKey, chestsForDay, rollLoot } from '../lib/chest';
+import type { ChestGrade, Loot } from '../lib/chest';
 import type { Mission, MissionId } from '../lib/sect';
 import type { SiteId, SiteOutcome } from '../lib/expedition';
 import { progressOf, tribulationLoss } from '../lib/economy';
@@ -47,6 +50,12 @@ export type Celebration =
   | { kind: 'tribulation-failed'; loss: number; nextChance: number; realm: string }
   | { kind: 'perfect-day'; count: number }
   | { kind: 'achievement'; id: string; title: string; description: string };
+
+/** Thứ moi được từ một hòm kỳ ngộ, kèm phẩm cấp hòm để UI tô đúng màu. */
+export interface ChestResult {
+  loot: Loot;
+  grade: ChestGrade;
+}
 
 /** Kết quả kết toán một sứ mệnh tông môn. */
 export interface MissionResult {
@@ -122,6 +131,8 @@ interface Ctx {
   startExpedition: (site: SiteId) => boolean;
   /** Đón đoàn về và bốc kết quả. Chưa đủ nhiệm vụ thì chưa về được. */
   resolveExpedition: () => SiteOutcome | null;
+  /** Mở một hòm kỳ ngộ đã có. Trả về thứ moi được, hoặc `null` nếu chưa có hòm. */
+  openChest: (ruleId: string) => ChestResult | null;
   /** Nhận một sứ mệnh tông môn, đặt cọc linh thạch. */
   acceptMission: (id: MissionId) => boolean;
   /** Kết toán sứ mệnh: đạt thì lấy cọc và thưởng, chưa đạt thì mất cọc. */
@@ -811,6 +822,49 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return true;
   }, [data, patch, notify]);
 
+  // ------------------------------------------------------------ hòm kỳ ngộ
+
+  const openChest = useCallback<Ctx['openChest']>(
+    (ruleId) => {
+      const key = todayKey();
+      const stats = dayStats(data.tasks, data.sessions, key);
+      const list = chestsForDay(
+        key,
+        stats.done,
+        stats.focusMin,
+        isPerfectDay(data.tasks, key),
+        data.chestsOpened,
+      );
+      const chest = list.find((c) => c.rule.id === ruleId);
+
+      // Chưa đạt mốc thì chưa có hòm; đã mở rồi thì thôi. Cả hai đều suy ra từ
+      // số liệu công việc nên không thể bấm vòng lại để lấy thêm.
+      if (!chest || !chest.earned || chest.opened) return null;
+
+      const loot = rollLoot(chest.rule.grade);
+      patch((d) => {
+        const herbs = { ...d.herbs };
+        for (const [id, n] of Object.entries(loot.herbs ?? {})) {
+          const k = id as keyof typeof herbs;
+          herbs[k] = Math.max(0, (herbs[k] ?? 0) + (n ?? 0));
+        }
+        return {
+          ...d,
+          chestsOpened: [...d.chestsOpened, chestKey(key, ruleId)],
+          herbs,
+          // Đi vào đúng hai kênh đã có cho cơ duyên, nên hồ sơ công việc thật
+          // vẫn không bị đụng tới lần nào.
+          stonesBonus: d.stonesBonus + (loot.stones ?? 0),
+          encounterXp: d.encounterXp + (loot.xp ?? 0),
+          pills: loot.pill ? { ...d.pills, [loot.pill]: d.pills[loot.pill] + 1 } : d.pills,
+        };
+      });
+
+      return { loot, grade: chest.rule.grade };
+    },
+    [data, patch],
+  );
+
   // ---------------------------------------------------------------- tông môn
 
   const acceptMission = useCallback<Ctx['acceptMission']>(
@@ -1047,6 +1101,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       // thì đo bằng lịch sử vừa bị xoá sạch nên phải bỏ.
       contribution: d.contribution,
       mission: undefined,
+      // Hòm căn cứ vào công việc trong ngày, mà công việc vừa bị xoá sạch.
+      chestsOpened: [],
     }));
     notify('Đã xoá toàn bộ dữ liệu', 'warn');
   }, [notify]);
@@ -1109,14 +1165,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
       duplicateTask, toggleSubtask, pushOverdueToToday, clearDone, addGoal, updateGoal, removeGoal,
       logSession, awaken, rerollRoot, summon, feedBeast, setActiveBeast, buyPill, attemptTribulation,
       pickTechnique, plantSeed, harvestPlot, refinePill, refineRootElement, condenseRootElement, upgradeCave,
-      startExpedition, resolveExpedition, acceptMission, settleMission,
+      startExpedition, resolveExpedition, acceptMission, settleMission, openChest,
       updateSettings, replaceAll, loadSample, resetAll,
     }),
     [data, audit, resealLedger, celebration, dismissCelebration, encounter, resolveEncounter, dismissEncounter, notify, addTask, updateTask, removeTask, setStatus, toggleDone, moveTask,
       duplicateTask, toggleSubtask, pushOverdueToToday, clearDone, addGoal, updateGoal, removeGoal,
       logSession, awaken, rerollRoot, summon, feedBeast, setActiveBeast, buyPill, attemptTribulation,
       pickTechnique, plantSeed, harvestPlot, refinePill, refineRootElement, condenseRootElement, upgradeCave,
-      startExpedition, resolveExpedition, acceptMission, settleMission,
+      startExpedition, resolveExpedition, acceptMission, settleMission, openChest,
       updateSettings, replaceAll, loadSample, resetAll],
   );
 

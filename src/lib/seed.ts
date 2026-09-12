@@ -76,6 +76,7 @@ export function seedData(): AppData {
     field: [],
     herbs: emptyHerbs(),
     contribution: 0,
+    chestsOpened: [],
     stonesSpent: 0,
     pills: { ha: 0, trung: 0, thuong: 0 },
     tuViPenalty: 0,
