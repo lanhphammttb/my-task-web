@@ -101,21 +101,32 @@ export default function CaveView() {
           root ? (
             <AlertDialog>
               <AlertDialogTrigger asChild>
+                {/* Nút này KHÔNG phải tẩy tuỷ. Nó gieo lại toàn bộ linh căn và
+                    có thể ra kém hơn hẳn, ngược hẳn với mục "Tẩy tuỷ" phía dưới
+                    vốn gột từng hệ một cách chắc chắn. Hai thứ từng trùng tên,
+                    nên ai bấm nhầm là mất luôn linh căn tốt. */}
                 <Button variant="outline" size="sm" className="gap-1.5">
-                  <RefreshCw className="size-3.5" /> Tẩy Tuỷ ({REROLL_COST})
+                  <RefreshCw className="size-3.5" /> Khai quang lại ({REROLL_COST})
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Dùng Tẩy Tuỷ Đan?</AlertDialogTitle>
+                  <AlertDialogTitle>Khai quang lại từ đầu?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Tốn {REROLL_COST} linh thạch để khai quang lại. Linh căn mới có thể tốt hơn,
-                    cũng có thể kém hơn — thiên ý khó lường.
+                    Tốn {REROLL_COST} linh thạch để gieo lại <strong>toàn bộ</strong> linh căn.
+                    Kết quả mới có thể tốt hơn, cũng có thể kém hơn — thiên ý khó lường, và linh
+                    căn đang có sẽ mất.
+                    <br />
+                    <br />
+                    Muốn chắc tay thì dùng mục <strong>Tẩy tuỷ</strong> phía dưới: đổi hoặc bỏ bớt
+                    đúng một hệ, không đụng tới phần còn lại.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Thôi</AlertDialogCancel>
-                  <AlertDialogAction onClick={() => rerollRoot()}>Tẩy tuỷ</AlertDialogAction>
+                  <AlertDialogAction onClick={() => rerollRoot()}>
+                    Khai quang lại
+                  </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
@@ -206,6 +217,8 @@ export default function CaveView() {
       {/* ---------------------------------------------------------- linh thú */}
       <Section
         id="cave-beast"
+        collapsible
+        defaultOpen={false}
         icon={PawPrint}
         title="Linh thú"
         subtitle={`Đã thu phục ${owned.length}/${BEASTS.length}`}

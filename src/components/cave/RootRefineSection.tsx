@@ -58,6 +58,8 @@ export default function RootRefineSection() {
   return (
     <Section
       id="cave-refine"
+      collapsible
+      defaultOpen={false}
       icon={Droplets}
       title="Tẩy tuỷ"
       subtitle={`${grade.name} · hệ số tu vi ×${grade.multiplier}`}

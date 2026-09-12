@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { ChevronDown } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { OPEN_SECTION } from "../lib/section";
 import { cn } from "@/lib/utils";
 
 /** Nhãn metadata nhỏ, thay cho việc nhồi emoji vào chuỗi văn bản. */
@@ -40,6 +42,8 @@ export function Section({
   children,
   className,
   tone = "default",
+  collapsible = false,
+  defaultOpen = true,
 }: {
   /** Neo để hub cuộn thẳng tới mục này khi mở từ icon bên rìa. */
   id?: string;
@@ -50,7 +54,29 @@ export function Section({
   children: ReactNode;
   className?: string;
   tone?: "default" | "accent" | "danger";
+  /**
+   * Cho gập lại. Dùng cho những bảng dài mà phần lớn thời gian người dùng chỉ
+   * ghé một hai mục - Động Phủ có tám mục, để mở hết thì cuộn mãi không tới
+   * nơi, nhất là trên điện thoại.
+   */
+  collapsible?: boolean;
+  /** Gập hay mở khi vừa vào. Chỉ có tác dụng khi `collapsible`. */
+  defaultOpen?: boolean;
 }) {
+  const [open, setOpen] = useState(!collapsible || defaultOpen);
+
+  // Mở từ icon bên rìa thì phải bung ra, nếu không người dùng nhảy tới đúng
+  // mục mình cần mà chỉ thấy một cái tiêu đề đang gập. Bảng phủ không dùng
+  // `location.hash` mà cuộn bằng `getElementById`, nên phải nghe sự kiện riêng.
+  useEffect(() => {
+    if (!collapsible || !id) return;
+    const onOpen = (e: Event) => {
+      if ((e as CustomEvent<string>).detail === id) setOpen(true);
+    };
+    window.addEventListener(OPEN_SECTION, onOpen);
+    return () => window.removeEventListener(OPEN_SECTION, onOpen);
+  }, [collapsible, id]);
+
   return (
     <section
       id={id}
@@ -65,8 +91,33 @@ export function Section({
       )}
     >
       {(title || action) && (
-        <header className="mb-4 flex flex-wrap items-start justify-between gap-3">
-          <div className="min-w-0">
+        <header
+          className={cn(
+            "flex flex-wrap items-start justify-between gap-3",
+            open ? "mb-4" : "mb-0",
+          )}
+        >
+          <div className="flex min-w-0 items-start gap-2">
+            {collapsible && (
+              <button
+                type="button"
+                onClick={() => setOpen((v) => !v)}
+                aria-expanded={open}
+                aria-controls={id ? `${id}-body` : undefined}
+                className="text-muted-foreground hover:text-gold mt-0.5 shrink-0 transition-colors"
+              >
+                <ChevronDown
+                  className={cn(
+                    "size-4 transition-transform duration-200",
+                    !open && "-rotate-90",
+                  )}
+                />
+                <span className="sr-only">
+                  {open ? "Thu gọn" : "Mở rộng"} {title}
+                </span>
+              </button>
+            )}
+            <div className="min-w-0">
             {title && (
               <h3 className="font-heading flex items-center gap-2 text-[15px] font-bold tracking-wide">
                 {Icon && (
@@ -84,14 +135,22 @@ export function Section({
                 {title}
               </h3>
             )}
-            {subtitle && (
-              <p className="text-muted-foreground mt-0.5 text-xs">{subtitle}</p>
-            )}
+              {subtitle && (
+                <p className="text-muted-foreground mt-0.5 text-xs">
+                  {subtitle}
+                </p>
+              )}
+            </div>
           </div>
           {action}
         </header>
       )}
-      {children}
+      {/* Gập bằng `hidden` chứ không tháo khỏi cây: giữ nguyên trạng thái bên
+          trong (ô đang gõ, hộp thoại đang mở) và không dựng lại từ đầu mỗi lần
+          bung ra. */}
+      <div id={id ? `${id}-body` : undefined} hidden={!open}>
+        {children}
+      </div>
     </section>
   );
 }

@@ -3,6 +3,7 @@ import { useEffect, useRef } from "react";
 import { motion } from "motion/react";
 import { X } from "lucide-react";
 import ArtImage from "../ArtImage";
+import { requestOpenSection } from "../../lib/section";
 
 interface Props {
   title: string;
@@ -44,6 +45,9 @@ export default function OverlayPanel({
   // Cuộn tới đúng mục khi mở bảng từ một icon cụ thể (ví dụ Linh Thú).
   useEffect(() => {
     if (!anchor) return;
+    // Mục đích có thể đang gập - bảo nó bung ra trước, không thì cuộn tới nơi
+    // chỉ thấy mỗi cái tiêu đề.
+    requestOpenSection(anchor);
     const id = window.setTimeout(() => {
       document
         .getElementById(anchor)

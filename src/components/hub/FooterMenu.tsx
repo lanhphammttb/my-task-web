@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
  * thôi không còn là lịch: nó thành thời khoá tông môn giao xuống. Bộ Nhật ·
  * Tuần · Nguyệt song song nhau nên bậc thời gian vẫn đọc ra ngay.
  */
-export const FOOTER_TABS: { key: ViewKey; icon: LucideIcon; label: string }[] =
+const FOOTER_TABS: { key: ViewKey; icon: LucideIcon; label: string }[] =
   [
     { key: "today", icon: Sun, label: "Nhật Khoá" },
     { key: "week", icon: Orbit, label: "Tuần Khoá" },
@@ -117,7 +117,12 @@ export default function FooterMenu({
                 >
                   <t.icon className="size-4.5 drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]" />
                 </span>
-                <span className="font-title truncate text-[10px] leading-tight font-bold tracking-wide">
+                {/* Phải có w-full thì nhãn mới bị bó theo bề rộng của nút. Thiếu nó,
+                    cha đang items-center nên span co đúng bằng chữ, `truncate`
+                    chẳng có bề rộng nào để cắt, và nhãn hai chữ như "Nguyệt
+                    Khoá" tràn ra đè sang nhãn bên cạnh trên màn hẹp. Cho xuống
+                    dòng thay vì cắt cụt, giống hệt nhãn ở hai cột bên. */}
+                <span className="font-title flex min-h-[24px] w-full items-start justify-center text-center text-[10px] leading-tight font-bold tracking-wide">
                   {t.label}
                 </span>
               </button>

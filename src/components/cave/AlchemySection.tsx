@@ -51,6 +51,8 @@ export default function AlchemySection() {
   return (
     <Section
       id="cave-pill"
+      collapsible
+      defaultOpen={false}
       icon={Flame}
       title="Đan đường"
       subtitle={`Lò ${cave.name} · tay nghề ${caveBonus > 0 ? `+${pct(caveBonus)}` : "chưa thêm gì"}`}

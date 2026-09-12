@@ -1,6 +1,6 @@
 import { REALMS } from "../lib/cultivation";
 import ArtImage from "./ArtImage";
-import { REALM_SLUG, SCENE_FALLBACK } from "./hub/HubScene";
+import { REALM_SLUG, SCENE_FALLBACK } from "../lib/realmArt";
 import { cn } from "@/lib/utils";
 
 /**

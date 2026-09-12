@@ -1,23 +1,7 @@
 import { REALMS } from "../../lib/cultivation";
+import { REALM_SLUG, SCENE_FALLBACK } from "../../lib/realmArt";
 import ArtImage from "../ArtImage";
 import { cn } from "@/lib/utils";
-
-/**
- * Tên file nền riêng cho từng cảnh giới. Thả ảnh vào `public/art/realm/` theo
- * đúng tên này là web tự dùng; chưa có thì lùi về bộ art dùng chung bên dưới.
- */
-export const REALM_SLUG = [
-  "01-luyen-khi",
-  "02-truc-co",
-  "03-kim-dan",
-  "04-nguyen-anh",
-  "05-hoa-than",
-  "06-luyen-hu",
-  "07-hop-the",
-  "08-dai-thua",
-  "09-do-kiep",
-  "10-phi-thang",
-];
 
 /**
  * Ảnh nền là ảnh vuông, còn khung hiển thị là 16:9 (máy tính) hoặc dọc (điện
@@ -37,13 +21,6 @@ const REALM_FOCUS = [
   "58% 66%", // Độ Kiếp - đài đá hứng lôi nằm sát đáy
   "58% 45%", // Phi Thăng - cổng trời trên cao bên phải
 ];
-
-/**
- * Ảnh lùi dùng chung cho mọi chỗ cần nền cảnh. Bộ art đã đủ nên nó gần như
- * không bao giờ hiện; giữ lại một tấm để nếu thiếu file thì vẫn có gì đó thay
- * vì một mảng đen, mà không phải đóng gói cả bộ ảnh dự phòng vào bản build.
- */
-export const SCENE_FALLBACK = "/art/scene/cave.jpg";
 
 /** Toạ độ hạt linh khí - cố định để lần render nào cũng như nhau. */
 const MOTES = [

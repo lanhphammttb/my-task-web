@@ -16,6 +16,9 @@ import { cultivationOf } from "./lib/cultivation";
 import { effectiveXp, progressOf } from "./lib/economy";
 import { achievementStates } from "./lib/achievements";
 import { questStates } from "./lib/quests";
+import { missionState } from "./lib/sect";
+import { expeditionState } from "./lib/expedition";
+import { verifiedFocusMinutes, verifiedTaskCount } from "./lib/economy";
 import { PILL_ORDER } from "./lib/pills";
 import CelebrationLayer from "./components/CelebrationLayer";
 import SettingsDialog from "./components/SettingsDialog";
@@ -24,7 +27,8 @@ import EncounterDialog from "./components/EncounterDialog";
 import TaskCard from "./components/TaskCard";
 import TaskEditorDialog from "./components/TaskEditorDialog";
 import { EmptyState } from "./components/primitives";
-import HubScene, { SCENE_FALLBACK } from "./components/hub/HubScene";
+import HubScene from "./components/hub/HubScene";
+import { SCENE_FALLBACK } from "./lib/realmArt";
 import HeaderHUD from "./components/hub/HeaderHUD";
 import HubCenter from "./components/hub/HubCenter";
 import HubIcon from "./components/hub/HubIcon";
@@ -208,16 +212,16 @@ function Shell() {
     );
   }, [query, data.tasks]);
 
-  // Đột phá cảnh giới và phi thăng thì rung cả thế giới một nhịp ngắn.
+  /**
+   * Đột phá cảnh giới và phi thăng thì rung cả thế giới một nhịp ngắn.
+   *
+   * Không cần state hay hẹn giờ: hoạt ảnh CSS `world-shake` chạy đúng một lượt
+   * 0,72 giây rồi tự dừng, dù class có nằm lại. Bản trước dựng một state chỉ để
+   * gỡ class sau 760ms - thừa một vòng render, mà thời gian lại lệch với chính
+   * hoạt ảnh nó điều khiển.
+   */
   const bigMoment =
     celebration?.kind === "realm-up" || celebration?.kind === "ascension";
-  const [shaking, setShaking] = useState(false);
-  useEffect(() => {
-    if (!bigMoment) return;
-    setShaking(true);
-    const t = window.setTimeout(() => setShaking(false), 760);
-    return () => window.clearTimeout(t);
-  }, [bigMoment]);
 
   const isDark = data.settings.theme === "dark";
   const progress = progressOf(data);
@@ -234,11 +238,28 @@ function Shell() {
   const pills = PILL_ORDER.reduce((s, g) => s + (data.pills[g] ?? 0), 0);
   const beastCount = data.beasts.length;
 
+  /**
+   * Chấm báo trên icon Tiên Lộ.
+   *
+   * Sứ mệnh có đặt cọc và có hạn chót, mà lại không được nhắc ở bất kỳ đâu
+   * ngoài chính bảng Tiên Lộ - nhận việc xong quên là mất cọc trong im lặng.
+   * Thế thì nó là cái bẫy chứ không phải công cụ cam kết. Báo khi sắp hết hạn,
+   * khi đã đạt để vào lấy thưởng, và khi đoàn thám hiểm đã về tới nơi.
+   */
+  const DAY_MS = 86400000;
+  const taskCount = verifiedTaskCount(data);
+  const mission = data.mission
+    ? missionState(data.mission, taskCount, verifiedFocusMinutes(data))
+    : null;
+  const pathAlert =
+    (!!mission && (mission.met || mission.msLeft < DAY_MS)) ||
+    (!!data.expedition && expeditionState(data.expedition, taskCount).ready);
+
   return (
     <div
       className={cn(
         "relative h-full min-h-0 overflow-hidden",
-        shaking && "world-shake",
+        bigMoment && "world-shake",
       )}
     >
       <HubScene
@@ -279,6 +300,7 @@ function Shell() {
           icon="tien-lo"
           label="Tiên Lộ"
           badge={unlocked}
+          alert={pathAlert}
           active={view === "awards"}
           onClick={() => toggle("awards")}
         />
@@ -320,6 +342,10 @@ function Shell() {
         <HubIcon
           icon="dong-phu"
           label="Động Phủ"
+          // Công pháp là lựa chọn đáng giá nhất trong động phủ và lần đầu chọn
+          // lại miễn phí, nhưng nằm lẫn giữa tám mục nên người mới không biết
+          // mà vào. Báo cho tới khi họ chọn xong, giống hệt chấm báo linh căn.
+          alert={!data.technique}
           active={view === "cave" && !anchor}
           onClick={() => toggle("cave")}
         />

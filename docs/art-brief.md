@@ -348,7 +348,7 @@ node scripts/loop-video.mjs <vào> <ra> <đầu> <cuối> [chồng mờ]  # dự
   chỗ nên khung không nhảy) — video mở 100% thì chữ chìm, mà lúc đó cũng không
   còn gì để đọc hay để chọn.
 
-## B9. Icon ứng dụng ✅## B9. Icon ứng dụng ✅
+## B9. Icon ứng dụng ✅
 Đặt ở `public/`, không phải `public/art/`.
 
 | File | Kích thước | Ghi chú |
@@ -367,8 +367,6 @@ chạy lại, không cần vẽ lại tranh.
 (`https://<tên-miền>/og.jpg`) — nhiều nơi bóc link không hiểu đường dẫn tương đối.
 
 ---
-
-# C. Còn thiếu — 29 file
 
 # C. Đợt cuối — 45 ảnh, đã xong
 

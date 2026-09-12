@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseQuick } from '../components/QuickAdd';
+import { parseQuick } from '../lib/quickParse';
 import { countdown, dateKey, formatDuration, monthGrid, weekDays } from '../lib/date';
 import { bestStreak, currentStreak, isOverdue, sortTasks, totalXp } from '../lib/stats';
 import { ascensionRatio, cultivationOf, realmLabel, realmLadder, TOTAL_TO_ASCEND } from '../lib/cultivation';

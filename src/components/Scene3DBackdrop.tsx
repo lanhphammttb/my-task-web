@@ -125,7 +125,7 @@ export default function Scene3DBackdrop({
 
   // Cảnh giới và độ đậm đổi ngay giữa lúc cảnh đang chạy, nên nhét vào ref để
   // vòng lặp đọc được giá trị mới mà không phải dựng lại toàn bộ thế giới.
-  const want = useRef({ color, light, intensity });
+  const want = useRef({ color, light, sky, intensity });
 
   // Khi người dùng tắt hiệu ứng chuyển động, cảnh đứng yên và chỉ vẽ lại đúng
   // lúc có gì đó thật sự đổi. Hàm vẽ lại ấy được gắn vào đây.
@@ -198,28 +198,59 @@ export default function Scene3DBackdrop({
     // giới 2D nên phủ kín trời là xoá mất tranh. Bốn mép tan dần để hoà vào
     // tranh phía dưới thay vì cắt ngang màn một đường cứng.
     let skyTex: THREE.Texture | null = null;
-    if (sky) {
+    let skyMat: THREE.MeshBasicMaterial | null = null;
+    let skyShown: string | undefined;
+
+    /**
+     * Nạp panorama trời, và đổi tấm khi lên cảnh giới mới.
+     *
+     * Phải đi qua `want` chứ không đọc thẳng prop `sky`: hiệu ứng dựng cảnh
+     * chỉ chạy đúng một lần, nên đọc thẳng là khoá cứng tấm trời của lần render
+     * đầu - đột phá xong trời vẫn y nguyên cho tới khi tải lại trang, đúng thứ
+     * tính năng này sinh ra để tránh.
+     *
+     * Đổi tấm thì chỉ thay texture trên vật liệu cũ, không dựng lại mặt phẳng:
+     * dựng lại là mất luôn hiệu ứng chuyển sắc đang chạy dở.
+     */
+    const syncSky = () => {
+      const url = want.current.sky;
+      if (url === skyShown) return;
+      skyShown = url;
+      if (!url) return;
+
       const img = new Image();
       img.onload = () => {
-        if (disposed) return;
-        skyTex = skyPanelTexture(img);
-        const mat = new THREE.MeshBasicMaterial({
-          map: skyTex,
-          transparent: true,
-          depthWrite: false,
-          fog: false,
-        });
-        const panel = new THREE.Mesh(new THREE.PlaneGeometry(210, 105), mat);
-        panel.position.set(2, 12, -88);
-        panel.renderOrder = -1;
-        scene.add(panel);
-        track(mat, 0.5, 0, 1);
+        // Bỏ qua nếu cảnh đã dọn, hoặc người dùng đã đột phá tiếp trong lúc
+        // ảnh còn đang tải và giờ tấm này không còn là tấm đang cần.
+        if (disposed || skyShown !== url) return;
+        const next = skyPanelTexture(img);
+
+        if (skyMat) {
+          skyTex?.dispose();
+          skyTex = next;
+          skyMat.map = next;
+          skyMat.needsUpdate = true;
+        } else {
+          skyTex = next;
+          skyMat = new THREE.MeshBasicMaterial({
+            map: next,
+            transparent: true,
+            depthWrite: false,
+            fog: false,
+          });
+          const panel = new THREE.Mesh(new THREE.PlaneGeometry(210, 105), skyMat);
+          panel.position.set(2, 12, -88);
+          panel.renderOrder = -1;
+          scene.add(panel);
+          track(skyMat, 0.5, 0, 1);
+        }
         redraw.current?.();
       };
       // Thiếu file thì im lặng bỏ qua, thế giới vẫn chạy như cũ.
       img.onerror = () => {};
-      img.src = sky;
-    }
+      img.src = url;
+    };
+    syncSky();
 
     // ------------------------------------------------------------- sao trời
     const starCount = small ? 240 : 460;
@@ -411,6 +442,8 @@ export default function Scene3DBackdrop({
     /** Kéo màu, độ đậm và mọi vật liệu về đúng trạng thái cảnh giới đang tu. */
     const applyTint = (dt: number) => {
       const w = want.current;
+      // Rẻ như so hai chuỗi khi trời không đổi, nên gọi mỗi khung cũng không sao.
+      syncSky();
       targetColor.set(w.color);
 
       // Đột phá cảnh giới thì cả thế giới chuyển sắc từ từ chứ không giật một
@@ -545,11 +578,11 @@ export default function Scene3DBackdrop({
     // Ghi ref ở đây chứ không ghi thẳng trong thân hàm: ghi lúc render là đụng
     // vào giá trị ngoài luồng render của React, đúng thứ chế độ nghiêm ngặt bắt
     // lỗi và cũng là thứ dễ sinh trạng thái lệch khi React render thử hai lần.
-    want.current = { color, light, intensity };
+    want.current = { color, light, sky, intensity };
     // Ở chế độ tắt chuyển động không có vòng lặp nào chạy, nên props đổi thì
     // phải tự gọi vẽ lại một khung.
     redraw.current?.();
-  }, [color, light, intensity]);
+  }, [color, light, sky, intensity]);
 
   return <div ref={host} className={className} aria-hidden />;
 }

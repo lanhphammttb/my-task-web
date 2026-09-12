@@ -5,7 +5,7 @@ import { PILLS } from "../lib/pills";
 import { useApp } from "../store/AppStore";
 import { Button } from "@/components/ui/button";
 import ArtImage from "./ArtImage";
-import { SCENE_FALLBACK } from "./hub/HubScene";
+import { SCENE_FALLBACK } from "../lib/realmArt";
 import {
   Dialog,
   DialogContent,

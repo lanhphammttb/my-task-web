@@ -36,6 +36,8 @@ export default function CaveUpgradeSection() {
   return (
     <Section
       id="cave-home"
+      collapsible
+      defaultOpen={false}
       icon={Home}
       title="Bậc động phủ"
       subtitle={`${cur.name} · bậc ${cur.level}/${MAX_CAVE_LEVEL}`}
