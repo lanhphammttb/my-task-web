@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { AnimatePresence } from "motion/react";
 import {
   AlertTriangle,
@@ -34,7 +34,7 @@ import {
 } from "../lib/date";
 import { dayStats, sortTasks, tasksOn } from "../lib/stats";
 import { nudge } from "../lib/motivation";
-import { aphorismOfDay } from "../lib/elders";
+import { aphorismOfDay, elderPortrait } from "../lib/elders";
 import { questStates } from "../lib/quests";
 import { ROOT_GRADES } from "../lib/spirit";
 import { cultivationOf } from "../lib/cultivation";
@@ -87,6 +87,11 @@ export default function TodayView({
   const remainMin = pending.reduce((s, t) => s + t.estimateMin, 0);
   const top3 = pending.slice(0, 3);
   const aphorism = aphorismOfDay();
+  const portrait = elderPortrait(aphorism.elder);
+  // Chỉ xếp ngang khi ảnh tải được thật, nếu không chữ sẽ thụt vào mà
+  // bên cạnh chẳng có mặt ai.
+  const [portraitOk, setPortraitOk] = useState(true);
+  const showPortrait = !!portrait && portraitOk;
   const quests = useMemo(() => questStates(data, date), [data, date]);
   const { dailyTarget, dailyFocusTarget } = data.settings;
   const perfect = stats.total > 0 && stats.done === stats.total;
@@ -231,15 +236,29 @@ export default function TodayView({
               </div>
             </div>
 
-            <blockquote className="border-gold/60 bg-card/70 text-muted-foreground rounded-r-lg border-l-2 px-3 py-2 text-xs">
-              <Quote className="text-gold mr-1 mb-0.5 inline size-3" />
-              <span className="italic">{aphorism.text}</span>
-              <cite className="mt-1 block text-[11px] not-italic">
-                <span className="text-gold/90 font-medium">
-                  — {aphorism.elder}
-                </span>
-                <span className="opacity-70"> · {aphorism.title}</span>
-              </cite>
+            {/* Chân dung tiền bối: bộ `art/elder/` có 13 tấm nhưng trước đây chỉ
+                hiện ở hub, còn đây - màn hay nhìn nhất - thì chỉ có mỗi tên bằng
+                chữ. Thiếu file thì lùi về icon nháy kép như cũ. */}
+            <blockquote className="border-gold/60 bg-card/70 text-muted-foreground flex items-start gap-3 rounded-r-lg border-l-2 px-3 py-2 text-xs">
+              {showPortrait ? (
+                <img
+                  src={portrait}
+                  alt=""
+                  onError={() => setPortraitOk(false)}
+                  className="border-gold/45 size-11 shrink-0 rounded-full border object-cover shadow-[0_0_12px_var(--gold-glow)]"
+                />
+              ) : (
+                <Quote className="text-gold mt-0.5 size-3 shrink-0" />
+              )}
+              <div className="min-w-0">
+                <span className="italic">{aphorism.text}</span>
+                <cite className="mt-1 block text-[11px] not-italic">
+                  <span className="text-gold/90 font-medium">
+                    — {aphorism.elder}
+                  </span>
+                  <span className="opacity-70"> · {aphorism.title}</span>
+                </cite>
+              </div>
             </blockquote>
           </div>
         </div>

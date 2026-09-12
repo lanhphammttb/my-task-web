@@ -39,7 +39,7 @@ export default function AwardsView({ onTribulation }: { onTribulation: () => voi
   const RealmIcon = c.realm.icon;
 
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-col gap-4">
+    <div className="stagger-in mx-auto flex w-full max-w-5xl flex-col gap-4">
       {/* Không lặp lại tiêu đề "Tiên Lộ" ở đây: bảng phủ đã có sẵn một h1 đúng
           chữ ấy ngay phía trên, để thêm h2 nữa là bộ đọc màn hình đọc hai lần. */}
       <p className="text-muted-foreground text-xs">

@@ -142,7 +142,7 @@
 
   /* Panel kính: sáng thì là giấy mờ, tối thì là kính đen. */
   --glass-bg: rgb(251 244 228 / 88%);
-  --panel-bg: rgb(247 239 221 / 96%);
+  --panel-bg: rgb(247 239 221 / 90%);
   --glass-border: rgb(138 107 40 / 34%);
   --glass-shadow: 0 12px 34px rgb(70 50 16 / 22%), inset 0 0 24px rgb(138 107 40 / 6%);
   --scene-dim: 0.1;
@@ -206,7 +206,7 @@
   --seal: #a8321f;
 
   --glass-bg: rgb(6 4 3 / 66%);
-  --panel-bg: rgb(10 7 5 / 92%);
+  --panel-bg: rgb(10 7 5 / 68%);
   --glass-border: rgb(196 166 97 / 30%);
   --glass-shadow: 0 10px 34px rgb(0 0 0 / 78%), inset 0 0 24px rgb(196 166 97 / 6%);
   --scene-dim: 0.42;
@@ -453,6 +453,33 @@
 
   /* Panel kính viền vàng: khung nền của mọi bảng trong hub. */
   /* Bảng phủ toàn màn: nền đục hơn chip nhỏ để chữ luôn đọc được. */
+  /**
+   * Các mục trong bảng hiện lên lần lượt thay vì bật ra cùng lúc.
+   *
+   * Động Phủ và Tiên Lộ là hai bảng duy nhất không có chút chuyển động nào -
+   * phần còn lại của app đều cho thẻ trôi vào bằng `motion`. Ở đây làm bằng CSS
+   * thuần vì chỉ cần hiệu ứng vào: không phải gánh thêm thư viện, mà cũng không
+   * đụng gì tới trạng thái bên trong mục.
+   *
+   * `backwards` để mục giữ trạng thái đầu khung hình trong lúc còn chờ tới
+   * lượt, nếu không nó sẽ loé lên rồi mới trôi.
+   */
+  .stagger-in > * {
+    animation: section-in 340ms cubic-bezier(0.2, 0.7, 0.3, 1) backwards;
+  }
+  .stagger-in > *:nth-child(2) { animation-delay: 45ms; }
+  .stagger-in > *:nth-child(3) { animation-delay: 90ms; }
+  .stagger-in > *:nth-child(4) { animation-delay: 135ms; }
+  .stagger-in > *:nth-child(5) { animation-delay: 180ms; }
+  .stagger-in > *:nth-child(6) { animation-delay: 225ms; }
+  .stagger-in > *:nth-child(n + 7) { animation-delay: 270ms; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .stagger-in > * {
+      animation: none;
+    }
+  }
+
   .panel-solid {
     background: var(--panel-bg);
   }
@@ -610,6 +637,13 @@
 /* Nền cảnh phóng rất chậm, tạo cảm giác camera sống. */
 /* Rung cả màn khi đột phá cảnh giới. Biên độ nhỏ và tắt nhanh - đủ để thân
    thể phản ứng, không đủ để chóng mặt. */
+@keyframes section-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
 @keyframes world-shake {
   0%, 100% { transform: translate3d(0, 0, 0); }
   12% { transform: translate3d(-5px, 3px, 0) rotate(-0.25deg); }

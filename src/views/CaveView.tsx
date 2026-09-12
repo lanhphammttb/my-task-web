@@ -10,6 +10,7 @@ import type { Beast, BeastRarity } from '../lib/beasts';
 import { ELEMENTS, REROLL_COST, ROOT_GRADES, gradeOf } from '../lib/spirit';
 import { stoneBreakdown, xpBreakdown } from '../lib/economy';
 import { railSrc } from '../lib/icons';
+import { useCountUp } from '../lib/useCountUp';
 import { useApp } from '../store/AppStore';
 import ArtImage from '../components/ArtImage';
 import BeastEmblem from '../components/BeastEmblem';
@@ -36,6 +37,7 @@ export default function CaveView() {
   const [revealed, setRevealed] = useState<Beast | null>(null);
 
   const stones = useMemo(() => stoneBreakdown(data), [data]);
+  const stonesShown = useCountUp(stones.balance);
   const xp = useMemo(() => xpBreakdown(data), [data]);
   const root = data.root;
   const grade = root ? gradeOf(root) : null;
@@ -49,7 +51,7 @@ export default function CaveView() {
   };
 
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-col gap-4">
+    <div className="stagger-in mx-auto flex w-full max-w-5xl flex-col gap-4">
       {/* Tiêu đề "Động Phủ" đã nằm ở h1 của bảng phủ, không lặp lại lần nữa. */}
       <p className="text-muted-foreground text-xs">
         Linh căn quyết định tốc độ hấp thu, công pháp quyết định lối tu, linh điền nuôi thuốc cho lò
@@ -66,7 +68,11 @@ export default function CaveView() {
               className="size-14 object-contain drop-shadow-lg"
             />
             <div className="flex items-baseline gap-2">
-              <span className="font-heading tabular text-gold text-4xl font-bold">{stones.balance}</span>
+              {/* Con số to nhất bảng này. Nhảy phắt thì não không kịp ghi nhận là vừa
+                  được thêm; chạy dần nửa giây mới thành khoảnh khắc thưởng. */}
+              <span className="font-heading tabular text-gold text-4xl font-bold">
+                {stonesShown}
+              </span>
               <span className="text-muted-foreground text-xs">linh thạch</span>
             </div>
           </div>
