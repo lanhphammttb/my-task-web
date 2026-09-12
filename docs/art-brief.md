@@ -456,10 +456,16 @@ readable silhouette, high contrast, plain white background, no text, no border
 | `realm/` 10 · `chibi/` 2 · `encounter/` 6 · `element/` 5 | 23 | ✅ |
 | `banner/` 8 · `award/` 16 · `avatar/` 4 · `rail/` 11 | 39 | ✅ |
 | `beast/` 18 · `elder/` 13 · `section/` 6 · `empty/` 5 · `pill/` 3 | 45 | ✅ |
-| `sky/` 4 · `media/` 5 · `scene/` 2 · icon ứng dụng 3 | 14 | ✅ |
-| **Tổng** | **121** | **✅ đủ** |
+| `sky/` 4 · `media/` 6 · `scene/` 1 · icon ứng dụng 3 | 14 | ✅ |
+| **Tổng** | **118** | **✅ đủ** |
 
-**Không còn ảnh nào phải tạo.** `public/art` 18,1 MB.
+**Không còn ảnh nào phải tạo.** `public/art` 19 MB, 118 file — đếm lại bằng
+`find public/art -type f` ngày 12/09, và đã rà không còn đường dẫn ảnh nào trong
+code trỏ vào chỗ trống.
+
+Thứ duy nhất còn thiếu thật là **model 3D `.glb`** — xem [`3d-brief.md`](3d-brief.md).
+Đó không phải ảnh, và hiện cũng chưa có dòng code nào trỏ tới, nên thiếu cũng
+không hỏng gì.
 
 Chỉ còn `media/ambient.mp3` là đồ mượn, và đó là việc code chứ không phải việc
 art — tôi tổng hợp nhạc nền bằng WebAudio.
