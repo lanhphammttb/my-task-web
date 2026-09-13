@@ -14,7 +14,8 @@ import { dayStats, sortTasks } from "./lib/stats";
 import { AppProvider, useApp } from "./store/AppStore";
 import { cultivationOf } from "./lib/cultivation";
 import { effectiveXp, progressOf } from "./lib/economy";
-import { achievementStates } from "./lib/achievements";
+import { achievementStates, isPerfectDay } from "./lib/achievements";
+import { chestsForDay, pendingChests } from "./lib/chest";
 import { questStates } from "./lib/quests";
 import { missionState } from "./lib/sect";
 import { expeditionState } from "./lib/expedition";
@@ -251,6 +252,20 @@ function Shell() {
   const mission = data.mission
     ? missionState(data.mission, taskCount, verifiedFocusMinutes(data))
     : null;
+  // Hòm kỳ ngộ nằm trong Nhật Khoá. Không báo ra ngoài thì xong việc rồi vẫn
+  // phải mở bảng mới biết có hòm - mà cái hay của nó nằm đúng ở chỗ biết ngay
+  // là có thứ đang chờ mình.
+  const chestAlert =
+    pendingChests(
+      chestsForDay(
+        todayKey(),
+        stats.done,
+        stats.focusMin,
+        isPerfectDay(data.tasks, todayKey()),
+        data.chestsOpened,
+      ),
+    ) > 0;
+
   const pathAlert =
     (!!mission && (mission.met || mission.msLeft < DAY_MS)) ||
     (!!data.expedition && !!expeditionState(data.expedition, taskCount)?.ready);
@@ -463,6 +478,7 @@ function Shell() {
 
       <FooterMenu
         view={searching ? null : view}
+        alerts={{ today: chestAlert }}
         onSelect={toggle}
         onNew={openNew}
         query={query}

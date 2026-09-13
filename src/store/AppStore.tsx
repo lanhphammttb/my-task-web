@@ -80,6 +80,8 @@ export interface RefineResult {
 
 interface Ctx {
   data: AppData;
+  /** Giờ mở app lần trước, chụp trước khi bị ghi đè. Rỗng nếu là lần đầu chạy. */
+  lastVisitAt: string;
   celebration: Celebration | null;
   dismissCelebration: () => void;
   /** Kỳ ngộ đang chờ người tu quyết định */
@@ -171,15 +173,27 @@ function nextOccurrence(date: string, recurrence: Task['recurrence']): string | 
 }
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [data, setData] = useState<AppData>(() => {
+  /**
+   * Dựng trạng thái khởi động một lần.
+   *
+   * Phải gộp chung với việc chụp `lastVisitAt`: `lastSeenAt` bị ghi đè bằng giờ
+   * hiện tại ngay tại đây, nên sau đó không còn cách nào biết lần trước người
+   * dùng mở app lúc nào - mà đó chính là thứ để dựng bản tóm tắt "trong lúc bạn
+   * vắng mặt".
+   */
+  const [boot] = useState(() => {
     const loaded = loadData();
     // Lần chạy đầu tiên: nạp dữ liệu mẫu để giao diện không trống trơn.
     const base = loaded.tasks.length === 0 && loaded.goals.length === 0 ? seedData() : loaded;
     // Chưa có sổ ghi (bản cũ hoặc dữ liệu mẫu) thì coi trạng thái hiện tại là
     // mốc đáng tin và ký lại từ đó.
     const ledger = base.ledger.length === 0 ? rebuildLedger(base) : base.ledger;
-    return { ...base, ledger, lastSeenAt: new Date().toISOString() };
+    return {
+      data: { ...base, ledger, lastSeenAt: new Date().toISOString() },
+      lastVisitAt: loaded.lastSeenAt,
+    };
   });
+  const [data, setData] = useState<AppData>(boot.data);
   const [queue, setQueue] = useState<Celebration[]>([]);
   const [encounter, setEncounter] = useState<Encounter | null>(null);
   /** Chặn giải cùng một kỳ ngộ hai lần (nhấn nhanh hai nút) */
@@ -1161,14 +1175,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<Ctx>(
     () => ({
-      data, audit, resealLedger, celebration, dismissCelebration, encounter, resolveEncounter, dismissEncounter, notify, addTask, updateTask, removeTask, setStatus, toggleDone, moveTask,
+      data, lastVisitAt: boot.lastVisitAt, audit, resealLedger, celebration, dismissCelebration, encounter, resolveEncounter, dismissEncounter, notify, addTask, updateTask, removeTask, setStatus, toggleDone, moveTask,
       duplicateTask, toggleSubtask, pushOverdueToToday, clearDone, addGoal, updateGoal, removeGoal,
       logSession, awaken, rerollRoot, summon, feedBeast, setActiveBeast, buyPill, attemptTribulation,
       pickTechnique, plantSeed, harvestPlot, refinePill, refineRootElement, condenseRootElement, upgradeCave,
       startExpedition, resolveExpedition, acceptMission, settleMission, openChest,
       updateSettings, replaceAll, loadSample, resetAll,
     }),
-    [data, audit, resealLedger, celebration, dismissCelebration, encounter, resolveEncounter, dismissEncounter, notify, addTask, updateTask, removeTask, setStatus, toggleDone, moveTask,
+    [data, boot, audit, resealLedger, celebration, dismissCelebration, encounter, resolveEncounter, dismissEncounter, notify, addTask, updateTask, removeTask, setStatus, toggleDone, moveTask,
       duplicateTask, toggleSubtask, pushOverdueToToday, clearDone, addGoal, updateGoal, removeGoal,
       logSession, awaken, rerollRoot, summon, feedBeast, setActiveBeast, buyPill, attemptTribulation,
       pickTechnique, plantSeed, harvestPlot, refinePill, refineRootElement, condenseRootElement, upgradeCave,

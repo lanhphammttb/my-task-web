@@ -24,6 +24,13 @@ const FOOTER_TABS: { key: ViewKey; icon: LucideIcon; label: string }[] =
 
 interface Props {
   view: ViewKey | null;
+  /**
+   * Tab nào đang có việc cần ghé.
+   *
+   * Trước đây chỉ hai cột bên mới báo được, nên hòm kỳ ngộ nằm trong Nhật Khoá
+   * thì xong việc rồi vẫn phải mở bảng ra mới biết là có hòm.
+   */
+  alerts?: Partial<Record<ViewKey, boolean>>;
   onSelect: (v: ViewKey) => void;
   onNew: () => void;
   query: string;
@@ -36,6 +43,7 @@ interface Props {
  */
 export default function FooterMenu({
   view,
+  alerts,
   onSelect,
   onNew,
   query,
@@ -116,6 +124,12 @@ export default function FooterMenu({
                   )}
                 >
                   <t.icon className="size-4.5 drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]" />
+                  {alerts?.[t.key] && (
+                    <span
+                      className="pulse-dot absolute -top-1 -right-1 size-2.5 rounded-full"
+                      style={{ background: "var(--gold-bright)" }}
+                    />
+                  )}
                 </span>
                 {/* Phải có w-full thì nhãn mới bị bó theo bề rộng của nút. Thiếu nó,
                     cha đang items-center nên span co đúng bằng chữ, `truncate`

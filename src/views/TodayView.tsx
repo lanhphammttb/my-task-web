@@ -44,6 +44,7 @@ import ProgressRing from "../components/ProgressRing";
 import RealmScene from "../components/RealmScene";
 import QuickAdd from "../components/QuickAdd";
 import ChestRow from "../components/ChestRow";
+import ReturnDigest from "../components/ReturnDigest";
 import TaskCard from "../components/TaskCard";
 import { EmptyState, Meter, MetaChip, Section } from "../components/primitives";
 import { Button } from "@/components/ui/button";
@@ -137,6 +138,10 @@ export default function TodayView({
           <ChevronRight className="size-4" />
         </Button>
       </div>
+
+      {/* Chỉ có nghĩa ở hôm nay: xem lại ngày cũ thì "trong lúc bạn vắng mặt"
+          là chuyện của ngày nào cũng không rõ. */}
+      {isToday && <ReturnDigest />}
 
       {/* -------------------------------------- mời khai quang nếu chưa có linh căn */}
       {!data.root && (
