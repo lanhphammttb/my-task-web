@@ -3,8 +3,8 @@
 Web app tu tiên, giao diện **vàng kim trên đen nâu**. Mọi chữ và thành phần UI do
 web vẽ đè lên → ảnh chỉ là **nền và minh hoạ**.
 
-**Tình trạng: còn 5 tấm `cave/` phải vẽ (mục E). Ngoài ra chỉ `ambient.mp3` là
-đồ mượn, sẽ tổng hợp bằng code.**
+**Tình trạng: xong toàn bộ art. Chỉ còn `ambient.mp3` là đồ mượn, sẽ tổng hợp
+bằng code.**
 
 | Nhóm | Tình trạng |
 |---|---|
@@ -23,7 +23,7 @@ web vẽ đè lên → ảnh chỉ là **nền và minh hoạ**.
 | `elder/` 13 chân dung tiền bối | ✅ xong |
 | `empty/` 5 minh hoạ trạng thái trống | ✅ xong |
 | `chest/` 3 hòm kỳ ngộ | ✅ xong |
-| `cave/` 5 bậc động phủ | ⭕ **chưa có → mục E** |
+| `cave/` 5 bậc động phủ | ✅ xong |
 
 Tên file rút gọn + quy trình xử lý: [`public/art/README.md`](../public/art/README.md)
 
@@ -452,7 +452,7 @@ readable silhouette, high contrast, plain white background, no text, no border
 
 ---
 
-# E. Còn phải vẽ — `cave/` 5 bậc động phủ
+# E. `cave/` — 5 bậc động phủ ✅
 
 Động phủ có 5 bậc, nâng bằng linh thạch. Trước đây cả 5 bậc dùng chung một tấm
 `section/dong-phu.png`, chú thích ghi tên bậc hiện tại nhưng ảnh thì không đổi -
@@ -478,8 +478,18 @@ tấm 5. Năm tấm năm cảnh khác nhau thì mất hẳn ý nghĩa.
   phải đọc được ở cỡ rất nhỏ**: một khối chính giữa khung, đừng rải chi tiết ra
   bốn góc.
 
-Gửi file thô vào `art-src/cave/` rồi chạy `npm run art -- cave`. Thiếu tấm nào
-thì tấm đó tự lùi về `section/dong-phu.png`, không vỡ gì cả.
+**Đã nhận đủ 5 tấm** (13/09), gửi gộp trong một sheet 1254×1254 có nhãn tên
+nung sẵn dưới mỗi ô. Quy trình đã chạy:
+
+```
+node scripts/strip-labels.mjs public/art/cave/sheet.png   # xoá 5 dải nhãn
+node scripts/slice-alpha.mjs  public/art/cave/sheet.png   1-hang-da-tho 2-dong-phu-so-khai 3-linh-dong 4-dong-thien 5-phuc-dia
+npm run art -- cave                                        # → 512×512, 103-148 KB
+```
+
+`strip-labels.mjs` phải sửa để nhận thêm viên nhãn **gần đen**: bão hoà tương
+đối vô dụng với màu tối (#111a20 trông xám trung tính mà tính ra đã 0.47), nên
+tông đen đo bằng độ lệch tuyệt đối giữa ba kênh.
 
 ---
 
@@ -492,12 +502,12 @@ thì tấm đó tự lùi về `section/dong-phu.png`, không vỡ gì cả.
 | `beast/` 18 · `elder/` 13 · `section/` 6 · `empty/` 5 · `pill/` 3 | 45 | ✅ |
 | `sky/` 4 · `media/` 6 · `scene/` 1 · icon ứng dụng 3 | 14 | ✅ |
 | `chest/` 3 hòm kỳ ngộ | 3 | ✅ |
-| `cave/` 5 bậc động phủ | 5 | ⭕ **chưa có** |
-| **Tổng** | **126** | **121 xong, còn 5** |
+| `cave/` 5 bậc động phủ | 5 | ✅ |
+| **Tổng** | **126** | **✅ đủ** |
 
-`public/art` 19 MB, 121 file — đếm lại bằng `find public/art -type f` ngày
-13/09. Rà toàn bộ đường dẫn ảnh trong `src/` thì chỗ trống duy nhất là 5 tấm
-`cave/`, và chỗ đó đã có đường lùi nên thiếu cũng không vỡ giao diện.
+**Không còn ảnh nào phải tạo.** `public/art` 19 MB, 126 file — đếm lại bằng
+`find public/art -type f` ngày 13/09, và đã rà toàn bộ đường dẫn ảnh trong
+`src/` thì không còn chỗ nào trỏ vào file trống.
 
 Thứ duy nhất còn thiếu thật là **model 3D `.glb`** — xem [`3d-brief.md`](3d-brief.md).
 Đó không phải ảnh, và hiện cũng chưa có dòng code nào trỏ tới, nên thiếu cũng

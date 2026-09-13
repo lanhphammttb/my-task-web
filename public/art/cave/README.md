@@ -1,7 +1,9 @@
 # Bậc động phủ
 
-Năm tấm, đặt tên đúng như dưới đây thì web tự nhận (thiếu tấm nào thì tấm đó
-lùi về `/art/section/dong-phu.png`, không vỡ gì cả):
+**Đã đủ cả 5 tấm.** Giữ lại đây để lần sau vẽ lại thì biết đường.
+
+Đặt tên đúng như dưới đây thì web tự nhận (thiếu tấm nào thì tấm đó lùi về
+`/art/section/dong-phu.png`, không vỡ gì cả):
 
 | File | Bậc | Mô tả trong app |
 | --- | --- | --- |
@@ -15,8 +17,15 @@ lùi về `/art/section/dong-phu.png`, không vỡ gì cả):
 chỗ mỗi bậc rộng ra và sáng hơn. Đây là thang nâng cấp - người ta nhìn để biết
 1400 linh thạch đổi lấy cái gì, nên phải so được tấm 1 với tấm 5.
 
-Nền trong suốt hoặc nền tối đều được. Gửi file thô vào `art-src/cave/` rồi chạy:
+Nền trong suốt hoặc nền tối đều được. Thả file thô thẳng vào **thư mục này**
+(`public/art/cave/`) rồi chạy `npm run art -- cave` - script tự thu về 512×512
+và cất bản gốc sang `art-src/`.
+
+Gửi cả 5 tấm gộp trong một sheet cũng được, miễn là nền trong suốt:
 
 ```
+node scripts/strip-labels.mjs public/art/cave/sheet.png --dry   # soi dải nhãn
+node scripts/strip-labels.mjs public/art/cave/sheet.png         # xoá chữ nung sẵn
+node scripts/slice-alpha.mjs  public/art/cave/sheet.png --dry   1-hang-da-tho 2-dong-phu-so-khai 3-linh-dong 4-dong-thien 5-phuc-dia
 npm run art -- cave
 ```

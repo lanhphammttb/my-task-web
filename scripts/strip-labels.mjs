@@ -3,9 +3,10 @@
  *
  *   node scripts/strip-labels.mjs <ảnh ghép> [--dry]
  *
- * Nhãn là một viên thuốc bo tròn màu xám lam phẳng, chữ trắng bên trong. Tìm
- * theo MÀU rồi lọc theo DÁNG (rộng, thấp, nằm ở phần dưới ô) nên thân con vật
- * màu xám cũng không bị nhầm. Xoá xong ghi đè sheet, cắt lại là sạch.
+ * Nhãn là một viên thuốc bo tròn màu phẳng, chữ sáng bên trong - đợt đầu là xám
+ * lam, đợt sheet động phủ là gần đen. Tìm theo MÀU rồi lọc theo DÁNG (rộng,
+ * thấp, đặc ruột) nên thân con vật màu xám cũng không bị nhầm. Xoá xong ghi đè
+ * sheet, cắt lại là sạch.
  */
 import sharp from 'sharp';
 import fs from 'node:fs';
@@ -20,14 +21,25 @@ const { width: W, height: H } = await sharp(src).metadata();
 const raw = await sharp(src).ensureAlpha().raw().toBuffer();
 const N = W * H;
 
-// Màu viên nhãn đo được trên sheet: xám lam phẳng, bão hoà rất thấp.
+/**
+ * Màu viên nhãn: phẳng và gần như không bão hoà. Hai tông đã gặp thật - xám lam
+ * (#787a88) ở đợt đầu, và gần đen (#111a20) ở sheet động phủ.
+ *
+ * Tông đen phải chặn thêm bằng dáng ở dưới, vì bóng đổ trong tranh cũng đen và
+ * cũng bão hoà thấp. Chỗ lọc dáng đã làm việc đó nên ở đây cứ nhận cả hai.
+ */
 const isPill = (p) => {
   const i = p * 4;
   if (raw[i + 3] < 150) return false;
   const r = raw[i], g = raw[i + 1], b = raw[i + 2];
   const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
-  return Math.abs(r - 120) < 30 && Math.abs(g - 122) < 30 && Math.abs(b - 136) < 30
+  // Xám lam: đo bằng bão hoà tương đối như cũ.
+  const grey = Math.abs(r - 120) < 30 && Math.abs(g - 122) < 30 && Math.abs(b - 136) < 30
     && (mx === 0 ? 0 : (mx - mn) / mx) < 0.22;
+  // Gần đen: bão hoà TƯƠNG ĐỐI vô dụng ở đây - #111a20 trông xám trung tính mà
+  // tính ra đã 0.47. Chỗ này phải đo độ lệch tuyệt đối giữa ba kênh.
+  const dark = mx <= 48 && mx - mn <= 18;
+  return grey || dark;
 };
 
 const seen = new Uint8Array(N);
@@ -51,7 +63,7 @@ for (let s = 0; s < N; s++) {
   }
   const bw = x1 - x0 + 1, bh = y1 - y0 + 1;
   // Dáng viên nhãn: rộng hơn cao nhiều, không quá to, và đặc (không rỗng ruột).
-  if (bw > 70 && bh >= 14 && bh <= 46 && bw / bh > 2.5 && area > bw * bh * 0.5) {
+  if (bw > 70 && bh >= 14 && bh <= 60 && bw / bh > 2.5 && area > bw * bh * 0.5) {
     boxes.push({ x0, y0, x1, y1 });
   }
 }
