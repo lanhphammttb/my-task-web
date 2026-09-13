@@ -147,6 +147,7 @@ export default function RootRefineSection() {
               <ChoiceCard
                 key={to}
                 tone={ELEMENTS[to].color}
+                leading={<ElementSeal element={to} size={40} />}
                 title={`${ELEMENTS[to].label} · ${ELEMENTS[to].perk}`}
                 onClick={() => {
                   if (swapFrom) refineRootElement(swapFrom, to);
