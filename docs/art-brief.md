@@ -3,7 +3,8 @@
 Web app tu tiên, giao diện **vàng kim trên đen nâu**. Mọi chữ và thành phần UI do
 web vẽ đè lên → ảnh chỉ là **nền và minh hoạ**.
 
-**Tình trạng: xong toàn bộ art. Chỉ còn `ambient.mp3` là đồ mượn, sẽ tổng hợp bằng code.**
+**Tình trạng: còn 5 tấm `cave/` phải vẽ (mục E). Ngoài ra chỉ `ambient.mp3` là
+đồ mượn, sẽ tổng hợp bằng code.**
 
 | Nhóm | Tình trạng |
 |---|---|
@@ -19,8 +20,10 @@ web vẽ đè lên → ảnh chỉ là **nền và minh hoạ**.
 | `rail/` 11 icon hai cột hub | ✅ xong |
 | video mốc lớn 2 file | ✅ xong |
 | video bế quan chibi | ✅ xong |
-| `elder/` 13 chân dung tiền bối | ⭕ nên có → mục C1 |
-| `empty/` 5 minh hoạ trạng thái trống | ⭕ nên có → mục C2 |
+| `elder/` 13 chân dung tiền bối | ✅ xong |
+| `empty/` 5 minh hoạ trạng thái trống | ✅ xong |
+| `chest/` 3 hòm kỳ ngộ | ✅ xong |
+| `cave/` 5 bậc động phủ | ⭕ **chưa có → mục E** |
 
 Tên file rút gọn + quy trình xử lý: [`public/art/README.md`](../public/art/README.md)
 
@@ -449,6 +452,37 @@ readable silhouette, high contrast, plain white background, no text, no border
 
 ---
 
+# E. Còn phải vẽ — `cave/` 5 bậc động phủ
+
+Động phủ có 5 bậc, nâng bằng linh thạch. Trước đây cả 5 bậc dùng chung một tấm
+`section/dong-phu.png`, chú thích ghi tên bậc hiện tại nhưng ảnh thì không đổi -
+bỏ 1400 linh thạch lên Phúc Địa vẫn đúng tấm hang đá lúc đầu.
+
+**Yêu cầu quan trọng nhất: vẽ cả 5 tấm từ CÙNG MỘT GÓC NHÌN**, cùng khung cảnh,
+chỉ khác ở chỗ mỗi bậc động rộng ra, sáng hơn, nhiều đồ hơn. Đây là thang nâng
+cấp - người ta nhìn để biết mình đang đổi lấy cái gì, nên phải so được tấm 1 với
+tấm 5. Năm tấm năm cảnh khác nhau thì mất hẳn ý nghĩa.
+
+| File | Bậc | Nội dung |
+|---|---|---|
+| `1-hang-da-tho.png` | Hang Đá Thô | Hốc đá trần, một cái lò con, hai vạt đất mới vỡ. Tối, ẩm, chỉ có một ngọn đèn. |
+| `2-dong-phu-so-khai.png` | Động Phủ Sơ Khai | Đục rộng thêm, có cửa đá. Ba vạt đất, lò lớn hơn, linh khí bắt đầu đọng thành sương mỏng. |
+| `3-linh-dong.png` | Linh Động | Khoét trúng mạch linh khí - vệt sáng lam chạy trong vách đá. Bốn vạt đất, lò cháy đều. |
+| `4-dong-thien.png` | Động Thiên | Trong động tự thành khí hậu: suối nhỏ, cây xanh, năm vạt đất. Sáng hơn hẳn, có tia nắng xiên. |
+| `5-phuc-dia.png` | Phúc Địa | Đất phúc, mây lành che đỉnh. Sáu vạt đất, hạc, đài đá, ánh vàng. Nhìn là biết đây là đích đến. |
+
+- Cỡ: vuông, ≥ 1024×1024, script tự thu về 512.
+- Kiểu: **A · Cảnh** (xem mục A5) - giống `realm/` và `encounter/`.
+- Nền trong suốt hoặc nền tối đều được.
+- Hiện ở ô vuông 96 px (tranh đầu mục) và ô 32 px (thang 5 bậc), nên **bố cục
+  phải đọc được ở cỡ rất nhỏ**: một khối chính giữa khung, đừng rải chi tiết ra
+  bốn góc.
+
+Gửi file thô vào `art-src/cave/` rồi chạy `npm run art -- cave`. Thiếu tấm nào
+thì tấm đó tự lùi về `section/dong-phu.png`, không vỡ gì cả.
+
+---
+
 # Tổng kết
 
 | Nhóm | Số file | Tình trạng |
@@ -457,11 +491,13 @@ readable silhouette, high contrast, plain white background, no text, no border
 | `banner/` 8 · `award/` 16 · `avatar/` 4 · `rail/` 11 | 39 | ✅ |
 | `beast/` 18 · `elder/` 13 · `section/` 6 · `empty/` 5 · `pill/` 3 | 45 | ✅ |
 | `sky/` 4 · `media/` 6 · `scene/` 1 · icon ứng dụng 3 | 14 | ✅ |
-| **Tổng** | **118** | **✅ đủ** |
+| `chest/` 3 hòm kỳ ngộ | 3 | ✅ |
+| `cave/` 5 bậc động phủ | 5 | ⭕ **chưa có** |
+| **Tổng** | **126** | **121 xong, còn 5** |
 
-**Không còn ảnh nào phải tạo.** `public/art` 19 MB, 118 file — đếm lại bằng
-`find public/art -type f` ngày 12/09, và đã rà không còn đường dẫn ảnh nào trong
-code trỏ vào chỗ trống.
+`public/art` 19 MB, 121 file — đếm lại bằng `find public/art -type f` ngày
+13/09. Rà toàn bộ đường dẫn ảnh trong `src/` thì chỗ trống duy nhất là 5 tấm
+`cave/`, và chỗ đó đã có đường lùi nên thiếu cũng không vỡ giao diện.
 
 Thứ duy nhất còn thiếu thật là **model 3D `.glb`** — xem [`3d-brief.md`](3d-brief.md).
 Đó không phải ảnh, và hiện cũng chưa có dòng code nào trỏ tới, nên thiếu cũng
