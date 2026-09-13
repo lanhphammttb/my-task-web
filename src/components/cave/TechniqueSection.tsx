@@ -9,6 +9,7 @@ import { stoneBalance } from "../../lib/economy";
 import { useApp } from "../../store/AppStore";
 import { MetaChip, Section } from "../primitives";
 import SectionArt from "../SectionArt";
+import TechniqueSeal from "./TechniqueSeal";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -77,8 +78,9 @@ function TechniqueCard({
       )}
       style={active ? undefined : { borderColor: `${t.tone}33` }}
     >
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
+      <div className="flex items-start gap-2.5">
+        <TechniqueSeal id={t.id} tone={t.tone} active={active} />
+        <div className="min-w-0 flex-1">
           <h4
             className="font-title text-sm font-bold tracking-wide"
             style={{ color: t.tone }}

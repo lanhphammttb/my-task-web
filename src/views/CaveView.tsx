@@ -148,6 +148,22 @@ export default function CaveView() {
             <div className="grid gap-2 sm:grid-cols-5">
               {ROOT_GRADES.map((g) => (
                 <div key={g.name} className="border-border bg-surface/60 rounded-lg border p-2.5 text-center">
+                  {/* Mấy hạt sáng = mấy hệ. Đọc ra bậc linh căn trước cả khi
+                      kịp đọc tên, mà "một hệ thì quý hơn năm hệ" cũng thành
+                      thứ nhìn thấy được chứ không phải chỉ nghe nói. */}
+                  <div className="mb-1.5 flex items-center justify-center gap-1">
+                    {Array.from({ length: 5 }, (_, i) => (
+                      <span
+                        key={i}
+                        className="size-1.5 rounded-full"
+                        style={
+                          i < g.count
+                            ? { background: g.tone, boxShadow: `0 0 5px ${g.tone}` }
+                            : { background: 'var(--border)' }
+                        }
+                      />
+                    ))}
+                  </div>
                   <div className="tone tabular text-sm font-bold" style={{ color: g.tone }}>
                     {Math.round(g.chance * 100)}%
                   </div>

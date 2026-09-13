@@ -16,6 +16,7 @@ export default function ChoiceCard({
   disabled,
   title,
   tone,
+  leading,
   trailing,
   children,
 }: {
@@ -24,6 +25,8 @@ export default function ChoiceCard({
   title: ReactNode;
   /** Màu chữ tiêu đề, thường là màu của hệ hoặc của loại thảo dược */
   tone?: string;
+  /** Hình đặt bên trái, chiếm trọn chiều cao thẻ - ví dụ cây linh thảo */
+  leading?: ReactNode;
   /** Nội dung nằm sát mép phải hàng tiêu đề, ví dụ giá tiền */
   trailing?: ReactNode;
   children?: ReactNode;
@@ -35,21 +38,26 @@ export default function ChoiceCard({
       disabled={disabled}
       className={cn(
         "border-border bg-muted/30 hover:bg-muted hover:border-gold/45",
-        "flex w-full min-w-0 flex-col items-start gap-1 rounded-lg border px-3 py-2.5 text-left",
+        "flex w-full min-w-0 items-center gap-3 rounded-lg border px-3 py-2.5 text-left",
         "transition-colors focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none",
         "disabled:pointer-events-none disabled:opacity-45",
       )}
     >
-      <span className="flex w-full min-w-0 flex-wrap items-baseline justify-between gap-x-2 gap-y-0.5">
-        <span
-          className="font-title text-sm font-bold"
-          style={tone ? { color: tone } : undefined}
-        >
-          {title}
+      {leading}
+      {/* Cột chữ phải `min-w-0`: không có nó thì nội dung dài đẩy phình thẻ ra
+          ngoài hộp thoại thay vì xuống dòng. */}
+      <span className="flex min-w-0 flex-1 flex-col items-start gap-1">
+        <span className="flex w-full min-w-0 flex-wrap items-baseline justify-between gap-x-2 gap-y-0.5">
+          <span
+            className="font-title text-sm font-bold"
+            style={tone ? { color: tone } : undefined}
+          >
+            {title}
+          </span>
+          {trailing}
         </span>
-        {trailing}
+        {children}
       </span>
-      {children}
     </button>
   );
 }

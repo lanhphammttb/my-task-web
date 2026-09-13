@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Leaf, Scissors, Sprout } from "lucide-react";
+import { Scissors, Sprout } from "lucide-react";
 import { HERBS, HERB_ORDER, plotState } from "../../lib/field";
 import { fieldSlots, nextCave } from "../../lib/cave";
 import { stoneBalance, verifiedFocusMinutes } from "../../lib/economy";
@@ -8,6 +8,7 @@ import { useApp } from "../../store/AppStore";
 import { Meter, MetaChip, Section } from "../primitives";
 import SectionArt from "../SectionArt";
 import ChoiceCard from "./ChoiceCard";
+import HerbPlant from "./HerbPlant";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -69,11 +70,31 @@ export default function FieldSection() {
                 key={slot}
                 type="button"
                 onClick={() => setSeedFor(slot)}
-                className="border-border/70 text-muted-foreground hover:border-gold/50 hover:text-gold flex min-h-24 flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed transition-colors"
+                className="border-border/70 text-muted-foreground hover:border-gold/50 hover:text-gold group flex min-h-24 items-center gap-3 rounded-xl border border-dashed px-3 py-3 text-left transition-colors"
               >
-                <Sprout className="size-5" strokeWidth={1.75} />
-                <span className="text-xs font-medium">
-                  Ô đất trống · gieo hạt
+                {/* Luống đất đã cuốc sẵn: nhìn ra ngay đây là chỗ trồng được,
+                    chứ không phải một ô trống chưa tải xong. */}
+                <svg
+                  viewBox="0 0 100 100"
+                  className="size-14 shrink-0"
+                  aria-hidden="true"
+                >
+                  <ellipse cx="50" cy="72" rx="34" ry="9" fill="#2a1f16" />
+                  <ellipse cx="50" cy="69" rx="29" ry="7" fill="#3b2c1f" />
+                  <path
+                    d="M28 70 H72 M32 64 H68 M36 76 H64"
+                    stroke="#57432f"
+                    strokeWidth="1.6"
+                    strokeLinecap="round"
+                  />
+                  <circle cx="36" cy="71" r="1.5" fill="#57432f" />
+                  <circle cx="61" cy="73" r="1.2" fill="#57432f" />
+                </svg>
+                <span className="min-w-0">
+                  <span className="block text-xs font-medium">Ô đất trống</span>
+                  <span className="text-muted-foreground/80 block text-[11px]">
+                    Bấm để gieo hạt
+                  </span>
                 </span>
               </button>
             );
@@ -90,8 +111,9 @@ export default function FieldSection() {
               className="flex min-h-24 flex-col justify-between gap-2 rounded-xl border p-3"
               style={{ borderColor: `${s.herb.tone}4d` }}
             >
-              <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0">
+              <div className="flex items-start gap-3">
+                <HerbPlant herb={s.herb} ratio={s.ratio} size={76} />
+                <div className="min-w-0 flex-1">
                   <h4
                     className="font-title truncate text-sm font-bold"
                     style={{ color: s.herb.tone }}
@@ -103,14 +125,9 @@ export default function FieldSection() {
                       ? `Đã chín · thu được ${s.herb.yield} nhánh`
                       : `Còn ${formatDuration(s.remain)} bế quan nữa`}
                   </p>
+                  <Meter value={s.ratio} className="mt-2" />
                 </div>
-                <Leaf
-                  className="size-4 shrink-0"
-                  style={{ color: s.herb.tone }}
-                />
               </div>
-
-              <Meter value={s.ratio} />
 
               <Button
                 size="sm"
@@ -144,7 +161,7 @@ export default function FieldSection() {
             return (
               <MetaChip
                 key={id}
-                className={cn(n === 0 && "opacity-45")}
+                className={cn("gap-1", n === 0 && "opacity-45")}
                 style={
                   n > 0
                     ? {
@@ -154,6 +171,7 @@ export default function FieldSection() {
                     : undefined
                 }
               >
+                <HerbPlant herb={HERBS[id]} ratio={1} size={16} bare />
                 {HERBS[id].short} × {n}
               </MetaChip>
             );
@@ -185,6 +203,7 @@ export default function FieldSection() {
                   disabled={!afford}
                   tone={herb.tone}
                   title={herb.name}
+                  leading={<HerbPlant herb={herb} ratio={1} size={52} />}
                   trailing={
                     <span className="tabular text-gold text-xs">
                       {herb.seedCost} linh thạch
