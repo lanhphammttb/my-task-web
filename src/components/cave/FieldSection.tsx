@@ -205,7 +205,12 @@ export default function FieldSection() {
                   title={herb.name}
                   leading={<HerbPlant herb={herb} ratio={1} size={52} />}
                   trailing={
-                    <span className="tabular text-gold text-xs">
+                    <span
+                      className={cn(
+                        "tabular text-xs",
+                        afford ? "text-gold" : "text-destructive",
+                      )}
+                    >
                       {herb.seedCost} linh thạch
                     </span>
                   }
@@ -221,6 +226,13 @@ export default function FieldSection() {
                   <span className="text-muted-foreground/80 text-[11px]">
                     {herb.note}
                   </span>
+                  {/* Nói thẳng còn thiếu bao nhiêu. Thẻ mờ đi mà không nói lý
+                      do thì người ta tưởng nó hỏng chứ không tưởng là hết tiền. */}
+                  {!afford && (
+                    <span className="text-destructive text-[11px] font-medium">
+                      Còn thiếu {herb.seedCost - balance} linh thạch
+                    </span>
+                  )}
                 </ChoiceCard>
               );
             })}

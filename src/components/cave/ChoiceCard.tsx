@@ -40,7 +40,10 @@ export default function ChoiceCard({
         "border-border bg-muted/30 hover:bg-muted hover:border-gold/45",
         "flex w-full min-w-0 items-center gap-3 rounded-lg border px-3 py-2.5 text-left",
         "transition-colors focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none",
-        "disabled:pointer-events-none disabled:opacity-45",
+        // 45% thì cả mô tả lẫn giá đều chìm hẳn vào nền tối, thành ra
+        // muốn biết món đắt tiền kia là gì cũng không đọc nổi. Mờ đủ để thấy
+        // là chưa bấm được, chứ không phải mờ tới mức giấu luôn nội dung.
+        "disabled:pointer-events-none disabled:opacity-70 disabled:grayscale-[0.35]",
       )}
     >
       {leading}
