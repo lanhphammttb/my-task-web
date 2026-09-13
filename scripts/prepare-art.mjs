@@ -60,6 +60,14 @@ const GROUPS = {
   elder: { kind: 'png', w: 256, h: 256, maxKB: 90 },
   // Minh hoạ trạng thái trống: vật thể nền trong suốt, thu vừa khung.
   empty: { kind: 'png', w: 512, h: 512, fit: 'contain', maxKB: 140 },
+  /**
+   * Hòm kỳ ngộ. Hiện ở ô 48 px trong danh sách nhưng giữ 512 để còn phóng to
+   * cho hoạt ảnh mở hòm sau này.
+   *
+   * Nhóm này KHÔNG tách nền chung: `go` và `ngoc` gửi tới đã có alpha thật,
+   * riêng `kim` nằm trên nền đen đặc nên được ghi đè riêng ở `CUT_OVERRIDE`.
+   */
+  chest: { kind: 'png', w: 512, h: 512, fit: 'contain', maxKB: 170 },
 };
 
 /**
@@ -76,12 +84,31 @@ const CUT = {
   glow: { lumMin: 232, satMax: 0.16, unmix: true },
   'glow-soft': { lumMin: 232, satMax: 0.16, unmix: false },
   checker: { lumMin: 226, satMax: 0.07, unmix: false },
+  /**
+   * Nền TỐI, ngược chiều với mọi chế độ trên.
+   *
+   * Cả bộ art từ trước tới nay đều gửi trên nền trắng, nên `cutout` chỉ biết
+   * coi pixel SÁNG là nền. `chest/kim.png` lại nằm trên nền đen đặc - dùng
+   * chung ngưỡng cũ thì nó xoá đúng phần chủ thể sáng và giữ lại nền.
+   */
+  dark: { lumMax: 26, unmix: true },
 };
+
+/**
+ * Ảnh cần chế độ tách nền khác với cả nhóm của nó.
+ *
+ * Không gộp vào `GROUPS` được vì cùng một thư mục mà mỗi file một kiểu nền:
+ * chạy tách nền tối lên hai hòm đã có alpha thật thì bóng đổ sẫm ở mép hòm
+ * cũng bị ăn mất.
+ */
+const CUT_OVERRIDE = { 'chest/kim.png': 'dark' };
 
 const lum = (r, g, b) => 0.2126 * r + 0.7152 * g + 0.0722 * b;
 
 /** Tách nền: BFS từ mọi pixel viền, chỉ xoá vùng nền LIỀN MẠCH với viền. */
-function cutout(raw, w, h, { lumMin, satMax, unmix }) {
+function cutout(raw, w, h, { lumMin, lumMax, satMax, unmix }) {
+  // Nền tối thì mọi ngưỡng đều đảo chiều: sáng là chủ thể, tối là nền.
+  const darkBg = lumMax !== undefined;
   /**
    * Pixel vốn đã trong suốt. Phải coi nó là nền để flood fill mọc được từ mép
    * vào — ảnh nào đã có alpha thật mà quanh chủ thể còn hào quang kem thì
@@ -93,8 +120,10 @@ function cutout(raw, w, h, { lumMin, satMax, unmix }) {
     if (wasClear(p)) return true;
     const i = p * 4;
     const r = raw[i], g = raw[i + 1], b = raw[i + 2];
+    const L = lum(r, g, b);
+    if (darkBg) return L <= lumMax;
     const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
-    return lum(r, g, b) >= lumMin && (mx === 0 ? 0 : (mx - mn) / mx) <= satMax;
+    return L >= lumMin && (mx === 0 ? 0 : (mx - mn) / mx) <= satMax;
   };
 
   const n = w * h;
@@ -119,7 +148,7 @@ function cutout(raw, w, h, { lumMin, satMax, unmix }) {
   }
 
   // Trong vùng nền: alpha giảm dần theo độ sáng để mép chủ thể không răng cưa.
-  const T = lumMin - 22;
+  const T = darkBg ? lumMax + 22 : lumMin - 22;
   for (let p = 0; p < n; p++) {
     // Pixel đã trong suốt thì để nguyên: tính lại theo độ sáng sẽ biến nó
     // thành đen đặc, vì màu RGB của pixel trong suốt thường bằng 0.
@@ -129,14 +158,19 @@ function cutout(raw, w, h, { lumMin, satMax, unmix }) {
     // NHÂN với alpha đang có thay vì gán thẳng: ảnh nền trắng đặc thì alpha
     // đang là 255 nên kết quả không đổi, còn ảnh đã có alpha thật thì hào quang
     // bán trong suốt chỉ mờ thêm chứ không bị đẩy ngược lên thành đục.
-    const f = Math.max(0, Math.min(1, (255 - L) / (255 - T)));
+    const f = darkBg
+      ? Math.max(0, Math.min(1, L / T))
+      : Math.max(0, Math.min(1, (255 - L) / (255 - T)));
     const a = Math.round(raw[i + 3] * f);
     raw[i + 3] = a;
     // Gỡ phần nền trắng đã trộn vào pixel bán trong suốt, tránh viền bạc.
     if (unmix && a > 0 && a < 255) {
       const f = a / 255;
       for (let c = 0; c < 3; c++) {
-        raw[i + c] = Math.max(0, Math.min(255, Math.round((raw[i + c] - 255 * (1 - f)) / f)));
+        // Trộn với đen chỉ là nhân với alpha, nên gỡ ra là chia. Trộn với
+        // trắng thì phải trừ phần trắng đã cộng vào trước khi chia.
+        const v = darkBg ? raw[i + c] / f : (raw[i + c] - 255 * (1 - f)) / f;
+        raw[i + c] = Math.max(0, Math.min(255, Math.round(v)));
       }
     }
   }
@@ -210,10 +244,11 @@ for (const dir of groups) {
 
     let note = '';
     let pipe;
-    if (spec.cut) {
+    const cut = CUT_OVERRIDE[`${dir}/${f}`] ?? spec.cut;
+    if (cut) {
       const { width: w, height: h } = meta;
       const raw = await sharp(p).ensureAlpha().raw().toBuffer();
-      cutout(raw, w, h, CUT[spec.cut]);
+      cutout(raw, w, h, CUT[cut]);
       if (HOLLOW.has(`${dir}/${f}`)) {
         const n = clearEnclosed(raw, w, h);
         if (n) note = `thông lòng ${n} px`;
