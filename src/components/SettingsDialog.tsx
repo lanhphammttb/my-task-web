@@ -12,11 +12,13 @@ import {
   Trash2,
   TriangleAlert,
   Upload,
+  UserRound,
   Volume2,
   Wind,
 } from "lucide-react";
 import { exportFile, readFile } from "../lib/storage";
 import { useApp } from "../store/AppStore";
+import AccountPanel from "./AccountPanel";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -100,7 +102,7 @@ export default function SettingsDialog({
         </DialogHeader>
 
         <Tabs defaultValue="goals" className="mt-2">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="goals" className="gap-1.5">
               <Wind className="size-3.5" /> Tu luyện
             </TabsTrigger>
@@ -110,7 +112,14 @@ export default function SettingsDialog({
             <TabsTrigger value="data" className="gap-1.5">
               <Database className="size-3.5" /> Dữ liệu
             </TabsTrigger>
+            <TabsTrigger value="account" className="gap-1.5">
+              <UserRound className="size-3.5" /> Tài khoản
+            </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="account">
+            <AccountPanel />
+          </TabsContent>
 
           <TabsContent value="goals" className="space-y-4 pt-5">
             <div className="grid gap-2">

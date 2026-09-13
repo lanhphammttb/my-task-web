@@ -1,6 +1,9 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { toast } from 'sonner';
+import { useServerSync } from './useServerSync';
+import type { ServerSync } from './useServerSync';
+import { LENH } from './lenh';
 import type { AppData, FocusSession, Goal, Settings, Status, Task } from '../types';
 import { GOAL_COLORS } from '../types';
 import { addDays, dateKey, parseKey, todayKey } from '../lib/date';
@@ -80,6 +83,8 @@ export interface RefineResult {
 
 interface Ctx {
   data: AppData;
+  /** Tình trạng nối với server trọng tài. `status: 'tat'` là đang chạy một mình. */
+  sync: ServerSync;
   /** Giờ mở app lần trước, chụp trước khi bị ghi đè. Rỗng nếu là lần đầu chạy. */
   lastVisitAt: string;
   celebration: Celebration | null;
@@ -149,6 +154,33 @@ interface Ctx {
 
 const AppContext = createContext<Ctx | null>(null);
 
+/**
+ * Bọc mọi hành động lại: chạy như cũ, rồi gửi lệnh tương ứng lên server.
+ *
+ * Thứ tự quan trọng - **tính ở máy trước, gửi sau**. Nhờ vậy màn hình đổi ngay
+ * lúc bấm, không chờ mạng, và lệnh chỉ được gửi khi chính web cũng thấy hợp lệ.
+ *
+ * Ép kiểu ở đây là chỗ duy nhất trong file: bọc kiểu này giữ nguyên chữ ký của
+ * từng hàm nhưng TypeScript không theo nổi qua một vòng lặp trên `Record`.
+ */
+function bocLenh<T extends Record<string, unknown>>(
+  hanhDong: T,
+  gui: (name: string, args: Record<string, unknown>) => void,
+): T {
+  const ra: Record<string, unknown> = { ...hanhDong };
+  for (const [ten, doi] of Object.entries(LENH)) {
+    const goc = hanhDong[ten];
+    if (typeof goc !== 'function') continue;
+    ra[ten] = (...tham: never[]) => {
+      const ketQua = (goc as (...a: never[]) => unknown)(...tham);
+      const args = doi(ketQua, ...tham);
+      if (args) gui(ten, args);
+      return ketQua;
+    };
+  }
+  return ra as T;
+}
+
 /** Ngày kế tiếp của một nhiệm vụ lặp lại. */
 function nextOccurrence(date: string, recurrence: Task['recurrence']): string | null {
   const base = parseKey(date);
@@ -200,6 +232,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const resolvedRef = useRef<string | null>(null);
 
   useEffect(() => saveData(data), [data]);
+
+  /*
+   * Nối với server trọng tài.
+   *
+   * `apDung` nhận trạng thái server trả về và thay thẳng bản ở máy. Đây là chỗ
+   * "server phán quyết" thành hiện thực: bản tính ở máy chỉ sống tới lúc server
+   * trả lời, sau đó con số của server là con số đúng.
+   */
+  const sync = useServerSync(
+    useCallback((next: AppData) => setData(next), []),
+    useCallback((message: string, tone?: 'ok' | 'warn') => {
+      if (tone === 'warn') toast.warning(message);
+      else toast.success(message);
+    }, []),
+  );
 
   useEffect(() => {
     // Tailwind bật chế độ tối qua class `dark` trên thẻ <html>.
@@ -1174,15 +1221,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [celebration]);
 
   const value = useMemo<Ctx>(
-    () => ({
-      data, lastVisitAt: boot.lastVisitAt, audit, resealLedger, celebration, dismissCelebration, encounter, resolveEncounter, dismissEncounter, notify, addTask, updateTask, removeTask, setStatus, toggleDone, moveTask,
+    () => bocLenh({
+      data, sync, lastVisitAt: boot.lastVisitAt, audit, resealLedger, celebration, dismissCelebration, encounter, resolveEncounter, dismissEncounter, notify, addTask, updateTask, removeTask, setStatus, toggleDone, moveTask,
       duplicateTask, toggleSubtask, pushOverdueToToday, clearDone, addGoal, updateGoal, removeGoal,
       logSession, awaken, rerollRoot, summon, feedBeast, setActiveBeast, buyPill, attemptTribulation,
       pickTechnique, plantSeed, harvestPlot, refinePill, refineRootElement, condenseRootElement, upgradeCave,
       startExpedition, resolveExpedition, acceptMission, settleMission, openChest,
       updateSettings, replaceAll, loadSample, resetAll,
-    }),
-    [data, boot, audit, resealLedger, celebration, dismissCelebration, encounter, resolveEncounter, dismissEncounter, notify, addTask, updateTask, removeTask, setStatus, toggleDone, moveTask,
+    }, sync.gui),
+    [data, sync, boot, audit, resealLedger, celebration, dismissCelebration, encounter, resolveEncounter, dismissEncounter, notify, addTask, updateTask, removeTask, setStatus, toggleDone, moveTask,
       duplicateTask, toggleSubtask, pushOverdueToToday, clearDone, addGoal, updateGoal, removeGoal,
       logSession, awaken, rerollRoot, summon, feedBeast, setActiveBeast, buyPill, attemptTribulation,
       pickTechnique, plantSeed, harvestPlot, refinePill, refineRootElement, condenseRootElement, upgradeCave,

@@ -137,6 +137,25 @@ export interface AppData {
   ledger: LedgerEntry[];
   /** Lần cuối mở app, để phát hiện đồng hồ bị đẩy lùi */
   lastSeenAt: string;
+  /**
+   * Tổng đã xác thực, do SERVER tính và gửi kèm. Chỉ có khi đang đăng nhập.
+   *
+   * Vì sao cần: sổ ghi của server ký bằng HMAC với khoá chỉ nó biết, nên hàm
+   * băm ở đây không kiểm được - kiểm thì ra số không, và màn hình báo 0 tu vi
+   * dù người ta đã làm việc cả tháng. Có trường này thì `verifiedTotals` lấy
+   * thẳng số của server thay vì tự kiểm.
+   *
+   * Tin như vậy KHÔNG hở: server không bao giờ đọc trường này (nó tự kiểm sổ
+   * của chính nó), nên sửa nó trong localStorage chỉ là tự nói dối với cái màn
+   * hình của mình - lần đồng bộ sau là con số thật quay lại ngay.
+   */
+  verified?: {
+    taskXp: number;
+    sessionMinutes: number;
+    taskCount: number;
+    sessionCount: number;
+    verified: number;
+  };
 }
 
 export const PRIORITY_META: Record<Priority, { label: string; color: string; weight: number }> = {

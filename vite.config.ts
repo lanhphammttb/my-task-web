@@ -19,5 +19,14 @@ export default defineConfig({
     // giây mỗi lượt; chạy song song với các tệp khác thì có lượt chạm ngưỡng
     // 5 giây mặc định và trượt oan. Nới ra cho có chỗ thở.
     testTimeout: 20000,
+    /*
+     * Test luôn chạy ở chế độ KHÔNG CÓ SERVER.
+     *
+     * Vite nạp tệp `.env` cho cả lúc test, nên máy nào có `VITE_API_URL` là bộ
+     * test máy ấy tự động gọi mạng - chậm, và kết quả phụ thuộc vào server có
+     * đang bật hay không. Ép rỗng để mọi máy chạy giống nhau; đường đi có server
+     * đã có bộ test riêng bên `my-task-api`.
+     */
+    env: { VITE_API_URL: '' },
   },
 });

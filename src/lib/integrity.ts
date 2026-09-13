@@ -125,22 +125,35 @@ const CLOCK_TOLERANCE_MS = 5 * 60 * 1000;
 export function auditData(data: AppData, now = new Date()): Audit {
   const findings: Finding[] = [];
 
+  /*
+   * Sổ do máy chủ ký thì bỏ qua ba mục đầu.
+   *
+   * Máy chủ băm bằng khoá mà trình duyệt không có, nên kiểm ở đây chắc chắn
+   * hỏng - và báo "sổ lệch" với người dùng đang chẳng làm gì sai. Chính máy chủ
+   * đã tự kiểm sổ của nó rồi; kết quả ấy hiện ở mục Tài khoản.
+   *
+   * Mấy mục sau vẫn kiểm được vì chúng soi dữ liệu chứ không soi băm.
+   */
+  const doServerKy = !!data.verified;
+
   // 1. Chuỗi băm có liền mạch không
-  let verified = 0;
+  let verified = data.verified?.verified ?? 0;
   let prevHash = SALT;
-  for (let i = 0; i < data.ledger.length; i++) {
-    const e = data.ledger[i];
-    const expected = hashOf({ seq: e.seq, kind: e.kind, ref: e.ref, at: e.at, value: e.value }, prevHash);
-    if (e.seq !== i + 1 || e.hash !== expected) {
-      findings.push({
-        code: 'chain-broken',
-        severity: 'error',
-        message: `Sổ ghi bị sửa ở bản ghi số ${i + 1}. Các số liệu sau đó không còn đáng tin.`,
-      });
-      break;
+  if (!doServerKy) {
+    for (let i = 0; i < data.ledger.length; i++) {
+      const e = data.ledger[i];
+      const expected = hashOf({ seq: e.seq, kind: e.kind, ref: e.ref, at: e.at, value: e.value }, prevHash);
+      if (e.seq !== i + 1 || e.hash !== expected) {
+        findings.push({
+          code: 'chain-broken',
+          severity: 'error',
+          message: `Sổ ghi bị sửa ở bản ghi số ${i + 1}. Các số liệu sau đó không còn đáng tin.`,
+        });
+        break;
+      }
+      prevHash = e.hash;
+      verified++;
     }
-    prevHash = e.hash;
-    verified++;
   }
 
   // 2. Có nhiệm vụ/phiên nào không nằm trong sổ ghi
@@ -220,7 +233,7 @@ export function auditData(data: AppData, now = new Date()): Audit {
   const dataTaskXp = data.tasks
     .filter((t) => t.status === 'done')
     .reduce((sum, t) => sum + taskValue(t), 0);
-  if (verified === data.ledger.length && ledgerTaskXp !== dataTaskXp) {
+  if (!doServerKy && verified === data.ledger.length && ledgerTaskXp !== dataTaskXp) {
     findings.push({
       code: 'xp-mismatch',
       severity: 'error',
@@ -239,7 +252,7 @@ export function auditData(data: AppData, now = new Date()): Audit {
  * vượt quá con số này. Thêm nhiệm vụ "đã xong" trực tiếp vào localStorage sẽ
  * không có bản ghi tương ứng, nên không làm tăng tu vi.
  */
-export function verifiedTotals(data: Pick<AppData, 'ledger'>): {
+export function verifiedTotals(data: Pick<AppData, 'ledger'> & Partial<Pick<AppData, 'verified'>>): {
   taskXp: number;
   sessionMinutes: number;
   /** Số nhiệm vụ đã xác thực - dùng để kẹp cả linh thạch */
@@ -247,6 +260,10 @@ export function verifiedTotals(data: Pick<AppData, 'ledger'>): {
   sessionCount: number;
   verified: number;
 } {
+  // Server đã ký và đã kiểm sổ bằng khoá của nó thì khỏi kiểm lại: hàm băm ở
+  // đây không có khoá ấy nên kiểm bao nhiêu cũng ra số không.
+  if (data.verified) return data.verified;
+
   let prevHash = SALT;
   let taskXp = 0;
   let sessionMinutes = 0;
