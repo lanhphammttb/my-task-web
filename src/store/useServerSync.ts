@@ -74,11 +74,22 @@ export function useServerSync(
   const queue = useRef<QueueItem[]>([]);
   const version = useRef<number | undefined>(undefined);
   const flushing = useRef(false);
-  /** Giữ hàm mới nhất, khỏi phải nhét vào deps của mọi callback. */
+  /**
+   * Giữ hàm mới nhất, khỏi phải nhét vào deps của mọi callback.
+   *
+   * Gán trong effect chứ không gán thẳng lúc dựng hình: ghi vào ref giữa lúc
+   * render là một tác dụng phụ, và React ở chế độ đồng thời có thể dựng hình
+   * rồi vứt đi - lúc ấy ref đã bị ghi bằng giá trị của bản vừa vứt.
+   *
+   * Effect này phải đứng TRƯỚC mọi effect khác trong tệp: effect chạy theo thứ
+   * tự khai báo, nên đặt sau thì lần nối đầu tiên đọc phải ref rỗng.
+   */
   const apply = useRef(apDungTrangThai);
   const notify = useRef(baoTin);
-  apply.current = apDungTrangThai;
-  notify.current = baoTin;
+  useEffect(() => {
+    apply.current = apDungTrangThai;
+    notify.current = baoTin;
+  });
 
   const nuot = useCallback((data: AppData, v: number) => {
     version.current = v;
