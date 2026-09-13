@@ -50,6 +50,9 @@ const GROUPS = {
   rail: { kind: 'png', w: 256, h: 256, fit: 'contain', maxKB: 90 },
   // Tranh mở đầu mỗi mục cơ chế, hiện ở ô vuông 80-96 px.
   section: { kind: 'png', w: 512, h: 512, fit: 'contain', maxKB: 180 },
+  // Năm bậc động phủ. Cùng chỗ ở qua năm lần mở rộng, nên vẽ cùng một góc
+  // nhìn thì mới thấy được nó rộng ra; hiện ở ô 96 px và ô 32 px trong thang.
+  cave: { kind: 'png', w: 512, h: 512, fit: 'contain', maxKB: 180 },
   // Linh thú: nền trong suốt sẵn, chỉ thu về khung vuông.
   beast: { kind: 'png', w: 512, h: 512, fit: 'contain', maxKB: 200 },
   // Đan dược: nền trong suốt sẵn.

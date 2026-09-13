@@ -16,11 +16,19 @@ export interface CaveLevel {
   /** Cộng thẳng vào tỷ lệ luyện đan thành công, 0..1 */
   refineBonus: number;
   note: string;
+  /**
+   * Tranh riêng của bậc này.
+   *
+   * Thiếu file thì `SectionArt`/`CaveThumb` tự lùi về tấm chung, nên thêm ảnh
+   * vào `public/art/cave/` là xong, không phải sửa code.
+   */
+  art: string;
 }
 
 export const CAVE_LEVELS: CaveLevel[] = [
   {
     level: 1,
+    art: '/art/cave/1-hang-da-tho.png',
     name: 'Hang Đá Thô',
     cost: 0,
     plots: 2,
@@ -29,6 +37,7 @@ export const CAVE_LEVELS: CaveLevel[] = [
   },
   {
     level: 2,
+    art: '/art/cave/2-dong-phu-so-khai.png',
     name: 'Động Phủ Sơ Khai',
     cost: 120,
     plots: 3,
@@ -37,6 +46,7 @@ export const CAVE_LEVELS: CaveLevel[] = [
   },
   {
     level: 3,
+    art: '/art/cave/3-linh-dong.png',
     name: 'Linh Động',
     cost: 320,
     plots: 4,
@@ -45,6 +55,7 @@ export const CAVE_LEVELS: CaveLevel[] = [
   },
   {
     level: 4,
+    art: '/art/cave/4-dong-thien.png',
     name: 'Động Thiên',
     cost: 700,
     plots: 5,
@@ -53,6 +64,7 @@ export const CAVE_LEVELS: CaveLevel[] = [
   },
   {
     level: 5,
+    art: '/art/cave/5-phuc-dia.png',
     name: 'Phúc Địa',
     cost: 1400,
     plots: 6,

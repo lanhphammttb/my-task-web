@@ -3,6 +3,7 @@ import { CAVE_LEVELS, MAX_CAVE_LEVEL, caveAt, nextCave } from "../../lib/cave";
 import { stoneBalance } from "../../lib/economy";
 import { useApp } from "../../store/AppStore";
 import { Meter, MetaChip, Section } from "../primitives";
+import ArtImage from "../ArtImage";
 import SectionArt from "../SectionArt";
 import { Button } from "@/components/ui/button";
 import {
@@ -77,7 +78,8 @@ export default function CaveUpgradeSection() {
       }
     >
       <SectionArt
-        src="/art/section/dong-phu.png"
+        src={cur.art}
+        fallback="/art/section/dong-phu.png"
         caption={cur.name}
         tone="#cbb994"
       >
@@ -101,13 +103,24 @@ export default function CaveUpgradeSection() {
           <li
             key={lv.level}
             className={cn(
-              "flex flex-wrap items-baseline gap-x-2 text-[11px]",
+              "flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px]",
               lv.level === cur.level
                 ? "text-gold-bright font-bold"
                 : "text-muted-foreground",
               lv.level > cur.level && "opacity-60",
             )}
           >
+            {/* Cái thang năm bậc trước đây toàn chữ, nên bỏ ra 1400 linh
+                thạch mà chẳng biết mình đang đổi lấy cái gì. */}
+            <ArtImage
+              src={lv.art}
+              fallback="/art/section/dong-phu.png"
+              alt=""
+              className={cn(
+                "size-8 shrink-0 rounded-md border border-(--border) object-cover",
+                lv.level > cur.level && "grayscale",
+              )}
+            />
             <span className="font-title">{lv.name}</span>
             <span className="tabular">
               {lv.plots} ô · luyện đan +{Math.round(lv.refineBonus * 100)}%
