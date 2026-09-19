@@ -241,7 +241,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
    * trả lời, sau đó con số của server là con số đúng.
    */
   const sync = useServerSync(
-    useCallback((next: AppData) => setData(next), []),
+    useCallback((doi: (truoc: AppData) => AppData) => setData((truoc) => doi(truoc)), []),
     useCallback((message: string, tone?: 'ok' | 'warn') => {
       if (tone === 'warn') toast.warning(message);
       else toast.success(message);

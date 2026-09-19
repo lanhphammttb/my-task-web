@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AppData } from '../types';
-import { ApiError, api, apiEnabled } from '../lib/api';
-import type { ApiUser } from '../lib/api';
+import { ApiError, api, apiEnabled, apThayDoi } from '../lib/api';
+import type { ApiUser, KiemTra } from '../lib/api';
 import { todayKey } from '../lib/date';
 
 /**
@@ -61,8 +61,28 @@ export interface ServerSync {
   gui: (name: string, args?: Record<string, unknown>) => void;
 }
 
+/**
+ * Vá xong có khớp với server không. Trả về chỗ lệch, hoặc `null` nếu khớp.
+ *
+ * Nói rõ lệch ở đâu chứ không chỉ true/false: khi chốt này bật lên thì web phải
+ * tải lại cả hồ sơ, và nếu chuyện đó xảy ra thường xuyên thì có bug ở phần vá -
+ * mà không biết lệch trường nào thì không có đường mà lần.
+ */
+function lechChoNao(data: AppData, kt: KiemTra): string | null {
+  const doi: [string, number, number][] = [
+    ['tasks', data.tasks.length, kt.tasks],
+    ['goals', data.goals.length, kt.goals],
+    ['sessions', data.sessions.length, kt.sessions],
+    ['ledger', data.ledger.length, kt.ledger],
+    ['taskXp', data.verified?.taskXp ?? -1, kt.taskXp],
+  ];
+  const xau = doi.filter(([, a, b]) => a !== b);
+  return xau.length === 0 ? null : xau.map(([t, a, b]) => `${t}: web ${a} ≠ server ${b}`).join(', ');
+}
+
 export function useServerSync(
-  apDungTrangThai: (data: AppData) => void,
+  /** Nhận hàm biến đổi chứ không nhận trạng thái: vá thì phải dựa trên bản đang giữ. */
+  apDungTrangThai: (doi: (truoc: AppData) => AppData) => void,
   baoTin?: (message: string, tone?: 'ok' | 'warn') => void,
 ): ServerSync {
   const [status, setStatus] = useState<SyncStatus>(apiEnabled ? 'dang-noi' : 'tat');
@@ -73,6 +93,20 @@ export function useServerSync(
   /** Hàng đợi và số hiệu trạng thái nằm trong ref: chúng đổi ngoài nhịp vẽ lại. */
   const queue = useRef<QueueItem[]>([]);
   const version = useRef<number | undefined>(undefined);
+  /**
+   * Bản của SERVER, giữ riêng khỏi bản đang hiện trên màn hình.
+   *
+   * Đây là chỗ sửa một lỗi thật: web sửa lạc quan tại chỗ để bấm cái là thấy
+   * ngay, nhưng có những sửa đổi server làm KHÁC - rõ nhất là nhiệm vụ lặp
+   * lại, web sinh lượt kế tiếp với một id, server sinh với id của nó. Bản vá
+   * thì tính trên trạng thái của server, nên vá vào bản đã lệch ở máy chỉ ra
+   * hai nhiệm vụ thay vì một, và sổ ghi cũng dôi ra.
+   *
+   * Vá vào bản này rồi mới đem hiển thị thì phần dự đoán chỉ sống tới lúc
+   * server trả lời, sau đó con số của server thay hẳn vào - đúng nghĩa "server
+   * phán quyết" mà vẫn không phải gửi lại cả hồ sơ.
+   */
+  const banServer = useRef<AppData | null>(null);
   const flushing = useRef(false);
   /**
    * Giữ hàm mới nhất, khỏi phải nhét vào deps của mọi callback.
@@ -91,9 +125,35 @@ export function useServerSync(
     notify.current = baoTin;
   });
 
+  /** Nuốt trọn một trạng thái đầy đủ từ server. */
   const nuot = useCallback((data: AppData, v: number) => {
     version.current = v;
-    apply.current(data);
+    banServer.current = data;
+    apply.current(() => data);
+  }, []);
+
+  /**
+   * Vá phần thay đổi vào bản đang giữ, rồi tự kiểm.
+   *
+   * Trả về `false` nếu vá xong mà lệch - lúc ấy chỗ gọi phải tải lại đầy đủ.
+   * Lệch nghĩa là bản ở máy đã sai từ trước khi vá, nên vá tiếp chỉ sai thêm.
+   */
+  const va = useCallback((doi: Parameters<typeof apThayDoi>[1], kt: KiemTra, v: number) => {
+    // Chưa có bản của server thì không vá được - phải tải đầy đủ trước.
+    if (!banServer.current) {
+      console.warn('[đồng bộ] chưa có bản của server để vá, phải tải lại');
+      return false;
+    }
+    const sau = apThayDoi(banServer.current, doi);
+    const lech = lechChoNao(sau, kt);
+    if (lech) {
+      console.warn('[đồng bộ] vá xong nhưng lệch, phải tải lại —', lech);
+      return false;
+    }
+    version.current = v;
+    banServer.current = sau;
+    apply.current(() => sau);
+    return true;
   }, []);
 
   const taiLai = useCallback(async () => {
@@ -117,8 +177,15 @@ export function useServerSync(
           const res = await api.lenh(item.name, item.args, todayKey(), version.current);
           queue.current.shift();
           setPending(queue.current.length);
-          nuot(res.data, res.version);
           setLoi(null);
+          if (!va(res.thayDoi, res.kiemTra, res.version)) {
+            // Bản ở máy đã lệch khỏi bản trên server. Bỏ hàng đợi rồi tải lại
+            // đầy đủ - gửi tiếp mấy lệnh tính trên nền lệch chỉ lệch thêm.
+            queue.current = [];
+            setPending(0);
+            await taiLai();
+            return;
+          }
         } catch (err) {
           if (!(err instanceof ApiError)) throw err;
 
@@ -202,17 +269,19 @@ export function useServerSync(
     queue.current = [];
     setPending(0);
     version.current = undefined;
+    banServer.current = null;
     setUser(null);
     setStatus('chua-dang-nhap');
   }, []);
 
   const nhapLenServer = useCallback(
     async (data: AppData) => {
-      const res = await api.lenh('importLocalData', { data }, todayKey(), version.current);
-      nuot(res.data, res.version);
-      notify.current?.(res.note ?? 'Đã đưa hồ sơ lên máy chủ');
+      await api.lenh('importLocalData', { data }, todayKey(), version.current);
+      // Nhập là thay trắng cả hồ sơ, nên tải lại đầy đủ thay vì vá.
+      await taiLai();
+      notify.current?.('Đã đưa hồ sơ lên máy chủ');
     },
-    [nuot],
+    [taiLai],
   );
 
   /* ------------------------------------------------- nối lại lúc mở app */
