@@ -31,9 +31,18 @@ export const clampEstimate = (v: number) =>
  * Việc của ngày mai thì hôm nay chưa thể xong - nếu cho tick thì mọi con số
  * tu vi, chuỗi ngày và thống kê đều thành vô nghĩa. Muốn làm sớm thì dời
  * nhiệm vụ về hôm nay trước.
+ *
+ * `today` là ngày theo lịch CỦA NGƯỜI DÙNG, không phải của máy chủ. Trước đây
+ * hàm này nhận tham số `now` rồi bỏ quên, cứ gọi thẳng `todayKey()` - chạy ở
+ * trình duyệt thì vô hại vì hai cái là một, nhưng khi có máy chủ thì thành sai:
+ * lúc 6 giờ sáng ở Việt Nam, máy chủ theo giờ UTC vẫn đang ở hôm qua, nên việc
+ * của hôm nay bị từ chối là "việc của ngày mai".
  */
-export function checkComplete(task: Task, now = new Date()): Violation | null {
-  const today = todayKey();
+export function checkComplete(
+  task: Task,
+  today = todayKey(),
+  now = new Date(),
+): Violation | null {
   if (task.date > today) {
     return {
       code: 'future-task',

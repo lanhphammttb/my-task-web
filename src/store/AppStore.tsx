@@ -364,7 +364,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (status === 'done') {
         const target = data.tasks.find((t) => t.id === id);
         if (target) {
-          const violation = checkComplete(target);
+          const violation = checkComplete(target);   // ở web, ngày của máy chính là ngày của người dùng
           if (violation?.level === 'block') {
             if (violation.fix === 'move-to-today') {
               toast.warning(violation.message, {
