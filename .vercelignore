@@ -1,0 +1,21 @@
+# Giữ tệp môi trường ở lại máy.
+#
+# `vercel deploy` đẩy nguyên thư mục lên rồi build TRÊN Vercel, nên `.env` của
+# máy mình cũng đi theo và Vite đọc nó. Lần đầu triển khai, bản chạy thật nung
+# thẳng `VITE_API_URL=http://localhost:5300` vào bundle - trang công khai đi gọi
+# localhost của từng người mở nó.
+#
+# Muốn đặt biến cho bản trên Vercel thì dùng `vercel env add`, đừng dựa vào tệp
+# ở máy.
+.env
+.env.*
+!.env.example
+
+# Vercel tự build, khỏi đẩy bản build cũ ở máy lên.
+dist/
+node_modules/
+
+# Không liên quan tới bản chạy.
+art-src/
+docs/
+*.log
