@@ -1,3 +1,5 @@
+import { exportFile, exportStoredFile, storageLoadError } from "./lib/storage";
+import { FocusTimerProvider, useFocusTimer } from "./store/FocusTimer";
 import {
   Suspense,
   lazy,
@@ -40,14 +42,14 @@ import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { skyForRealm } from "./lib/sky";
 import { cn } from "@/lib/utils";
-import TodayView from "./views/TodayView";
-import WeekView from "./views/WeekView";
-import MonthView from "./views/MonthView";
-import GoalsView from "./views/GoalsView";
-import FocusView from "./views/FocusView";
-import CaveView from "./views/CaveView";
-import AwardsView from "./views/AwardsView";
-import StatsView from "./views/StatsView";
+const TodayView = lazy(() => import("./views/TodayView"));
+const WeekView = lazy(() => import("./views/WeekView"));
+const MonthView = lazy(() => import("./views/MonthView"));
+const GoalsView = lazy(() => import("./views/GoalsView"));
+const FocusView = lazy(() => import("./views/FocusView"));
+const CaveView = lazy(() => import("./views/CaveView"));
+const AwardsView = lazy(() => import("./views/AwardsView"));
+const StatsView = lazy(() => import("./views/StatsView"));
 
 // three.js khá nặng nên lớp 3D được nạp trễ; nền ảnh 2D vẫn nằm phía dưới.
 const Scene3DBackdrop = lazy(() => import("./components/Scene3DBackdrop"));
@@ -115,7 +117,7 @@ const HOTKEY_ORDER: ViewKey[] = [
 ];
 
 function Shell() {
-  const { data, awaken, celebration } = useApp();
+  const { data, awaken, celebration, storageError, retrySave } = useApp();
   const [view, setView] = useState<ViewKey | null>(null);
   const [anchor, setAnchor] = useState<string | undefined>();
   const [date, setDate] = useState(todayKey());
@@ -123,7 +125,7 @@ function Shell() {
   const [editorOpen, setEditorOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [tribulationOpen, setTribulationOpen] = useState(false);
-  const [focusTaskId, setFocusTaskId] = useState<string | undefined>();
+  const { pickTask: setFocusTaskId } = useFocusTimer();
   const [query, setQuery] = useState("");
 
   const open = useCallback((v: ViewKey, at?: string) => {
@@ -158,7 +160,7 @@ function Shell() {
       setFocusTaskId(t.id);
       open("focus");
     },
-    [open],
+    [open, setFocusTaskId],
   );
 
   const openDay = useCallback(
@@ -294,6 +296,11 @@ function Shell() {
       </Suspense>
 
       <HeaderHUD onSettings={() => setSettingsOpen(true)} />
+      {storageError && <div role="alert" className="fixed inset-x-2 top-2 z-[100] rounded-lg border bg-background p-3 text-sm shadow-lg">
+        <p>{storageError}</p>
+        <button className="mr-4 underline" onClick={() => { try { if (storageLoadError()) exportStoredFile(); else exportFile(data); } catch { /* Keep the error visible if storage is inaccessible. */ } }}>Xuất bản sao JSON</button>
+        <button className="underline" onClick={retrySave}>Thử lưu lại</button>
+      </div>}
 
       {/* ----------------------------------------------------- hai cột icon */}
       <SideRail side="left" label="Hoạt động tu luyện" collapsed={panelOpen}>
@@ -437,6 +444,7 @@ function Shell() {
             anchor={anchor}
             onClose={closePanel}
           >
+            <Suspense fallback={<p role="status">Đang tải…</p>}>
             {view === "today" && (
               <TodayView
                 date={date}
@@ -465,13 +473,14 @@ function Shell() {
               <GoalsView onEdit={openEdit} onFocus={startFocus} />
             )}
             {view === "focus" && (
-              <FocusView taskId={focusTaskId} onPickTask={setFocusTaskId} />
+              <FocusView />
             )}
             {view === "cave" && <CaveView />}
             {view === "awards" && (
               <AwardsView onTribulation={() => setTribulationOpen(true)} />
             )}
             {view === "stats" && <StatsView />}
+            </Suspense>
           </OverlayPanel>
         ) : null}
       </AnimatePresence>
@@ -509,7 +518,7 @@ export default function App() {
   return (
     <AppProvider>
       <TooltipProvider delayDuration={300}>
-        <Shell />
+        <FocusTimerProvider><Shell /></FocusTimerProvider>
       </TooltipProvider>
     </AppProvider>
   );

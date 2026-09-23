@@ -75,6 +75,8 @@ describe("lớp đồng bộ với server", () => {
     const daBiet = new Set<string>([...Object.keys(LENH), ...KHONG_GUI]);
     const khongDoiDuLieu = new Set([
       "data",
+      "storageError", // Local persistence status, not server data.
+      "retrySave", // Retry only the browser write.
       "sync",
       "lastVisitAt",
       "audit",

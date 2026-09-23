@@ -6,6 +6,7 @@ thành nhiệm vụ trở thành tiến trình từ Luyện Khí lên Phi Thăng
 ## Chạy dự án
 
 ```bash
+nvm use           # Node 22.21.1 (xem .nvmrc)
 npm install
 npm run dev        # http://localhost:5173
 ```
@@ -15,7 +16,7 @@ npm run dev        # http://localhost:5173
 | `npm run dev` | Server phát triển, hot reload |
 | `npm run build` | Kiểm tra TypeScript rồi build vào `dist/` |
 | `npm run preview` | Xem thử bản build production |
-| `npm test` | Chạy 29 test (Vitest + jsdom) |
+| `npm test` | Chạy bộ test (Vitest + jsdom) |
 | `npm run test:watch` | Test ở chế độ theo dõi |
 | `npm run lint` | Chạy oxlint |
 
@@ -134,3 +135,10 @@ src/
 - **`src/test-setup.ts`** cấp `Storage` trong bộ nhớ (Node 25 gắn sẵn một `localStorage` rỗng che
   mất bản của jsdom), cùng `ResizeObserver`, `matchMedia` và context canvas 2d cho Radix + confetti.
 - Dữ liệu chỉ nằm trong trình duyệt — dùng Cài đặt → "Xuất tệp JSON" để sao lưu định kỳ.
+
+## Độ tin cậy và hiệu năng
+
+- Đồng hồ Bế Quan chạy ở cấp ứng dụng và tính theo thời điểm kết thúc, tiếp tục khi chuyển màn hình hoặc tab. Tải lại trang vẫn kết thúc phiên chưa lưu.
+- Lỗi ghi localStorage hiện cảnh báo kèm xuất JSON và thử lưu lại. Dữ liệu cũ không đọc được sẽ được giữ nguyên để xuất bản khôi phục, không tự ghi đè.
+- Tệp nhập được kiểm tra cấu trúc trước khi thay thế dữ liệu. ID tài nguyên cũ vẫn được dọn theo quy tắc tương thích.
+- Các màn hình tải khi mở. Nền Three.js luôn được hiển thị như thiết kế ban đầu.

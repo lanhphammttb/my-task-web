@@ -7,7 +7,7 @@ import { LENH } from './lenh';
 import type { AppData, FocusSession, Goal, Settings, Status, Task } from '../types';
 import { GOAL_COLORS } from '../types';
 import { addDays, dateKey, parseKey, todayKey } from '../lib/date';
-import { loadData, saveData, uid } from '../lib/storage';
+import { loadData, saveData, storageLoadError, clearStorageLoadError, uid } from '../lib/storage';
 import { seedData } from '../lib/seed';
 import { effectiveXp, stoneBalance, verifiedFocusMinutes, verifiedTaskCount } from '../lib/economy';
 import { cultivationOf, realmLabel } from '../lib/cultivation';
@@ -83,6 +83,8 @@ export interface RefineResult {
 
 interface Ctx {
   data: AppData;
+  storageError: string | null;
+  retrySave: () => void;
   /** Tình trạng nối với server trọng tài. `status: 'tat'` là đang chạy một mình. */
   sync: ServerSync;
   /** Giờ mở app lần trước, chụp trước khi bị ghi đè. Rỗng nếu là lần đầu chạy. */
@@ -231,7 +233,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   /** Chặn giải cùng một kỳ ngộ hai lần (nhấn nhanh hai nút) */
   const resolvedRef = useRef<string | null>(null);
 
-  useEffect(() => saveData(data), [data]);
+  const [storageError, setStorageError] = useState<string | null>(storageLoadError);
+  const retrySave = useCallback(() => setStorageError(saveData(data)), [data]);
+  useEffect(() => { setStorageError(saveData(data)); }, [data]);
 
   /*
    * Nối với server trọng tài.
@@ -1128,17 +1132,29 @@ export function AppProvider({ children }: { children: ReactNode }) {
   );
 
   const updateSettings = useCallback<Ctx['updateSettings']>(
-    (p) => patch((d) => ({ ...d, settings: { ...d.settings, ...p } })),
+    (p) => patch((d) => {
+      const settings = { ...d.settings, ...p };
+      for (const [key, min, max] of [
+        ['focusLength', 1, 240], ['breakLength', 1, 240],
+        ['dailyTarget', 1, 30], ['dailyFocusTarget', 1, 1440],
+      ] as const) {
+        const value = settings[key];
+        settings[key] = Number.isFinite(value) ? Math.max(min, Math.min(max, Math.round(value))) : d.settings[key];
+      }
+      return { ...d, settings };
+    }),
     [patch],
   );
 
   const replaceAll = useCallback<Ctx['replaceAll']>(
-    (next) =>
+    (next) => {
+      clearStorageLoadError();
       setData({
         ...next,
         ledger: rebuildLedger(next),
         lastSeenAt: new Date().toISOString(),
-      }),
+      });
+    },
     [],
   );
   const loadSample = useCallback(() => {
@@ -1147,6 +1163,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     notify('Đã nạp dữ liệu mẫu');
   }, [notify]);
   const resetAll = useCallback(() => {
+    clearStorageLoadError();
     setData((d) => ({
       version: 1, tasks: [], goals: [], sessions: [], settings: d.settings,
       root: d.root, beasts: d.beasts, activeBeastId: d.activeBeastId, stonesSpent: 0,
@@ -1222,14 +1239,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<Ctx>(
     () => bocLenh({
-      data, sync, lastVisitAt: boot.lastVisitAt, audit, resealLedger, celebration, dismissCelebration, encounter, resolveEncounter, dismissEncounter, notify, addTask, updateTask, removeTask, setStatus, toggleDone, moveTask,
+      data, storageError, retrySave, sync, lastVisitAt: boot.lastVisitAt, audit, resealLedger, celebration, dismissCelebration, encounter, resolveEncounter, dismissEncounter, notify, addTask, updateTask, removeTask, setStatus, toggleDone, moveTask,
       duplicateTask, toggleSubtask, pushOverdueToToday, clearDone, addGoal, updateGoal, removeGoal,
       logSession, awaken, rerollRoot, summon, feedBeast, setActiveBeast, buyPill, attemptTribulation,
       pickTechnique, plantSeed, harvestPlot, refinePill, refineRootElement, condenseRootElement, upgradeCave,
       startExpedition, resolveExpedition, acceptMission, settleMission, openChest,
       updateSettings, replaceAll, loadSample, resetAll,
     }, sync.gui),
-    [data, sync, boot, audit, resealLedger, celebration, dismissCelebration, encounter, resolveEncounter, dismissEncounter, notify, addTask, updateTask, removeTask, setStatus, toggleDone, moveTask,
+    [data, storageError, retrySave, sync, boot, audit, resealLedger, celebration, dismissCelebration, encounter, resolveEncounter, dismissEncounter, notify, addTask, updateTask, removeTask, setStatus, toggleDone, moveTask,
       duplicateTask, toggleSubtask, pushOverdueToToday, clearDone, addGoal, updateGoal, removeGoal,
       logSession, awaken, rerollRoot, summon, feedBeast, setActiveBeast, buyPill, attemptTribulation,
       pickTechnique, plantSeed, harvestPlot, refinePill, refineRootElement, condenseRootElement, upgradeCave,

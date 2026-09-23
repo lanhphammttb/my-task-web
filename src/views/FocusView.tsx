@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useFocusTimer } from "../store/FocusTimer";
 import {
   ArrowLeftRight,
   CheckCircle2,
@@ -15,7 +15,6 @@ import type { Task } from "../types";
 import { clockLabel, formatDuration, todayKey } from "../lib/date";
 import { sortTasks } from "../lib/stats";
 import { PRIORITY_UI } from "../lib/ui";
-import { soundComplete } from "../lib/celebrate";
 import { useApp } from "../store/AppStore";
 import ProgressRing from "../components/ProgressRing";
 import MeditationScene from "../components/MeditationScene";
@@ -31,25 +30,10 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
-type Mode = "work" | "break";
-
-export default function FocusView({
-  taskId,
-  onPickTask,
-}: {
-  taskId?: string;
-  onPickTask: (id?: string) => void;
-}) {
-  const { data, logSession, setStatus, notify } = useApp();
-  const { focusLength, breakLength, dailyFocusTarget } = data.settings;
-
-  const [mode, setMode] = useState<Mode>("work");
-  const [seconds, setSeconds] = useState(focusLength * 60);
-  const [running, setRunning] = useState(false);
-  const [rounds, setRounds] = useState(0);
-  const tick = useRef<number | null>(null);
-
-  const totalSeconds = (mode === "work" ? focusLength : breakLength) * 60;
+export default function FocusView() {
+  const { data, setStatus } = useApp();
+  const { focusLength, dailyFocusTarget } = data.settings;
+  const { mode, seconds, running, rounds, totalSeconds, taskId, pickTask: onPickTask, reset, toggle, stopEarly } = useFocusTimer();
   const task = data.tasks.find((t) => t.id === taskId);
   const candidates = sortTasks(
     data.tasks.filter((t) => t.status !== "done" && t.date <= todayKey()),
@@ -58,70 +42,12 @@ export default function FocusView({
   const todayMin = todaySessions.reduce((s, x) => s + x.minutes, 0);
   const isWork = mode === "work";
 
-  const reset = useCallback(
-    (next: Mode) => {
-      setMode(next);
-      setSeconds((next === "work" ? focusLength : breakLength) * 60);
-      setRunning(false);
-    },
-    [focusLength, breakLength],
-  );
-
-  // Chỉ đồng bộ lại khi người dùng đổi cấu hình thời lượng - không reset khi tạm dừng.
-  const cfgRef = useRef({ focusLength, breakLength });
-  useEffect(() => {
-    const prev = cfgRef.current;
-    if (prev.focusLength === focusLength && prev.breakLength === breakLength)
-      return;
-    cfgRef.current = { focusLength, breakLength };
-    if (!running)
-      setSeconds((mode === "work" ? focusLength : breakLength) * 60);
-  }, [focusLength, breakLength, mode, running]);
-
-  useEffect(() => {
-    if (!running) return;
-    tick.current = window.setInterval(() => setSeconds((s) => s - 1), 1000);
-    return () => {
-      if (tick.current) window.clearInterval(tick.current);
-    };
-  }, [running]);
-
-  useEffect(() => {
-    if (seconds > 0) return;
-    setRunning(false);
-    soundComplete();
-    if (mode === "work") {
-      logSession(focusLength, taskId);
-      setRounds((r) => r + 1);
-      reset("break");
-    } else {
-      notify("Hết giờ nghỉ. Vào phiên tập trung tiếp theo!");
-      reset("work");
-    }
-  }, [seconds, mode, focusLength, taskId, logSession, notify, reset]);
-
-  useEffect(() => {
-    document.title = running
-      ? `${clockLabel(seconds)} · ${isWork ? "Nhập định" : "Điều tức"}`
-      : "Đạo Trình · Kế hoạch & tu luyện";
-    return () => {
-      document.title = "Đạo Trình · Kế hoạch & tu luyện";
-    };
-  }, [seconds, running, isWork]);
-
-  const stopEarly = () => {
-    const spent = Math.round((totalSeconds - seconds) / 60);
-    if (isWork && spent >= 1) logSession(spent, taskId);
-    reset("work");
-  };
-
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-4">
       <div>
         <h2 className="text-lg font-bold tracking-tight">Bế quan tu luyện</h2>
         <p className="text-muted-foreground text-xs">
-          Nhập định {focusLength} phút với đúng một việc. Không chuyển tab,
-          không điện thoại — mỗi phút bế quan đều đổi thành tu vi.
+          Nhập định {focusLength} phút với đúng một việc. Đồng hồ tiếp tục chạy khi bạn xem lịch hoặc chuyển tab.
         </p>
       </div>
 
@@ -251,7 +177,7 @@ export default function FocusView({
               <Button
                 size="lg"
                 className="gap-2"
-                onClick={() => setRunning((r) => !r)}
+                onClick={toggle}
               >
                 {running ? (
                   <Pause className="size-4" />

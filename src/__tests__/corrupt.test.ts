@@ -21,7 +21,7 @@ describe('id lạ trong dữ liệu đã lưu', () => {
   it('linh thảo không còn tồn tại thì bỏ qua ô đất, không làm sập app', () => {
     expect(
       plotState(
-        { slot: 0, herb: 'khong_co_that' as never, plantedAtFocus: 0, plantedAt: '' },
+        { slot: 0, herb: 'khong_co_that' as never, plantedAtFocus: 0, plantedAt: new Date().toISOString() },
         100,
       ),
     ).toBeNull();
@@ -29,7 +29,7 @@ describe('id lạ trong dữ liệu đã lưu', () => {
 
   it('bí cảnh không còn tồn tại thì bỏ qua chuyến đi, không làm sập app', () => {
     expect(
-      expeditionState({ site: 'khong_co_that' as never, startedAtTasks: 0, startedAt: '' }, 10),
+      expeditionState({ site: 'khong_co_that' as never, startedAtTasks: 0, startedAt: new Date().toISOString() }, 10),
     ).toBeNull();
   });
 
@@ -40,7 +40,7 @@ describe('id lạ trong dữ liệu đã lưu', () => {
           id: 'khong_co_that' as never,
           startTasks: 0,
           startFocus: 0,
-          acceptedAt: '',
+          acceptedAt: new Date().toISOString(),
           dueAt: new Date().toISOString(),
           stake: 10,
         },
@@ -63,18 +63,18 @@ describe('dọn id đã chết ngay lúc nạp dữ liệu', () => {
         stonesBonus: 100,
         technique: 'khong_co_that',
         field: [
-          { slot: 0, herb: 'khong_co_that', plantedAtFocus: 0, plantedAt: '' },
-          { slot: 1, herb: 'thanh_diep', plantedAtFocus: 0, plantedAt: '' },
+          { slot: 0, herb: 'khong_co_that', plantedAtFocus: 0, plantedAt: new Date().toISOString() },
+          { slot: 1, herb: 'thanh_diep', plantedAtFocus: 0, plantedAt: new Date().toISOString() },
         ],
         mission: {
           id: 'khong_co_that',
           startTasks: 0,
           startFocus: 0,
-          acceptedAt: '',
-          dueAt: '',
+          acceptedAt: new Date().toISOString(),
+          dueAt: new Date().toISOString(),
           stake: 70,
         },
-        expedition: { site: 'khong_co_that', startedAtTasks: 0, startedAt: '' },
+        expedition: { site: 'khong_co_that', startedAtTasks: 0, startedAt: new Date().toISOString() },
       }),
     );
 
@@ -97,7 +97,7 @@ describe('dọn id đã chết ngay lúc nạp dữ liệu', () => {
         ...emptyData(),
         stonesBonus: 100,
         technique: 'thuy_van',
-        field: [{ slot: 0, herb: 'kim_tuy', plantedAtFocus: 5, plantedAt: '' }],
+        field: [{ slot: 0, herb: 'kim_tuy', plantedAtFocus: 5, plantedAt: new Date().toISOString() }],
       }),
     );
 

@@ -53,7 +53,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const SHORTCUTS: [string, string][] = [
   ["N", "Nhiệm vụ mới"],
-  ["1 – 7", "Chuyển màn hình"],
+  ["1 – 8", "Chuyển màn hình"],
   ["/", "Tìm kiếm"],
   ["T", "Về hôm nay"],
   ["Esc", "Đóng hộp thoại"],

@@ -1,3 +1,4 @@
+import { validateData } from "./dataValidation";
 import type { AppData, Settings } from '../types';
 import { HERBS } from './field';
 import type { HerbId } from './field';
@@ -14,6 +15,8 @@ export const emptyHerbs = (): Record<HerbId, number> => ({
 });
 
 const KEY = 'my-task-planner/v1';
+let loadFailure: string | null = null;
+export const storageLoadError = () => loadFailure;
 
 export const DEFAULT_SETTINGS: Settings = {
   theme: 'dark',
@@ -69,21 +72,21 @@ export const emptyData = (): AppData => ({
 function dropDeadIds(d: AppData): AppData {
   let refund = 0;
 
-  const field = d.field.filter((plot) => plot.herb in HERBS);
+  const field = d.field.filter((plot) => Object.hasOwn(HERBS, plot.herb));
 
   let mission = d.mission;
-  if (mission && !(mission.id in MISSIONS)) {
+  if (mission && !(Object.hasOwn(MISSIONS, mission.id))) {
     refund += mission.stake;
     mission = undefined;
   }
 
   let expedition = d.expedition;
-  if (expedition && !(expedition.site in SITES)) {
+  if (expedition && !(Object.hasOwn(SITES, expedition.site))) {
     // Phí lên đường đã tiêu rồi nhưng chuyến đi không bao giờ về được nữa.
     expedition = undefined;
   }
 
-  const technique = d.technique && d.technique in TECHNIQUES ? d.technique : undefined;
+  const technique = d.technique && Object.hasOwn(TECHNIQUES, d.technique) ? d.technique : undefined;
 
   return {
     ...d,
@@ -96,10 +99,12 @@ function dropDeadIds(d: AppData): AppData {
 }
 
 export function loadData(): AppData {
+  loadFailure = null;
   try {
     const raw = localStorage.getItem(KEY);
     if (!raw) return emptyData();
     const parsed = JSON.parse(raw) as Partial<AppData>;
+    validateData(parsed);
     return dropDeadIds({
       version: 1,
       tasks: parsed.tasks ?? [],
@@ -130,15 +135,18 @@ export function loadData(): AppData {
       lastSeenAt: parsed.lastSeenAt ?? new Date().toISOString(),
     });
   } catch {
+    loadFailure = "Không đọc được dữ liệu đã lưu. Bản gốc được giữ nguyên; hãy xuất bản sao trước khi khôi phục.";
     return emptyData();
   }
 }
 
 export function saveData(data: AppData) {
   try {
+    if (loadFailure) return loadFailure;
     localStorage.setItem(KEY, JSON.stringify(data));
+    return null;
   } catch {
-    /* hết dung lượng hoặc chế độ ẩn danh - bỏ qua để app vẫn chạy */
+    return 'Không lưu được dữ liệu trên trình duyệt. Hãy xuất tệp JSON để tránh mất thay đổi.';
   }
 }
 
@@ -158,7 +166,7 @@ export function readFile(file: File): Promise<AppData> {
     reader.onload = () => {
       try {
         const parsed = JSON.parse(String(reader.result)) as Partial<AppData>;
-        if (!Array.isArray(parsed.tasks)) throw new Error('Tệp không đúng định dạng');
+        validateData(parsed);
         resolve(
           dropDeadIds({
             version: 1,
@@ -202,3 +210,12 @@ export const uid = () =>
   typeof crypto !== 'undefined' && 'randomUUID' in crypto
     ? crypto.randomUUID()
     : `id-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+
+export function clearStorageLoadError() { loadFailure = null; }
+export function exportStoredFile() {
+  const raw = localStorage.getItem(KEY);
+  if (!raw) return;
+  const url = URL.createObjectURL(new Blob([raw], { type: 'application/json' }));
+  const a = document.createElement('a'); a.href = url; a.download = 'dao-trinh-recovery.json'; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
