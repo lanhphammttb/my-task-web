@@ -31,6 +31,7 @@ interface Props {
   open: boolean;
   task: Task | null;
   defaultDate?: string;
+  defaultGoalId?: string;
   onOpenChange: (open: boolean) => void;
 }
 
@@ -66,6 +67,7 @@ export default function TaskEditorDialog({
   open,
   task,
   defaultDate,
+  defaultGoalId,
   onOpenChange,
 }: Props) {
   const { addTask, updateTask, removeTask, data } = useApp();
@@ -93,9 +95,9 @@ export default function TaskEditorDialog({
             recurrence: task.recurrence,
             subtasks: task.subtasks.map((s) => ({ ...s })),
           }
-        : blank(defaultDate ?? todayKey()),
+        : { ...blank(defaultDate ?? todayKey()), goalId: defaultGoalId ?? "none" },
     );
-  }, [open, task, defaultDate]);
+  }, [open, task, defaultDate, defaultGoalId]);
 
   const set = <K extends keyof Draft>(key: K, value: Draft[K]) =>
     setDraft((d) => ({ ...d, [key]: value }));

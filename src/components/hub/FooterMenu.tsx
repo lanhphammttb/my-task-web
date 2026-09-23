@@ -1,26 +1,17 @@
 import { useRef, useState } from "react";
-import { Moon, Mountain, Orbit, Plus, Search, Sun, X } from "lucide-react";
+import { Flame, Mountain, Plus, Search, ScrollText, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { ViewKey } from "../../types";
 import { useChromeVar } from "./useChromeVar";
 import { cn } from "@/lib/utils";
 
-/**
- * Bốn bậc thời khoá.
- *
- * Trước đây chỗ này ghi "Hôm nay / Tuần / Tháng / Mục tiêu" - giọng ứng dụng
- * lịch, chọi hẳn với cột hai bên vốn nói Bế Quan, Linh Căn, Đan Đường. Chữ
- * "khoá" (課) là bài tập thầy giao phải làm trong ngày, nên gọi thế thì cái lịch
- * thôi không còn là lịch: nó thành thời khoá tông môn giao xuống. Bộ Nhật ·
- * Tuần · Nguyệt song song nhau nên bậc thời gian vẫn đọc ra ngay.
- */
-const FOOTER_TABS: { key: ViewKey; icon: LucideIcon; label: string }[] =
-  [
-    { key: "today", icon: Sun, label: "Nhật Khoá" },
-    { key: "week", icon: Orbit, label: "Tuần Khoá" },
-    { key: "month", icon: Moon, label: "Nguyệt Khoá" },
-    { key: "goals", icon: Mountain, label: "Đại Nguyện" },
-  ];
+/** Destinations belong in the world navigation; time scales live inside the journal. */
+const FOOTER_TABS: { key: ViewKey | null; icon: LucideIcon; label: string; hint: string; art?: string }[] = [
+  { key: null, icon: Mountain, label: "Sơn Môn", hint: "Về tiên giới" },
+  { key: "today", icon: ScrollText, label: "Hành Sự", hint: "Việc của bạn", art: "/art/rail/nhat-khoa.png" },
+  { key: "focus", icon: Flame, label: "Bế Quan", hint: "Tập trung", art: "/art/rail/be-quan.png" },
+  { key: "goals", icon: Mountain, label: "Đại Nguyện", hint: "Điều muốn đạt", art: "/art/rail/chieu-thu.png" },
+];
 
 interface Props {
   view: ViewKey | null;
@@ -31,16 +22,13 @@ interface Props {
    * thì xong việc rồi vẫn phải mở bảng ra mới biết là có hòm.
    */
   alerts?: Partial<Record<ViewKey, boolean>>;
-  onSelect: (v: ViewKey) => void;
+  onSelect: (v: ViewKey | null) => void;
   onNew: () => void;
   query: string;
   onQuery: (q: string) => void;
 }
 
-/**
- * Thanh tab dưới cùng - nơi đặt phần "kế hoạch" thật sự của ứng dụng.
- * Bấm lại tab đang mở thì đóng bảng để quay về hub.
- */
+/** Persistent destinations; Sơn Môn always returns to the living world. */
 export default function FooterMenu({
   view,
   alerts,
@@ -87,13 +75,13 @@ export default function FooterMenu({
             xuống hàng thứ hai ở góc trái trên máy hẹp. */}
         <div className="mx-auto flex min-w-0 flex-1 items-center justify-around gap-1 sm:max-w-md">
           {FOOTER_TABS.map((t) => {
-            const active = view === t.key;
+            const active = view === t.key || (t.key === "today" && (view === "week" || view === "month"));
             return (
               <button
                 key={t.key}
                 type="button"
                 onClick={() => onSelect(t.key)}
-                aria-label={t.label}
+                aria-label={t.key === "today" ? "Hành Sự Đường" : t.label}
                 aria-current={active ? "page" : undefined}
                 className={cn(
                   "group relative flex min-w-0 flex-1 flex-col items-center gap-1 rounded-xl px-1 py-1 transition-colors",
@@ -123,8 +111,8 @@ export default function FooterMenu({
                     active && "gold-border",
                   )}
                 >
-                  <t.icon className="size-4.5 drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]" />
-                  {alerts?.[t.key] && (
+                  {t.art ? <img src={t.art} alt="" className="size-7 object-contain" /> : <t.icon className="size-5" />}
+                  {t.key && alerts?.[t.key] && (
                     <span
                       className="pulse-dot absolute -top-1 -right-1 size-2.5 rounded-full"
                       style={{ background: "var(--gold-bright)" }}
@@ -139,6 +127,7 @@ export default function FooterMenu({
                 <span className="font-title flex min-h-[24px] w-full items-start justify-center text-center text-[10px] leading-tight font-bold tracking-wide">
                   {t.label}
                 </span>
+                <span className="hidden text-[9px] text-muted-foreground sm:block">{t.hint}</span>
               </button>
             );
           })}

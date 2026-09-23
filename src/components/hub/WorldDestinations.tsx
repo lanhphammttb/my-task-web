@@ -1,5 +1,8 @@
 import { ArrowUpRight, Compass, ScrollText, Flame } from 'lucide-react';
 import { useApp } from '../../store/AppStore';
+import { expeditionState } from '../../lib/expedition';
+import { plotState } from '../../lib/field';
+import { verifiedFocusMinutes, verifiedTaskCount } from '../../lib/economy';
 import { todayKey } from '../../lib/date';
 import type { ViewKey } from '../../types';
 import ArtImage from '../ArtImage';
@@ -7,11 +10,15 @@ import ArtImage from '../ArtImage';
 /** Places to enter, with live information from the player's actual activity. */
 export default function WorldDestinations({ onExplore }: { onExplore: (view: ViewKey, anchor?: string) => void }) {
   const { data } = useApp();
-  const remaining = data.tasks.filter(t => t.date <= todayKey() && t.status !== 'done').length;
+  const remaining = data.tasks.filter(t => t.date === todayKey() && t.status !== 'done').length;
+  const trip = data.expedition ? expeditionState(data.expedition, verifiedTaskCount(data)) : null;
+  const plots = data.field.map(p => plotState(p, verifiedFocusMinutes(data))).filter(p => p !== null);
+  const ripe = plots.filter(p => p.ready).length;
+  const fieldHint = ripe ? `${ripe} ô linh thảo đã chín` : plots.length ? `Bế quan thêm ${Math.ceil(Math.min(...plots.map(p => p.remain)))} phút để hái` : `Động phủ bậc ${data.caveLevel}`;
   const places = [
-    { title: 'Tàng Thư Các', subtitle: 'Nhật khoá hôm nay', status: remaining ? `${remaining} việc đang chờ` : 'Nhật khoá thanh thản', image: '/art/world/daily-pavilion-v1.webp', icon: ScrollText, view: 'today' as const, anchor: undefined },
-    { title: 'Bí Cảnh', subtitle: 'Khám phá tiên giới', status: data.expedition ? 'Chuyến đi đang tiếp diễn' : 'Chọn hành trình mới', image: '/art/world/expedition-gate-v1.webp', icon: Compass, view: 'awards' as const, anchor: 'awards-expedition' },
-    { title: 'Động Phủ', subtitle: 'Tu luyện & luyện đan', status: `Động phủ bậc ${data.caveLevel}`, image: '/art/scene/cave.jpg', icon: Flame, view: 'cave' as const, anchor: undefined },
+    { title: 'Hành Sự Đường', subtitle: 'Ghi việc · chọn một việc để làm', status: remaining ? `${remaining} việc đang chờ` : 'Nhật khoá thanh thản', image: '/art/world/daily-pavilion-v1.webp', icon: ScrollText, view: 'today' as const, anchor: undefined },
+    { title: 'Bí Cảnh', subtitle: 'Khám phá tiên giới', status: trip ? trip.ready ? 'Đoàn đã về · nhận thành quả' : `Thêm ${trip.remain} việc để đoàn trở về` : 'Chọn hành trình mới', image: '/art/world/expedition-gate-v1.webp', icon: Compass, view: 'awards' as const, anchor: 'awards-expedition' },
+    { title: 'Động Phủ', subtitle: 'Tu luyện & luyện đan', status: fieldHint, image: '/art/scene/cave.jpg', icon: Flame, view: 'cave' as const, anchor: plots.length ? 'cave-field' : undefined },
   ];
   return <section aria-label="Khám phá tiên giới" className="world-destinations pointer-events-auto w-full max-w-3xl text-left">
     <div className="mb-2 flex items-center justify-between px-1">

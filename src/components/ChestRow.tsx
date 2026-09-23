@@ -1,3 +1,4 @@
+import { todayKey } from "../lib/date";
 import { useMemo, useState } from "react";
 import { Gift, Lock, PackageOpen, Sparkles } from "lucide-react";
 import { chestsForDay } from "../lib/chest";
@@ -70,6 +71,7 @@ function ChestArt({ src, tone, dim }: { src: string; tone: string; dim: boolean 
  */
 export default function ChestRow({ date }: { date: string }) {
   const { data, openChest } = useApp();
+  const isToday = date === todayKey();
   const [revealed, setRevealed] = useState<{ loot: Loot; chest: ChestState } | null>(null);
 
   const list = useMemo(() => {
@@ -86,6 +88,7 @@ export default function ChestRow({ date }: { date: string }) {
   const ready = list.filter((c) => c.earned && !c.opened).length;
 
   const open = (chest: ChestState) => {
+    if (!isToday) return;
     const res = openChest(chest.rule.id);
     if (!res) return;
     // Hòm kim hiếm tới mức cả tháng chưa chắc được một cái - ăn mừng to hơn.
@@ -101,14 +104,14 @@ export default function ChestRow({ date }: { date: string }) {
       icon={Gift}
       title="Hòm kỳ ngộ"
       subtitle={
-        ready > 0
+        !isToday ? "Lịch sử ngày đã chọn. Chỉ hòm của hôm nay có thể mở." : ready > 0
           ? `${ready} hòm đang chờ mở`
           : "Làm xong việc là có hòm — mở ra mới biết bên trong"
       }
     >
       <div className="grid gap-2.5 sm:grid-cols-2">
         {list.map((c) => {
-          const canOpen = c.earned && !c.opened;
+          const canOpen = isToday && c.earned && !c.opened;
           return (
             <div
               key={c.rule.id}
@@ -142,7 +145,7 @@ export default function ChestRow({ date }: { date: string }) {
                 {c.opened ? (
                   <MetaChip>đã mở</MetaChip>
                 ) : c.earned ? (
-                  <Button size="sm" className="gap-1.5" onClick={() => open(c)}>
+                  <Button size="sm" className="gap-1.5" onClick={() => open(c)} disabled={!isToday}>
                     <PackageOpen className="size-3.5" /> Mở
                   </Button>
                 ) : (

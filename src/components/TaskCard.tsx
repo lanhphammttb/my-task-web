@@ -133,7 +133,7 @@ export default function TaskCard({ task, onEdit, onFocus, showDate }: Props) {
           {/* Chip điểm bay lên - phần thưởng tức thì cho hành động vừa rồi */}
           {xpBurst > 0 && (
             <span className="text-success animate-xp-float pointer-events-none absolute -top-1 left-1/2 z-20 -translate-x-1/2 text-xs font-bold whitespace-nowrap">
-              +{xpBurst} XP
+              +{xpBurst} tu vi
             </span>
           )}
         </div>
@@ -228,6 +228,8 @@ export default function TaskCard({ task, onEdit, onFocus, showDate }: Props) {
             ))}
           </div>
 
+          {onFocus && !done && <button className="btn-game mt-3 px-3 py-1.5 text-[11px]" aria-label={`Bế quan: ${task.title}`} onClick={() => onFocus(task)}><Crosshair className="size-3.5" /> Bế quan làm việc này</button>}
+
           <AnimatePresence initial={false}>
             {open && (
               <motion.div
@@ -298,16 +300,7 @@ export default function TaskCard({ task, onEdit, onFocus, showDate }: Props) {
                         {task.status === "doing" ? "Tạm dừng" : "Bắt đầu"}
                       </Button>
                     )}
-                    {onFocus && !done && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-7 gap-1.5 px-2.5 text-xs"
-                        onClick={() => onFocus(task)}
-                      >
-                        <Crosshair className="size-3.5" /> Tập trung
-                      </Button>
-                    )}
+
                     <Button
                       size="sm"
                       variant="outline"

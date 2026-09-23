@@ -108,7 +108,7 @@ src/
 │  ├─ ui.ts                  Bảng màu/icon cho ưu tiên, trạng thái, chu kỳ lặp
 │  ├─ storage.ts             Đọc/ghi localStorage, xuất/nhập tệp JSON
 │  ├─ motivation.ts          Câu nói theo ngày + lời nhắc theo tiến độ
-│  └─ seed.ts                Dữ liệu mẫu cho lần chạy đầu
+│  └─ seed.ts                Dữ liệu mẫu nạp chủ động trong Cài đặt
 ├─ components/
 │  ├─ ui/                    Component shadcn (do CLI sinh, có thể sửa tự do)
 │  ├─ AppSidebar.tsx         Điều hướng + thẻ cảnh giới + chuỗi tu luyện
@@ -142,3 +142,9 @@ src/
 - Lỗi ghi localStorage hiện cảnh báo kèm xuất JSON và thử lưu lại. Dữ liệu cũ không đọc được sẽ được giữ nguyên để xuất bản khôi phục, không tự ghi đè.
 - Tệp nhập được kiểm tra cấu trúc trước khi thay thế dữ liệu. ID tài nguyên cũ vẫn được dọn theo quy tắc tương thích.
 - Các màn hình tải khi mở. Nền Three.js luôn được hiển thị như thiết kế ban đầu.
+
+## Rà soát trải nghiệm 23/09/2026
+
+Web mới bắt đầu trống; thêm công việc cá nhân từ sảnh chính rồi vào Bế Quan ngay. Thẻ hành trình hiển thị công việc và phút tập trung cần để tiến triển. Hoàn thành phần việc hôm nay sẽ hiện lời ghi nhận và cho phép nghỉ.
+
+Xem [báo cáo và các vấn đề còn lại](docs/review/project-review-2026-09-23.md), [prompt tạo ba ảnh mới](docs/review/asset-prompts.md). Chạy `npm run art:audit` để kiểm tra ảnh và tham chiếu tài nguyên.

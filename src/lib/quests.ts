@@ -1,5 +1,5 @@
 import type { AppData, Task } from '../types';
-import { dateKey, parseKey } from './date';
+import { dateKey, parseKey, completedDay } from './date';
 
 /**
  * Nhật khoá tông môn: mỗi ngày ba nhiệm vụ phụ, thưởng linh thạch.
@@ -99,7 +99,7 @@ export function questsFor(key: string): QuestDef[] {
 export function dayRecord(data: AppData, key: string): DayRecord {
   return {
     key,
-    completed: data.tasks.filter((t) => t.status === 'done' && (t.completedAt?.slice(0, 10) ?? t.date) === key),
+    completed: data.tasks.filter((t) => t.status === 'done' && (completedDay(t)) === key),
     scheduled: data.tasks.filter((t) => t.date === key),
     focusMin: data.sessions.filter((s) => s.date === key).reduce((sum, s) => sum + s.minutes, 0),
   };
@@ -129,7 +129,7 @@ function activeDays(data: AppData): string[] {
   const set = new Set<string>();
   for (const t of data.tasks) {
     set.add(t.date);
-    if (t.completedAt) set.add(t.completedAt.slice(0, 10));
+    if (t.completedAt) set.add(completedDay(t));
   }
   for (const s of data.sessions) set.add(s.date);
   return [...set].sort();

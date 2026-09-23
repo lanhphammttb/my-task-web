@@ -1,5 +1,6 @@
 import WorldDestinations from "./WorldDestinations";
-import type { ViewKey } from "../../types";
+import NextPractice from "./NextPractice";
+import type { Task, ViewKey } from "../../types";
 import { useState } from "react";
 import { useCountUp } from "../../lib/useCountUp";
 import { ChevronRight, Quote, Sparkles, Zap } from "lucide-react";
@@ -20,6 +21,8 @@ interface Props {
   onFocus: () => void;
   onAwaken: () => void;
   onExplore: (view: ViewKey, anchor?: string) => void;
+  onFocusTask: (task: Task) => void;
+  onNew: () => void;
 }
 
 /**
@@ -27,7 +30,7 @@ interface Props {
  * một vòng tu vi lớn ở giữa, nút hành động chính ngay dưới, và các chỉ số ngày
  * hôm nay bám quanh. Mọi thứ khác chỉ là icon quanh rìa màn hình.
  */
-export default function HubCenter({ onTribulation, onFocus, onAwaken, onExplore }: Props) {
+export default function HubCenter({ onTribulation, onFocus, onAwaken, onExplore, onFocusTask, onNew }: Props) {
   const { data } = useApp();
   const progress = progressOf(data);
   const c = cultivationOf(progress.xp);
@@ -199,6 +202,7 @@ export default function HubCenter({ onTribulation, onFocus, onAwaken, onExplore 
         />
         <Stat label="Chuỗi ngày" value={`${streak}`} done={streak > 0} />
       </div>
+      <NextPractice onFocus={onFocusTask} onResume={onFocus} onNew={onNew} onReview={() => onExplore("stats")} />
       <WorldDestinations onExplore={onExplore} />
     </div>
   );

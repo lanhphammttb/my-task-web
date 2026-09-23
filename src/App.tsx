@@ -37,6 +37,7 @@ import HubCenter from "./components/hub/HubCenter";
 import HubIcon from "./components/hub/HubIcon";
 import SideRail from "./components/hub/SideRail";
 import OverlayPanel from "./components/hub/OverlayPanel";
+import WorkSanctuary from "./components/hub/WorkSanctuary";
 import FooterMenu from "./components/hub/FooterMenu";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -63,18 +64,18 @@ interface PanelMeta {
 
 const PANEL: Record<ViewKey, PanelMeta> = {
   today: {
-    title: "Nhật Khoá",
-    subtitle: "Việc phải xong trước khi mặt trời lặn",
+    title: "Hành Sự Đường",
+    subtitle: "Việc đời thường, từng bước thành đạo",
     banner: "/art/banner/today.jpg",
   },
   week: {
-    title: "Tuần Khoá",
+    title: "Hành Sự Đường",
     subtitle: "Bảy ngày trước mặt, liệu sức mà chia",
     banner: "/art/banner/week.jpg",
   },
   month: {
-    title: "Nguyệt Khoá",
-    subtitle: "Một tháng trải ra, thấy ngay chỗ nào còn hổng",
+    title: "Hành Sự Đường",
+    subtitle: "Nhìn xa để dành thời gian cho điều quan trọng",
     banner: "/art/banner/month.jpg",
   },
   goals: {
@@ -122,6 +123,7 @@ function Shell() {
   const [anchor, setAnchor] = useState<string | undefined>();
   const [date, setDate] = useState(todayKey());
   const [editorTask, setEditorTask] = useState<Task | null>(null);
+  const [editorGoalId, setEditorGoalId] = useState<string | undefined>();
   const [editorOpen, setEditorOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [tribulationOpen, setTribulationOpen] = useState(false);
@@ -146,6 +148,7 @@ function Shell() {
   }, []);
 
   const openNew = useCallback(() => {
+    setEditorGoalId(undefined);
     setEditorTask(null);
     setEditorOpen(true);
   }, []);
@@ -304,18 +307,11 @@ function Shell() {
       {/* ----------------------------------------------------- hai cột icon */}
       <SideRail side="left" label="Hoạt động tu luyện" collapsed={panelOpen}>
         <HubIcon
-          icon="be-quan"
-          label="Bế Quan"
-          active={view === "focus"}
-          alert={stats.focusMin < (data.settings.dailyFocusTarget || 60)}
-          onClick={() => toggle("focus")}
-        />
-        <HubIcon
           icon="nhat-khoa"
           label="Tông Khoá"
           badge={questsLeft}
           active={view === "today" && anchor === "quests"}
-          onClick={() => open("today", "quests")}
+          onClick={() => { setDate(todayKey()); open("today", "quests"); }}
         />
         <HubIcon
           icon="tien-lo"
@@ -392,7 +388,9 @@ function Shell() {
         <div className="my-auto w-full shrink-0">
           <HubCenter
             onTribulation={() => setTribulationOpen(true)}
-            onExplore={open}
+            onFocusTask={startFocus}
+            onNew={() => { setDate(todayKey()); openNew(); }}
+            onExplore={(v, at) => { if (v === "today") setDate(todayKey()); open(v, at); }}
             onFocus={() => open("focus")}
             onAwaken={() => awaken()}
           />
@@ -444,6 +442,7 @@ function Shell() {
             anchor={anchor}
             onClose={closePanel}
           >
+            <WorkSanctuary view={view} onSelect={open}>
             <Suspense fallback={<p role="status">Đang tải…</p>}>
             {view === "today" && (
               <TodayView
@@ -470,7 +469,7 @@ function Shell() {
               />
             )}
             {view === "goals" && (
-              <GoalsView onEdit={openEdit} onFocus={startFocus} />
+              <GoalsView onEdit={openEdit} onFocus={startFocus} onAddTask={(goalId) => { setEditorGoalId(goalId); setDate(todayKey()); setEditorTask(null); setEditorOpen(true); }} />
             )}
             {view === "focus" && (
               <FocusView />
@@ -481,6 +480,7 @@ function Shell() {
             )}
             {view === "stats" && <StatsView />}
             </Suspense>
+            </WorkSanctuary>
           </OverlayPanel>
         ) : null}
       </AnimatePresence>
@@ -488,7 +488,7 @@ function Shell() {
       <FooterMenu
         view={searching ? null : view}
         alerts={{ today: chestAlert }}
-        onSelect={toggle}
+        onSelect={(v) => { if (v === null) closePanel(); else { if (v === "today") setDate(todayKey()); open(v); } }}
         onNew={openNew}
         query={query}
         onQuery={setQuery}
@@ -498,6 +498,7 @@ function Shell() {
         open={editorOpen}
         task={editorTask}
         defaultDate={date}
+        defaultGoalId={editorGoalId}
         onOpenChange={setEditorOpen}
       />
       <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />

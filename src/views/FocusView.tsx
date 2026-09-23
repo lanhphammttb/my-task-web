@@ -164,8 +164,10 @@ export default function FocusView() {
                   size="sm"
                   className="gap-1.5"
                   onClick={() => {
-                    setStatus(task.id, "done");
-                    onPickTask(undefined);
+                    if (setStatus(task.id, "done")) {
+                      stopEarly();
+                      onPickTask(undefined);
+                    }
                   }}
                 >
                   <CheckCircle2 className="size-3.5" /> Đánh dấu hoàn thành

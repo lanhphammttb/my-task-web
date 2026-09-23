@@ -241,7 +241,7 @@ export default function MonthView({
                 icon={CalendarPlus}
                 art="no-task"
                 title="Ngày này còn trống"
-                hint="Thêm nhiệm vụ để lấp đầy kế hoạch."
+                hint="Dành chỗ cho việc quan trọng và cả những ngày nghỉ."
               />
             ) : (
               <AnimatePresence initial={false}>

@@ -1,3 +1,4 @@
+import { seedData } from "../lib/seed";
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it } from 'vitest';
 import App from '../App';
@@ -8,7 +9,7 @@ function openPanel(label: string) {
 }
 
 describe('Ứng dụng web', () => {
-  beforeEach(() => localStorage.clear());
+  beforeEach(() => { localStorage.clear(); localStorage.setItem('my-task-planner/v1', JSON.stringify(seedData())); });
 
   it('khởi động vào hub tu luyện với HUD, châm ngôn và hai cột icon', () => {
     render(<App />);
@@ -27,15 +28,15 @@ describe('Ứng dụng web', () => {
 
   it('mở bảng Hôm nay từ thanh tab và thấy dữ liệu mẫu', async () => {
     render(<App />);
-    openPanel('Nhật Khoá');
+    openPanel('Hành Sự Đường');
 
-    expect(await screen.findByRole('heading', { name: 'Nhật Khoá' })).toBeDefined();
+    expect(await screen.findByRole('heading', { name: 'Hành Sự Đường' })).toBeDefined();
     expect((await screen.findAllByText('Chốt tài liệu bàn giao module thanh toán')).length).toBeGreaterThan(0);
   });
 
   it('thêm nhiệm vụ qua ô thêm nhanh và lưu vào localStorage', async () => {
     render(<App />);
-    openPanel('Nhật Khoá');
+    openPanel('Hành Sự Đường');
 
     const input = await screen.findByPlaceholderText(/Thêm nhanh nhiệm vụ/);
     fireEvent.change(input, { target: { value: 'Nhiệm vụ kiểm thử !cao @08:15 ~45 #test' } });
@@ -50,7 +51,7 @@ describe('Ứng dụng web', () => {
 
   it('đánh dấu hoàn thành làm tăng số việc đã xong', async () => {
     render(<App />);
-    openPanel('Nhật Khoá');
+    openPanel('Hành Sự Đường');
 
     const before = JSON.parse(localStorage.getItem('my-task-planner/v1') ?? '{"tasks":[]}');
     const doneBefore = before.tasks.filter((t: { status: string }) => t.status === 'done').length;
@@ -66,8 +67,9 @@ describe('Ứng dụng web', () => {
   it('chuyển được sang bảng Tháng, Mục tiêu và Thống kê', async () => {
     render(<App />);
 
-    openPanel('Nguyệt Khoá');
-    expect(await screen.findByRole('heading', { name: 'Nguyệt Khoá' })).toBeDefined();
+    openPanel('Hành Sự Đường');
+    fireEvent.click(await screen.findByRole('button', { name: /Nguyệt Khoá/ }));
+    expect(await screen.findByRole('button', { name: 'Tháng sau' })).toBeDefined();
 
     openPanel('Đại Nguyện');
     expect(await screen.findByRole('heading', { name: 'Đại Nguyện' })).toBeDefined();
@@ -112,7 +114,7 @@ describe('Ứng dụng web', () => {
 
   it('không cho hoàn thành nhiệm vụ của ngày mai, không bung hiệu ứng', async () => {
     render(<App />);
-    openPanel('Nhật Khoá');
+    openPanel('Hành Sự Đường');
 
     // Sang ngày mai rồi thử tick một nhiệm vụ ở đó.
     fireEvent.click(await screen.findByRole('button', { name: 'Ngày sau' }));
@@ -131,7 +133,7 @@ describe('Ứng dụng web', () => {
 
   it('nhiệm vụ hôm nay vẫn hoàn thành được và được ghi vào sổ', async () => {
     render(<App />);
-    openPanel('Nhật Khoá');
+    openPanel('Hành Sự Đường');
 
     const before = JSON.parse(localStorage.getItem('my-task-planner/v1') ?? '{}');
     const beforeLedger = before.ledger.length;

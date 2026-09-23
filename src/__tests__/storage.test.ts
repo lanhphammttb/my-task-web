@@ -16,6 +16,13 @@ describe('safe persistence', () => {
     await expect(read(value)).rejects.toThrow();
     expect(localStorage.getItem(KEY)).toBe(previous);
   });
+  it('preserves legitimate negative encounter balances', async () => {
+    const data = { ...emptyData(), stonesBonus: -120, encounterXp: -300 };
+    expect((await read(data)).stonesBonus).toBe(-120);
+    saveData(data);
+    expect(loadData().encounterXp).toBe(-300);
+    expect(storageLoadError()).toBeNull();
+  });
   it('reports quota failure and recovers on retry', () => {
     const spy = vi.spyOn(localStorage, 'setItem').mockImplementationOnce(() => { throw new DOMException('Full', 'QuotaExceededError'); });
     expect(saveData(emptyData())).toContain('Không lưu');

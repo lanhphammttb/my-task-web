@@ -1,6 +1,6 @@
 import type { FocusSession, Task } from '../types';
 import { PRIORITY_META } from '../types';
-import { addDays, dateKey, parseKey, todayKey } from './date';
+import { addDays, dateKey, parseKey, todayKey, completedDay } from './date';
 
 export interface DayStats {
   key: string;
@@ -32,7 +32,7 @@ export function dayStats(tasks: Task[], sessions: FocusSession[], key: string): 
 
 /** Chuỗi ngày liên tiếp gần nhất có ít nhất 1 nhiệm vụ hoàn thành. */
 export function currentStreak(tasks: Task[]): number {
-  const doneDays = new Set(tasks.filter((t) => t.status === 'done').map((t) => t.completedAt?.slice(0, 10) ?? t.date));
+  const doneDays = new Set(tasks.filter((t) => t.status === 'done').map((t) => completedDay(t)));
   let streak = 0;
   let cursor = new Date();
   // Hôm nay chưa xong việc thì vẫn tính chuỗi từ hôm qua (chưa hết ngày).
@@ -45,7 +45,7 @@ export function currentStreak(tasks: Task[]): number {
 }
 
 export function bestStreak(tasks: Task[]): number {
-  const days = [...new Set(tasks.filter((t) => t.status === 'done').map((t) => t.completedAt?.slice(0, 10) ?? t.date))].sort();
+  const days = [...new Set(tasks.filter((t) => t.status === 'done').map((t) => completedDay(t)))].sort();
   let best = 0;
   let run = 0;
   let prev: string | null = null;

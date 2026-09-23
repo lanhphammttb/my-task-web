@@ -217,8 +217,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
    */
   const [boot] = useState(() => {
     const loaded = loadData();
-    // Lần chạy đầu tiên: nạp dữ liệu mẫu để giao diện không trống trơn.
-    const base = loaded.tasks.length === 0 && loaded.goals.length === 0 ? seedData() : loaded;
+    // Empty is a valid personal profile. Sample data is an explicit Settings action.
+    const base = loaded;
     // Chưa có sổ ghi (bản cũ hoặc dữ liệu mẫu) thì coi trạng thái hiện tại là
     // mốc đáng tin và ký lại từ đó.
     const ledger = base.ledger.length === 0 ? rebuildLedger(base) : base.ledger;
@@ -364,6 +364,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const setStatus = useCallback<Ctx['setStatus']>(
     (id, status) => {
+      const existing = data.tasks.find(t => t.id === id);
+      if (!existing || existing.status === status) return false;
       // Hoàn thành thì phải hợp lý: không thể xong việc của ngày mai hôm nay.
       if (status === 'done') {
         const target = data.tasks.find((t) => t.id === id);
@@ -393,7 +395,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
       patch((d) => {
         const target = d.tasks.find((t) => t.id === id);
-        if (!target) return d;
+        if (!target || target.status === status) return d;
         const before = d;
         const updated: Task = {
           ...target,

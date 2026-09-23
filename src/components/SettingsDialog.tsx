@@ -394,13 +394,27 @@ export default function SettingsDialog({
                 hidden
                 onChange={(e) => void doImport(e.target.files?.[0])}
               />
-              <Button
-                variant="outline"
-                className="justify-start gap-2"
-                onClick={() => clearDone()}
-              >
-                <Eraser className="size-4" /> Dọn việc đã xong
-              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="outline" className="justify-start gap-2">
+                    <Eraser className="size-4" /> Dọn việc đã xong
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Xoá lịch sử nhiệm vụ đã xong?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Thao tác này xoá các việc đã hoàn thành trước hôm nay, không phải cất chúng vào kho.
+                      Tu vi, linh thạch, chuỗi ngày và tiến độ liên quan sẽ được tính lại và có thể giảm.
+                      Nếu muốn giữ thành quả tu luyện, hãy huỷ và giữ lịch sử này.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Giữ lịch sử</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => clearDone()}>Xoá lịch sử cũ</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
               <Button
                 variant="outline"
                 className="justify-start gap-2"

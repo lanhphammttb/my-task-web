@@ -51,9 +51,10 @@ import { cn } from "@/lib/utils";
 interface Props {
   onEdit: (t: Task) => void;
   onFocus: (t: Task) => void;
+  onAddTask: (goalId: string) => void;
 }
 
-export default function GoalsView({ onEdit, onFocus }: Props) {
+export default function GoalsView({ onEdit, onFocus, onAddTask }: Props) {
   const { data, addGoal, updateGoal, removeGoal } = useApp();
   const [editing, setEditing] = useState<Goal | null>(null);
   const [formOpen, setFormOpen] = useState(false);
@@ -133,7 +134,7 @@ export default function GoalsView({ onEdit, onFocus }: Props) {
       <article
         key={g.id}
         className={cn(
-          "border-border bg-card overflow-hidden rounded-xl border",
+          "vow-card border-border bg-card overflow-hidden rounded-xl border",
           complete && "ring-success/30 ring-1",
         )}
       >
@@ -186,6 +187,8 @@ export default function GoalsView({ onEdit, onFocus }: Props) {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
+
+          <button className="btn-game px-3 py-2 text-xs" onClick={() => onAddTask(g.id)}><Plus className="size-3.5" /> Thêm bước nhỏ cho đại nguyện</button>
 
           {/* Thanh tiến độ tô đúng màu nhận diện của mục tiêu */}
           <div className="flex items-center gap-3">
@@ -286,7 +289,7 @@ export default function GoalsView({ onEdit, onFocus }: Props) {
           icon={Target}
           art="no-goal"
           title="Chưa có mục tiêu nào"
-          hint="Đặt 2-3 mục tiêu lớn cho quý này, rồi chia nhỏ thành nhiệm vụ mỗi ngày."
+          hint="Chọn một điều có ý nghĩa với bạn: khoẻ hơn, học một kỹ năng, hoàn thành một dự án. Sau đó thêm bước nhỏ để làm hôm nay."
         />
       )}
 

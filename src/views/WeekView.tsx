@@ -112,7 +112,7 @@ export default function WeekView({
       </p>
 
       <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-7">
-        {days.map((d) => {
+        {days.map((d, index) => {
           const key = dateKey(d);
           const list = byDay.get(key) ?? [];
           const done = list.filter((t) => t.status === "done").length;
@@ -135,7 +135,7 @@ export default function WeekView({
                 setHoverDay(null);
               }}
               className={cn(
-                "flex flex-col rounded-xl border p-2.5 transition-colors lg:min-h-[340px]",
+                "journey-day flex flex-col rounded-xl border p-2.5 transition-colors lg:min-h-[340px]",
                 isTd
                   ? "border-primary bg-primary/[0.06]"
                   : "border-border bg-card",
@@ -143,6 +143,7 @@ export default function WeekView({
                   "border-primary bg-primary/12 ring-primary/25 ring-2",
               )}
             >
+              <span className="mb-3 text-[9px] tracking-widest text-gold">CHẶNG {String(index + 1).padStart(2, "0")}</span>
               <button
                 onClick={() => onOpenDay(key)}
                 className="mb-2 flex w-full items-start justify-between text-left"
@@ -180,6 +181,7 @@ export default function WeekView({
               />
 
               <div className="flex flex-1 flex-col gap-1.5">
+                {list.length === 0 && <p className="mb-2 text-[10px] leading-relaxed text-muted-foreground">Chưa hẹn việc. Có thể dành ngày này để nghỉ.</p>}
                 {list.map((t) => (
                   <div
                     key={t.id}
