@@ -11,9 +11,9 @@ interface Props extends Omit<React.ComponentProps<"img">, "src"> {
 
 /** Ảnh có đường lùi: tải lỗi thì đổi sang `fallback`, hoặc biến mất. */
 export default function ArtImage({ src, fallback, ...rest }: Props) {
-  const [failed, setFailed] = useState<string | null>(null);
-  const url = failed === src ? fallback : src;
+  const [failed, setFailed] = useState<string[]>([]);
+  const url = !failed.includes(src) ? src : fallback && !failed.includes(fallback) ? fallback : undefined;
   if (!url) return null;
 
-  return <img {...rest} src={url} onError={() => setFailed(src)} />;
+  return <img {...rest} src={url} onError={() => setFailed(previous => [...previous, url])} />;
 }

@@ -33,7 +33,7 @@ export default function SideRail({
       className={cn(
         "absolute z-20 flex transition-opacity duration-200",
         collapsed
-          ? "pointer-events-none opacity-0 lg:pointer-events-auto lg:opacity-100"
+          ? "invisible pointer-events-none opacity-0 lg:visible lg:pointer-events-auto lg:opacity-100"
           : "pointer-events-auto",
         // Máy hẹp: hàng ngang, cuộn ngang nếu chật.
         "top-[var(--rail-top)] right-0 left-0 justify-center gap-1 overflow-x-auto px-2",

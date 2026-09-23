@@ -1,3 +1,5 @@
+import WorldDestinations from "./WorldDestinations";
+import type { ViewKey } from "../../types";
 import { useState } from "react";
 import { useCountUp } from "../../lib/useCountUp";
 import { ChevronRight, Quote, Sparkles, Zap } from "lucide-react";
@@ -17,6 +19,7 @@ interface Props {
   onTribulation: () => void;
   onFocus: () => void;
   onAwaken: () => void;
+  onExplore: (view: ViewKey, anchor?: string) => void;
 }
 
 /**
@@ -24,7 +27,7 @@ interface Props {
  * một vòng tu vi lớn ở giữa, nút hành động chính ngay dưới, và các chỉ số ngày
  * hôm nay bám quanh. Mọi thứ khác chỉ là icon quanh rìa màn hình.
  */
-export default function HubCenter({ onTribulation, onFocus, onAwaken }: Props) {
+export default function HubCenter({ onTribulation, onFocus, onAwaken, onExplore }: Props) {
   const { data } = useApp();
   const progress = progressOf(data);
   const c = cultivationOf(progress.xp);
@@ -49,7 +52,7 @@ export default function HubCenter({ onTribulation, onFocus, onAwaken }: Props) {
   const ready = progress.readyForTribulation;
 
   return (
-    <div className="pointer-events-none flex h-full min-h-0 flex-col items-center justify-center gap-3 px-4 py-2 text-center">
+    <div className="pointer-events-none flex min-h-0 flex-col items-center justify-center gap-3 px-4 py-2 text-center">
       {/* ---------------------------------------------------- châm ngôn tiền bối */}
       {/* Châm ngôn tiền bối. Có chân dung thì xếp ngang, chưa có thì canh giữa
           như cũ - ArtImage tự ẩn nên layout không bị hụt chỗ. */}
@@ -114,7 +117,7 @@ export default function HubCenter({ onTribulation, onFocus, onAwaken }: Props) {
         <ArtImage
           src={`/art/chibi/${ready ? "breakthrough" : "idle"}.png`}
           alt=""
-          className="animate-float pointer-events-none absolute -bottom-6 hidden drop-shadow-[0_8px_22px_rgba(0,0,0,0.65)] sm:-left-36 sm:block sm:w-36 lg:-left-44 lg:w-44"
+          className="animate-float pointer-events-none absolute -bottom-3 -left-16 w-24 drop-shadow-[0_8px_22px_rgba(0,0,0,0.65)] sm:-bottom-6 sm:-left-36 sm:w-36 lg:-left-44 lg:w-44"
         />
 
         {/* Linh thú đứng cạnh chủ nhân */}
@@ -196,6 +199,7 @@ export default function HubCenter({ onTribulation, onFocus, onAwaken }: Props) {
         />
         <Stat label="Chuỗi ngày" value={`${streak}`} done={streak > 0} />
       </div>
+      <WorldDestinations onExplore={onExplore} />
     </div>
   );
 }

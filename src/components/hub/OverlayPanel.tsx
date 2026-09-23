@@ -45,15 +45,21 @@ export default function OverlayPanel({
   // Cuộn tới đúng mục khi mở bảng từ một icon cụ thể (ví dụ Linh Thú).
   useEffect(() => {
     if (!anchor) return;
-    // Mục đích có thể đang gập - bảo nó bung ra trước, không thì cuộn tới nơi
-    // chỉ thấy mỗi cái tiêu đề.
-    requestOpenSection(anchor);
-    const id = window.setTimeout(() => {
-      document
-        .getElementById(anchor)
-        ?.scrollIntoView({ block: "start", behavior: "smooth" });
-    }, 220);
-    return () => window.clearTimeout(id);
+    // Lazy-loaded views may arrive after the panel: wait for the actual target.
+    let frame = 0;
+    const reveal = () => {
+      const target = document.getElementById(anchor);
+      if (!target) return false;
+      requestOpenSection(anchor);
+      frame = requestAnimationFrame(() => target.scrollIntoView({
+        block: "start", behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+      }));
+      return true;
+    };
+    if (reveal()) return () => cancelAnimationFrame(frame);
+    const observer = new MutationObserver(() => { if (reveal()) observer.disconnect(); });
+    if (scroller.current) observer.observe(scroller.current, { childList: true, subtree: true });
+    return () => { observer.disconnect(); cancelAnimationFrame(frame); };
   }, [anchor]);
 
   return (

@@ -209,7 +209,7 @@
   --panel-bg: rgb(10 7 5 / 68%);
   --glass-border: rgb(196 166 97 / 30%);
   --glass-shadow: 0 10px 34px rgb(0 0 0 / 78%), inset 0 0 24px rgb(196 166 97 / 6%);
-  --scene-dim: 0.42;
+  --scene-dim: 0.24;
   --scene-blend: rgb(13 10 8 / 62%);
 
   --sidebar: #120d08;
@@ -677,3 +677,9 @@
   0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 0 0 var(--gold-glow); }
   50% { opacity: 0.7; transform: scale(1.25); box-shadow: 0 0 0 6px transparent; }
 }
+
+/* A compact, scrollable hub keeps every destination reachable on short screens. */
+.hub-scroll { scrollbar-width: thin; scrollbar-color: var(--gold) transparent; }
+.destination-card { height: clamp(116px, 15vh, 168px); background: #10202a; transition: border-color 200ms, box-shadow 200ms; }
+.destination-card:hover { border-color: var(--gold-bright); box-shadow: 0 5px 24px #0006, 0 0 18px #d9b06118; }
+.world-destinations { margin-top: 8px; }

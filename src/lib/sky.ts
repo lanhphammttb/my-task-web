@@ -12,10 +12,11 @@ const SKY_BY_REALM = [
   "void", // Hợp Thể
   "storm", // Đại Thừa
   "storm", // Độ Kiếp
-  "storm", // Phi Thăng
+  "ascension", // Phi Thăng: trời quang, không còn thiên lôi
 ] as const;
 
 export function skyForRealm(realmIndex: number) {
   const i = Math.max(0, Math.min(SKY_BY_REALM.length - 1, realmIndex));
+  if (SKY_BY_REALM[i] === "ascension") return "/art/world/ascension-sky-v1.webp";
   return `/art/sky/${SKY_BY_REALM[i]}.webp`;
 }

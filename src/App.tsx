@@ -281,7 +281,6 @@ function Shell() {
     >
       <HubScene
         realmIndex={c.realmIndex}
-        override={view ? PANEL[view].banner : undefined}
       />
       {/* Lớp 3D phủ lên nền ảnh, tô theo màu cảnh giới đang tu */}
       <Suspense fallback={null}>
@@ -384,15 +383,16 @@ function Shell() {
           bottom: "calc(var(--footer-h, 86px) + 10px)",
         }}
         className={cn(
-          "absolute inset-x-0 z-10 flex items-center justify-center transition-opacity duration-300 lg:right-24 lg:left-24",
+          "hub-scroll absolute inset-x-0 z-10 flex flex-col items-center overflow-y-auto overscroll-contain transition-opacity duration-300 lg:right-24 lg:left-24",
           panelOpen && "pointer-events-none opacity-0",
         )}
       >
         {/* my-auto thay cho items-center: căn giữa mà vẫn cuộn được tới đỉnh
             khi màn hình thấp, thay vì bị cắt mất phần trên. */}
-        <div className="my-auto w-full">
+        <div className="my-auto w-full shrink-0">
           <HubCenter
             onTribulation={() => setTribulationOpen(true)}
+            onExplore={open}
             onFocus={() => open("focus")}
             onAwaken={() => awaken()}
           />

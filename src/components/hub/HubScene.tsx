@@ -84,7 +84,7 @@ export default function HubScene({
       <div
         className="absolute inset-0"
         style={{
-          background: "color-mix(in oklab, var(--background) 22%, transparent)",
+          background: "color-mix(in oklab, var(--background) 12%, transparent)",
         }}
       />
 
@@ -99,7 +99,7 @@ export default function HubScene({
         className="absolute inset-0"
         style={{
           background:
-            "radial-gradient(102% 80% at 50% 44%, transparent 0%, color-mix(in oklab, var(--background) 48%, transparent) 52%, var(--background) 98%)",
+            "radial-gradient(102% 80% at 50% 44%, transparent 0%, color-mix(in oklab, var(--background) 32%, transparent) 52%, var(--background) 98%)",
         }}
       />
       <div
