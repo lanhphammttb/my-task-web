@@ -700,18 +700,16 @@ body[data-scroll-locked] .world-rail {
   padding-right: 4.6rem;
 }
 
-/* Tấm trượt bám đáy thì không chừa lề phải cho dãy nút nữa - dãy nút nổi đè
-   lên mép tấm, đúng kiểu nút nổi của game. Chừa lề chỉ làm tấm hẹp lại. */
-@media (max-width: 767px) {
-  .panel-shell {
-    padding-right: 0;
-  }
-  /* Nội dung bên trong vẫn phải né dãy nút, nếu không chữ chui xuống dưới nó. */
-  .panel-shell .panel-noi-dung {
-    padding-right: 4.2rem;
-  }
-}
-
+/*
+ * Chừa lề ĐÚNG MỘT LẦN, ở vỏ ngoài.
+ *
+ * Bản trước chừa hai lần: vỏ lùi vào cho dãy nút, rồi phần nội dung bên trong
+ * lại lùi thêm 4,2rem nữa. Thành ra tấm bảng kết thúc ngay sát dãy nút - đúng
+ * chỗ nó cần dừng - nhưng chữ bên trong lại dừng sớm hơn mép bảng 67px, để hở
+ * một dải tối vô cớ dọc mép phải. Nhìn ra là hỏng ngay.
+ *
+ * Chỉ vỏ lùi. Nội dung dùng trọn bề ngang của tấm.
+ */
 @media (max-width: 420px) {
   .panel-shell { padding-right: 4rem; }
 }

@@ -1,10 +1,40 @@
 import path from 'node:path';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
+import { loadEnv } from 'vite';
+// `defineConfig` lấy từ vitest để giữ được khối `test`; `loadEnv` thì chỉ vite
+// mới xuất ra.
 import { defineConfig } from 'vitest/config';
 
-export default defineConfig({
+/** Backend mà dev server chuyển tiếp tới. Đổi bằng `VITE_API_PROXY` trong .env. */
+const API_MAC_DINH = 'https://my-task-api-theta.vercel.app';
+
+export default defineConfig(({ mode }) => ({
   plugins: [react(), tailwindcss()],
+
+  /*
+   * Chuyển tiếp `/api` sang backend, thay vì để trình duyệt gọi thẳng.
+   *
+   * Không phải để tránh CORS - CORS đã mở sẵn cho localhost:5173. Mà vì COOKIE:
+   * phiên đăng nhập được đặt `SameSite=Lax`, nên trình duyệt KHÔNG lưu nó khi
+   * localhost gọi sang một tên miền khác. Đăng ký trả về 201 đàng hoàng, cookie
+   * bị vứt lặng lẽ, rồi mọi lệnh sau đó đều 401 và app báo "chưa đăng nhập".
+   *
+   * Hạ xuống `SameSite=None` thì chữa được triệu chứng nhưng mở đường cho CSRF,
+   * và trình duyệt đang dần chặn hẳn cookie bên thứ ba. Chuyển tiếp thì trình
+   * duyệt chỉ thấy MỘT nguồn là localhost:5173, cookie thành cookie của chính
+   * nó - đúng y cách bản deploy đang chạy, nơi `vercel.json` trỏ `/api/*` sang
+   * backend. Dev giống thật là chỗ đáng giá nhất của cách này.
+   */
+  server: {
+    proxy: {
+      '/api': {
+        target: loadEnv(mode, import.meta.dirname, '').VITE_API_PROXY || API_MAC_DINH,
+        changeOrigin: true,
+        rewrite: (duong) => duong.replace(/^\/api/, ''),
+      },
+    },
+  },
   resolve: {
     alias: { '@': path.resolve(import.meta.dirname, './src') },
   },
@@ -29,4 +59,4 @@ export default defineConfig({
      */
     env: { VITE_API_URL: '' },
   },
-});
+}));

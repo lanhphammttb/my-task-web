@@ -317,7 +317,10 @@ export default function FocusView({ onNew }: { onNew: () => void }) {
                 onClick={() => onPickTask(t.id)}
                 disabled={inSession}
                 className={cn(
-                  "flex items-center gap-2.5 rounded-xl border p-3 text-left transition-colors",
+                  // `min-w-0`: ô của lưới mặc định không co nhỏ hơn nội dung,
+                  // nên một tên việc dài kéo nút ra ngoài mép bảng - và
+                  // `truncate` ở dòng chữ bên trong không bao giờ được dùng tới.
+                  "flex min-w-0 items-center gap-2.5 rounded-xl border p-3 text-left transition-colors",
                   t.id === taskId
                     ? "border-primary bg-primary/12"
                     : "border-border bg-surface/60 hover:border-primary/50 hover:bg-surface",
