@@ -6,7 +6,7 @@
   "rewrites": [
     {
       "source": "/api/:duong*",
-      "destination": "https://my-task-api-lanhphams-projects.vercel.app/:duong*"
+      "destination": "https://my-task-api-theta.vercel.app/:duong*"
     },
     {
       "source": "/((?!art/|assets/|favicon|apple-touch-icon|manifest|robots).*)",
