@@ -18,6 +18,15 @@ interface Props {
   qi?: boolean;
   /** Màu rãnh nền. Đặt màu trong suốt khi vòng nằm đè lên ảnh/video. */
   track?: string;
+  /**
+   * Co giãn theo bề ngang khung chứa thay vì đóng cứng `size` px.
+   *
+   * Mặc định vòng đóng cứng `size` bằng `style` nội tuyến - mà nội tuyến thì
+   * class Tailwind ở ngoài không đè nổi, nên đặt `w-[92px]` cho khung chứa vẫn
+   * ra một cái vòng 198px tràn ra ngoài. Bật cờ này thì `size` chỉ còn là bề
+   * ngang TỐI ĐA, còn thật sự rộng bao nhiêu là do khung chứa quyết định.
+   */
+  fluid?: boolean;
 }
 
 /**
@@ -37,6 +46,7 @@ export default function ProgressRing({
   glowOnFull = true,
   qi = false,
   track,
+  fluid = false,
 }: Props) {
   const clamped = Math.max(0, Math.min(1, Number.isFinite(value) ? value : 0));
   const r = (size - stroke) / 2;
@@ -48,10 +58,11 @@ export default function ProgressRing({
     <div
       className={cn(
         "relative grid shrink-0 place-items-center",
+        fluid && "aspect-square w-full",
         full && glowOnFull && "animate-glow",
         className,
       )}
-      style={{ width: size, height: size }}
+      style={fluid ? { maxWidth: size } : { width: size, height: size }}
     >
       {/* Vòng linh khí: nét đứt mảnh xoay chậm quanh vòng tiến độ */}
       {qi && (
@@ -59,7 +70,7 @@ export default function ProgressRing({
           width={size}
           height={size}
           viewBox={`0 0 ${size} ${size}`}
-          className="animate-qi absolute inset-0 opacity-60"
+          className="animate-qi absolute inset-0 size-full opacity-60"
         >
           <circle
             cx={size / 2}
@@ -78,7 +89,7 @@ export default function ProgressRing({
         width={size}
         height={size}
         viewBox={`0 0 ${size} ${size}`}
-        className="absolute inset-0 -rotate-90"
+        className="absolute inset-0 size-full -rotate-90"
       >
         <defs>
           <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="1">

@@ -14,7 +14,7 @@ beforeEach(() => localStorage.clear());
 describe('personal cultivation journey', () => {
   it('starts with the user’s own work instead of awarding sample progress', () => {
     render(<App />);
-    expect(screen.getByRole('button', {name:'Thêm việc của tôi'})).toBeDefined();
+    expect(screen.getByRole('button', {name:'Thêm việc'})).toBeDefined();
     const saved = JSON.parse(localStorage.getItem('my-task-planner/v1')!);
     expect(saved.tasks).toEqual([]);
     expect(saved.ledger).toEqual([]);

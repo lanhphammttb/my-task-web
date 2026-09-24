@@ -3,6 +3,7 @@ import { fireEvent, render, screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import App from '../App';
 import { aphorismOfDay, elderPortrait } from '../lib/elders';
+import { dateKey } from '../lib/date';
 
 /**
  * Hub là màn hình mặc định. Mọi NƠI đều mở từ dãy nút tròn bám mép phải;
@@ -58,7 +59,8 @@ describe('Ứng dụng web', () => {
     openPanel('Bế Quan Động');
     expect(await screen.findByRole('heading', { name: 'Bế quan tu luyện' })).toBeDefined();
     openPanel('Sơn Môn');
-    expect(await screen.findByRole('button', { name: 'Tập trung việc này' })).toBeDefined();
+    // Sảnh vẫn có lối vào bế quan: mỗi dòng việc hôm nay là một lối.
+    expect((await screen.findAllByRole('button', { name: /^Tập trung việc này/ })).length).toBeGreaterThan(0);
   });
 
   it('phím / mở ô tìm kiếm và đóng tra cứu xoá bộ lọc', async () => {
@@ -109,7 +111,7 @@ describe('Ứng dụng web', () => {
 
   it('giữ phiên tập trung khi rời bảng và trở lại đúng trạng thái tạm dừng', async () => {
     render(<App />);
-    openPanel('Tập trung việc này');
+    openPanel('Bế Quan Động');
     fireEvent.click(await screen.findByRole('button', { name: 'Bắt đầu' }));
     fireEvent.click(screen.getByRole('button', { name: 'Tạm dừng' }));
     openPanel('Sơn Môn');
@@ -274,7 +276,15 @@ describe('Ứng dụng web', () => {
     fireEvent.click(boxes[0]);
 
     const saved = JSON.parse(localStorage.getItem('my-task-planner/v1') ?? '{}');
-    const tomorrow = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10);
+    /*
+     * Ngày mai phải tính bằng đúng thước của app: `dateKey` theo giờ MÁY.
+     *
+     * Bản cũ dùng `toISOString()` - tức giờ UTC. Ở múi giờ +7, từ 0h tới 7h
+     * sáng thì UTC còn ở ngày hôm trước, nên "ngày mai" của test lại trùng
+     * đúng "hôm nay" của app: test tick một việc hợp lệ của hôm nay rồi báo
+     * lỗi là app cho làm việc của tương lai. Chỉ đỏ lúc rạng sáng.
+     */
+    const tomorrow = dateKey(new Date(Date.now() + 86_400_000));
     const done = saved.tasks.filter(
       (t: { date: string; status: string }) => t.date === tomorrow && t.status === 'done',
     );

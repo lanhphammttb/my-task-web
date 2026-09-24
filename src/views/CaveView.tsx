@@ -26,6 +26,8 @@ import FieldSection from '../components/cave/FieldSection';
 import AlchemySection from '../components/cave/AlchemySection';
 import RootRefineSection from '../components/cave/RootRefineSection';
 import CaveUpgradeSection from '../components/cave/CaveUpgradeSection';
+import CaveRoom from '../components/cave/CaveRoom';
+import { requestOpenSection } from '../lib/section';
 import { cn } from '@/lib/utils';
 import SectionLinks from '../components/SectionLinks';
 
@@ -53,11 +55,27 @@ export default function CaveView() {
 
   return (
     <div className="stagger-in mx-auto flex w-full max-w-5xl flex-col gap-4">
-      {/* Tiêu đề "Động Phủ" đã nằm ở h1 của bảng phủ, không lặp lại lần nữa. */}
-      <p className="text-muted-foreground text-xs">
-        Linh căn quyết định tốc độ hấp thu, công pháp quyết định lối tu, linh điền nuôi thuốc cho lò
-        đan. Dùng linh thạch tích luỹ để nuôi dưỡng và nâng cấp.
-      </p>
+      {/* Tiêu đề "Động Phủ" đã nằm ở h1 của bảng phủ, không lặp lại lần nữa.
+
+          Mở Động Phủ ra là NHÌN THẤY CĂN PHÒNG trước đã, không phải đọc một
+          đoạn giải thích cơ chế. Đoạn văn cũ nói linh căn/công pháp/linh điền
+          dùng để làm gì - mà ngay dưới đây mỗi mục đều đã tự giới thiệu, nên
+          nó chỉ là một lớp chữ chắn giữa người chơi và nhà của họ. */}
+      <CaveRoom
+        onGo={(id) => {
+          const section = document.getElementById(id);
+          if (!section) return;
+          requestOpenSection(id);
+          requestAnimationFrame(() =>
+            section.scrollIntoView({
+              block: 'start',
+              behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches
+                ? 'auto'
+                : 'smooth',
+            }),
+          );
+        }}
+      />
 
       <SectionLinks label="Các mục trong Động Phủ" items={[
         { id: 'cave-stone', label: 'Linh thạch' },

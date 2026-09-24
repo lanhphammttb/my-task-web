@@ -26,6 +26,7 @@ import TaskCard from "./components/TaskCard";
 import TaskEditorDialog from "./components/TaskEditorDialog";
 import { EmptyState } from "./components/primitives";
 import HubScene from "./components/hub/HubScene";
+import { nenPhong, nenPhongLui } from "./lib/room";
 import { SCENE_FALLBACK } from "./lib/realmArt";
 import HeaderHUD from "./components/hub/HeaderHUD";
 import HubCenter from "./components/hub/HubCenter";
@@ -268,8 +269,13 @@ function Shell() {
         bigMoment && "world-shake",
       )}
     >
+      {/* Về nhà thì cả khung cảnh phía sau đổi theo căn phòng, không chỉ đổi
+          nội dung trong bảng. Đi đâu cũng thấy một nền y hệt thì không có cảm
+          giác đang bước sang một chỗ khác. */}
       <HubScene
         realmIndex={c.realmIndex}
+        override={view === "cave" ? nenPhong(data.caveLevel) : undefined}
+        overrideFallback={view === "cave" ? nenPhongLui(data.caveLevel) : undefined}
       />
       {/* Lớp 3D phủ lên nền ảnh, tô theo màu cảnh giới đang tu */}
       <Suspense fallback={null}>
@@ -278,7 +284,9 @@ function Shell() {
           sky={skyForRealm(c.realmIndex)}
           light={!isDark}
           // Mở bảng ra là thế giới lùi lại một bước, nhường mắt cho nội dung.
-          intensity={panelOpen ? 0.38 : 1}
+          /* Vào động phủ thì tắt hẳn: lớp 3D vẽ đè lên ảnh nền, để nguyên
+             thì đứng trong nhà vẫn thấy núi non bên ngoài. */
+          intensity={view === "cave" ? 0 : panelOpen ? 0.38 : 1}
           className="pointer-events-none fixed inset-0 -z-10"
         />
       </Suspense>
@@ -310,7 +318,6 @@ function Shell() {
             onFocusTask={startFocus}
             onNew={() => { setDate(todayKey()); openNew(); }}
             onExplore={(v, at) => { if (v === "today") setDate(todayKey()); open(v, at); }}
-            onFocus={() => open("focus")}
             onAwaken={() => awaken()}
           />
         </div>

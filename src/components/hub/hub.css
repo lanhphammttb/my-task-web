@@ -241,23 +241,39 @@
     width: 30px;
     height: 30px;
   }
+  /* Vẫn đủ 44px - mức tối thiểu cho ngón tay. Trước đây bóp còn 36px vì đáy
+     màn phải nhét năm tab; giờ điều hướng nằm ở dãy nút bên phải, đáy chỉ còn
+     một đích đến nên thừa chỗ. */
   .navigation-tool,
   .navigation-add {
-    width: 36px;
-    min-width: 36px;
+    width: 44px;
+    min-width: 44px;
     height: 44px;
     padding: 0;
   }
   .cultivation-hub {
     padding: 10px 16px 16px;
-    gap: 16px;
-  }
-  .cultivation-hub .elder-teaching {
-    padding: 12px;
     gap: 12px;
   }
+  /* Châm ngôn là không khí, không phải việc phải làm: trên điện thoại gói gọn
+     hai dòng, thừa thì cắt. Trước đây bốn dòng chữ nghiêng chiếm 130px - hơn
+     cả danh sách việc. */
+  .cultivation-hub .elder-teaching {
+    padding: 10px 12px;
+    gap: 10px;
+  }
   .cultivation-hub .elder-teaching p {
-    font-size: 13px;
+    font-size: 12.5px;
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .cultivation-hub .elder-teaching img {
+    width: 38px;
+    height: 38px;
   }
   .app-hud {
     flex-wrap: wrap;
@@ -440,9 +456,11 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 0.15rem;
   width: 4.1rem;
-  padding: 0.15rem 0;
+  min-height: 2.9rem;
+  padding: 0.2rem 0;
   background: none;
   border: 0;
   cursor: pointer;
@@ -597,36 +615,71 @@
 
 .today-dong {
   display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  padding: 0.35rem 0.1rem;
+  align-items: stretch;
+  gap: 0.15rem;
 }
 
-/* Ô tick to hơn hẳn phần còn lại: đây là thao tác chính của cả ứng dụng, và
-   trên điện thoại thì ngón tay cần chỗ. */
+/*
+ * Vùng chạm 44px.
+ *
+ * Ô tick trước đây vẽ 24x24 - chính là thao tác làm nhiều nhất của cả app mà
+ * lại là nút nhỏ nhất màn hình. 44px là mức tối thiểu cả Apple lẫn Google đều
+ * khuyến nghị; dưới mức ấy là bấm trượt suốt.
+ *
+ * Ô VUÔNG nhìn thấy vẫn 24px cho gọn mắt - phần nới rộng là vùng bấm quanh nó.
+ */
 .today-dong-tick {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  flex-shrink: 0;
+  border: 0;
+  background: transparent;
+  border-radius: 0.5rem;
+}
+
+.today-dong-o {
   display: grid;
   place-items: center;
   width: 1.5rem;
   height: 1.5rem;
-  flex-shrink: 0;
   border: 1.5px solid;
   border-radius: 0.4rem;
-  background: transparent;
   transition: background 0.15s;
 }
 
-.today-dong-tick:hover,
-.today-dong-tick:focus-visible {
-  background: color-mix(in oklab, var(--gold, #cbb994) 18%, transparent);
+.today-dong-tick:hover .today-dong-o,
+.today-dong-tick:focus-visible .today-dong-o {
+  background: color-mix(in oklab, var(--gold, #cbb994) 22%, transparent);
 }
 
 .today-dong-tick:hover svg { opacity: 0.6; }
 
+/* Chạm vào thân dòng thì vào bế quan với việc ấy - cũng cao 44px. */
+.today-dong-than {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+  padding: 0 0.35rem;
+  border: 0;
+  border-radius: 0.5rem;
+  background: transparent;
+  text-align: left;
+}
+
+.today-dong-than:hover,
+.today-dong-than:focus-visible {
+  background: color-mix(in oklab, var(--gold, #cbb994) 10%, transparent);
+}
+
 .today-dong-ten {
   flex: 1;
   min-width: 0;
-  font-size: 0.8rem;
+  font-size: 0.82rem;
   line-height: 1.3;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -656,8 +709,11 @@
 .today-list-xem {
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
-  padding: 0.35rem 0.7rem;
+  justify-content: center;
+  gap: 0.3rem;
+  /* 44px như mọi vùng chạm khác */
+  min-height: 2.75rem;
+  padding: 0 0.9rem;
   border-radius: 999px;
   font-size: 0.72rem;
   font-weight: 600;

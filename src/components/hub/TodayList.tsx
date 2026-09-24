@@ -25,9 +25,12 @@ const TOI_DA = 4;
 export default function TodayList({
   onOpenAll,
   onNew,
+  onFocus,
 }: {
   onOpenAll: () => void;
   onNew: () => void;
+  /** Chạm vào dòng thì vào bế quan với đúng việc ấy */
+  onFocus: (task: Task) => void;
 }) {
   const { data, toggleDone } = useApp();
   const hom = todayKey();
@@ -57,7 +60,7 @@ export default function TodayList({
         <ul className="today-list-ds">
           {hien.map((t) => (
             <li key={t.id}>
-              <Dong task={t} onTick={() => toggleDone(t.id)} />
+              <Dong task={t} onTick={() => toggleDone(t.id)} onFocus={() => onFocus(t)} />
             </li>
           ))}
         </ul>
@@ -83,8 +86,22 @@ export default function TodayList({
   );
 }
 
-/** Một dòng việc: tick được ngay, không mở gì thêm. */
-function Dong({ task, onTick }: { task: Task; onTick: () => void }) {
+/**
+ * Một dòng việc.
+ *
+ * Hai thao tác, không cần mở gì thêm: bấm ô vuông là xong việc, chạm vào phần
+ * còn lại là vào bế quan với việc ấy. Cả hai đều cao 44px - mức tối thiểu cho
+ * ngón tay, mà ô tick trước đây chỉ có 24px dù nó là thao tác chính của cả app.
+ */
+function Dong({
+  task,
+  onTick,
+  onFocus,
+}: {
+  task: Task;
+  onTick: () => void;
+  onFocus: () => void;
+}) {
   const meta = PRIORITY_META[task.priority];
   return (
     <div className="today-dong">
@@ -93,14 +110,22 @@ function Dong({ task, onTick }: { task: Task; onTick: () => void }) {
         className="today-dong-tick"
         onClick={onTick}
         aria-label={`Đánh dấu hoàn thành: ${task.title}`}
-        style={{ borderColor: `${meta.color}88` }}
       >
-        <Check className="size-3.5 opacity-0 transition-opacity" />
+        <span className="today-dong-o" style={{ borderColor: `${meta.color}99` }}>
+          <Check className="size-3.5 opacity-0 transition-opacity" />
+        </span>
       </button>
-      <span className="today-dong-ten">{task.title}</span>
-      <span className="today-dong-xp" style={{ color: meta.color }}>
-        +{10 * meta.weight}
-      </span>
+      <button
+        type="button"
+        className="today-dong-than"
+        onClick={onFocus}
+        aria-label={`Tập trung việc này: ${task.title}`}
+      >
+        <span className="today-dong-ten">{task.title}</span>
+        <span className="today-dong-xp" style={{ color: meta.color }}>
+          +{10 * meta.weight}
+        </span>
+      </button>
     </div>
   );
 }

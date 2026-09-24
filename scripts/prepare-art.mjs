@@ -71,6 +71,26 @@ const GROUPS = {
    * riêng `kim` nằm trên nền đen đặc nên được ghi đè riêng ở `CUT_OVERRIDE`.
    */
   chest: { kind: 'png', w: 512, h: 512, fit: 'contain', maxKB: 170 },
+  /**
+   * Nền phòng động phủ - tấm tranh TRẢI KÍN màn khi vào nhà.
+   *
+   * Khác hẳn nhóm `cave`: `cave` là ảnh vuông 512 nằm trong một ô nhỏ của
+   * bảng nâng cấp, còn cái này là cả căn phòng phủ hết màn hình. Tỷ lệ 16:9
+   * vì màn máy tính nằm ngang; điện thoại dựng đứng thì cắt hai bên, nên chủ
+   * thể phải nằm gọn trong khoảng giữa.
+   *
+   * Phòng vẽ TRỐNG, không có đồ đạc: bàn ghế lò đan nằm ở nhóm `prop` để còn
+   * hiện dần theo thứ người chơi sắm được.
+   */
+  room: { kind: 'webp', w: 1920, h: 1080, quality: 80, maxKB: 420 },
+  /**
+   * Đồ đạc kê trong phòng. Nền trong suốt, vật thể nằm giữa khung.
+   *
+   * Mỗi món gắn với một điều kiện mở: sắm được là thấy nó xuất hiện trong
+   * phòng ngay - đó là toàn bộ lý do nhóm này tồn tại. Giữ 768 px vì món to
+   * như lò đan chiếm gần nửa chiều cao phòng trên màn lớn.
+   */
+  prop: { kind: 'png', w: 768, h: 768, fit: 'contain', maxKB: 220 },
 };
 
 /**

@@ -137,7 +137,7 @@ export default function HeaderHUD({ onSettings }: { onSettings: () => void }) {
             onClick={() => updateSettings({ theme: isDark ? "light" : "dark" })}
             aria-label="Đổi ngày/đêm"
             title="Đổi ngày/đêm"
-            className="glass-panel text-gold hover:text-gold-bright grid size-8 place-items-center rounded-full transition-colors"
+            className="glass-panel text-gold hover:text-gold-bright grid size-11 place-items-center rounded-full transition-colors"
           >
             {isDark ? <Sun className="size-4" /> : <Moon className="size-4" />}
           </button>
@@ -146,7 +146,7 @@ export default function HeaderHUD({ onSettings }: { onSettings: () => void }) {
             onClick={onSettings}
             aria-label="Cài đặt"
             title="Cài đặt"
-            className="glass-panel hover:scale-105 grid size-8 place-items-center rounded-full transition-transform"
+            className="glass-panel hover:scale-105 grid size-11 place-items-center rounded-full transition-transform"
           >
             <ArtImage
               src={railSrc("cai-dat")}

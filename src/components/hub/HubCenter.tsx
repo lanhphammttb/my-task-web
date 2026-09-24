@@ -1,16 +1,14 @@
-import NextPractice from "./NextPractice";
 import TodayList from "./TodayList";
 import type { Task, ViewKey } from "../../types";
 import { useState } from "react";
 import { useCountUp } from "../../lib/useCountUp";
-import { Quote, Sparkles, Zap } from "lucide-react";
+import { Quote, Sparkles, Timer, Zap } from "lucide-react";
 import { useApp } from "../../store/AppStore";
+import { useFocusTimer } from "../../store/FocusTimer";
 import { ASCENSION_INDEX, REALMS, cultivationOf } from "../../lib/cultivation";
 import { activeBeast, progressOf } from "../../lib/economy";
 import { beastById, beastLevel } from "../../lib/beasts";
 import { aphorismOfDay, elderPortrait } from "../../lib/elders";
-import { currentStreak, dayStats } from "../../lib/stats";
-import { formatDuration, todayKey } from "../../lib/date";
 import ArtImage from "../ArtImage";
 import ProgressRing from "../ProgressRing";
 import RealmSeal from "../RealmSeal";
@@ -18,7 +16,6 @@ import { cn } from "@/lib/utils";
 
 interface Props {
   onTribulation: () => void;
-  onFocus: () => void;
   onAwaken: () => void;
   onExplore: (view: ViewKey, anchor?: string) => void;
   onFocusTask: (task: Task) => void;
@@ -32,20 +29,20 @@ interface Props {
  */
 export default function HubCenter({
   onTribulation,
-  onFocus,
   onAwaken,
   onExplore,
   onFocusTask,
   onNew,
 }: Props) {
   const { data } = useApp();
+  const timer = useFocusTimer();
+  // Phiên bế quan đang dở - kể cả lúc đang nghỉ giữa hiệp.
+  const dangBeQuan = timer.inSession || timer.mode === "break";
+  const vietDangLam = data.tasks.find((t) => t.id === timer.taskId);
   const progress = progressOf(data);
   const c = cultivationOf(progress.xp);
   const xpShown = useCountUp(progress.xp);
   const intoShown = useCountUp(c.into);
-  const key = todayKey();
-  const stats = dayStats(data.tasks, data.sessions, key);
-  const streak = currentStreak(data.tasks);
   const aph = aphorismOfDay();
   const portrait = elderPortrait(aph.elder);
   // Chỉ xếp ngang khi ảnh tải được thật, nếu không chữ sẽ lệch trái mà không
@@ -57,8 +54,6 @@ export default function HubCenter({
 
   // Độ kiếp là để bước sang cảnh giới KẾ TIẾP, không phải cảnh giới đang đứng.
   const nextRealm = REALMS[Math.min(ASCENSION_INDEX, progress.gateRealm + 1)];
-  const target = data.settings.dailyTarget || 3;
-  const focusTarget = data.settings.dailyFocusTarget || 60;
   const ready = progress.readyForTribulation;
 
   return (
@@ -73,7 +68,38 @@ export default function HubCenter({
           số mới thấy - tức là vẫn giữ nguyên cái lệch cần sửa: thứ làm 20 lần
           mỗi ngày nằm sau thứ làm mỗi tháng một lần. Vỏ tu tiên là lớp sơn cho
           việc thật, nên việc thật phải nằm trên. */}
-      <TodayList onOpenAll={() => onExplore("today")} onNew={onNew} />
+      {/*
+        Đường về phiên bế quan đang dở.
+
+        Nút này vốn nằm trong thẻ "Việc tiếp theo" đã bỏ. Ba nhãn kia của thẻ ấy
+        ("Tập trung việc này", "Xem thành quả", "Thêm việc của tôi") đều lặp lại
+        thứ danh sách việc ngay dưới đã làm được, nhưng nhãn NÀY thì không: tạm
+        dừng bế quan rồi quay ra sảnh mà mất nó là mất hẳn đường quay lại.
+
+        Nên giữ lại một mình nó, và chỉ hiện khi thật sự có phiên đang dở - hơn
+        cái thẻ cũ ở chỗ lúc không có việc gì thì nó không chiếm chỗ.
+      */}
+      {dangBeQuan && (
+        <button
+          type="button"
+          onClick={() => onExplore("focus")}
+          className="border-gold/45 bg-background/70 text-gold-bright pointer-events-auto flex min-h-11 w-full max-w-[540px] items-center gap-2 rounded-xl border px-3 text-left text-[12px] font-semibold backdrop-blur"
+        >
+          <Timer className="size-4 shrink-0" />
+          <span className="shrink-0">Về phiên bế quan</span>
+          {vietDangLam && (
+            <span className="text-muted-foreground min-w-0 truncate text-[11px] font-normal">
+              {vietDangLam.title}
+            </span>
+          )}
+        </button>
+      )}
+
+      <TodayList
+        onOpenAll={() => onExplore("today")}
+        onNew={onNew}
+        onFocus={onFocusTask}
+      />
       {/* ---------------------------------------------------- châm ngôn tiền bối */}
       {/* Châm ngôn tiền bối. Có chân dung thì xếp ngang, chưa có thì canh giữa
           như cũ - ArtImage tự ẩn nên layout không bị hụt chỗ. */}
@@ -98,35 +124,62 @@ export default function HubCenter({
           <p className="font-heading text-[13px] leading-relaxed italic">
             “{aph.text}”
           </p>
+          {/* Tên và chức danh chung một dòng cho đỡ tốn chiều cao, nhưng vẫn
+              là hai nút chữ riêng - gộp thành một chuỗi thì không còn tra được
+              đúng tên tiền bối nữa. */}
           <footer className="text-gold/80 font-title mt-1 text-[10px] font-bold tracking-widest uppercase">
-            {aph.elder}
+            <span>{aph.elder}</span>{" · "}
+            <span className="text-muted-foreground">{aph.title}</span>
           </footer>
-          <span className="text-muted-foreground mt-1 block text-[10px]">
-            {aph.title}
-          </span>
         </span>
       </blockquote>
 
-      {/* ------------------------------------------------------- vòng tu vi lớn */}
-      <div className="pointer-events-auto relative w-[168px] sm:w-[198px] [&>svg]:h-auto [&>svg]:w-full">
-        <ProgressRing
-          value={c.ascended ? 1 : c.ratio}
-          size={198}
-          stroke={9}
-          color={c.realm.color}
-          qi
-          glowOnFull
-          centerClassName="gap-1"
-          className="animate-float drop-shadow-[0_8px_28px_rgba(0,0,0,0.65)]"
-          label=""
-        />
-        <span className="absolute inset-0 grid place-items-center">
-          <span className="flex flex-col items-center gap-1.5">
+      {/* ------------------------------------------------------ dải cảnh giới */}
+      {/*
+        Trên điện thoại khối này xếp NGANG, không phải vòng tròn lớn xếp dọc.
+
+        Đo trên màn 360x640: vòng tròn cùng chữ bên trong cao 198px - khối cao
+        nhất sảnh - trong khi cả khung chỉ có 423px. Mà bóp nhỏ vòng lại thôi
+        thì không xong: chữ "Tầng 2/9" và số tu vi hết chỗ nằm giữa lòng vòng.
+
+        Nên xếp ngang hẳn: vòng nhỏ bên trái (ấn cảnh giới nằm trong lòng), chữ
+        trải sang phải, chibi và linh thú đứng cuối dải - đúng kiểu thanh trạng
+        thái của game trên điện thoại, cao 92px thay vì 198px. Từ `sm` trở lên
+        vẫn là vòng lớn canh giữa với chữ nằm trong lòng vòng như cũ.
+      */}
+      <div className="pointer-events-auto relative flex w-full max-w-[540px] items-center gap-3 sm:block sm:w-auto">
+        <div className="relative w-[92px] shrink-0 sm:w-[198px]">
+          <ProgressRing
+            value={c.ascended ? 1 : c.ratio}
+            size={198}
+            fluid
+            stroke={9}
+            color={c.realm.color}
+            qi
+            glowOnFull
+            centerClassName="gap-1"
+            className="animate-float drop-shadow-[0_8px_28px_rgba(0,0,0,0.65)]"
+            label=""
+          />
+          {/* Vòng nhỏ trên điện thoại chỉ ôm vừa cái ấn, chữ đẩy ra ngoài */}
+          <span className="absolute inset-0 grid place-items-center sm:hidden">
             <RealmSeal
               name={c.realm.name}
               tier={c.ascended ? undefined : c.tier}
-              size="lg"
+              size="sm"
             />
+          </span>
+        </div>
+
+        <span className="flex min-w-0 flex-1 flex-col items-start gap-0.5 text-left sm:absolute sm:inset-0 sm:grid sm:place-items-center sm:text-center">
+          <span className="flex flex-col items-start gap-0.5 sm:items-center sm:gap-1.5">
+            <span className="hidden sm:block">
+              <RealmSeal
+                name={c.realm.name}
+                tier={c.ascended ? undefined : c.tier}
+                size="lg"
+              />
+            </span>
             <span className="font-title text-gold-bright text-[11px] font-bold tracking-[0.18em] uppercase">
               {c.ascended ? "Viên mãn" : `Tầng ${c.tier}/${c.realm.tiers}`}
             </span>
@@ -138,11 +191,12 @@ export default function HubCenter({
           </span>
         </span>
 
-        {/* Đạo nhân chibi. Chưa có file thì ArtImage tự ẩn, layout không đổi. */}
+        {/* Đạo nhân chibi. Chưa có file thì ArtImage tự ẩn, layout không đổi.
+            Điện thoại: đứng cuối dải. Màn rộng: đứng hẳn ra ngoài vòng. */}
         <ArtImage
           src={`/art/chibi/${ready ? "breakthrough" : "idle"}.png`}
           alt=""
-          className="animate-float pointer-events-none absolute -bottom-3 -left-16 w-24 drop-shadow-[0_8px_22px_rgba(0,0,0,0.65)] sm:-bottom-6 sm:-left-36 sm:w-36 lg:-left-44 lg:w-44"
+          className="animate-float pointer-events-none w-12 shrink-0 drop-shadow-[0_8px_22px_rgba(0,0,0,0.65)] sm:absolute sm:-bottom-6 sm:-left-36 sm:w-36 lg:-left-44 lg:w-44"
         />
 
         {/* Linh thú đứng cạnh chủ nhân */}
@@ -151,7 +205,7 @@ export default function HubCenter({
             src={beast.image}
             alt={beast.name}
             title={`${beast.name} · cấp ${beastLevel(owned.fed)}`}
-            className="animate-float border-gold/50 bg-background/60 absolute -right-6 -bottom-2 size-16 rounded-full border object-cover shadow-[0_0_18px_var(--gold-glow)]"
+            className="animate-float border-gold/50 bg-background/60 size-9 shrink-0 rounded-full border object-cover shadow-[0_0_18px_var(--gold-glow)] sm:absolute sm:-right-6 sm:-bottom-2 sm:size-16"
             style={{ animationDelay: "1.2s" }}
           />
         )}
@@ -165,7 +219,7 @@ export default function HubCenter({
           <button
             type="button"
             onClick={onTribulation}
-            className="btn-game animate-glow px-6 py-2.5 text-[13px]"
+            className="btn-game animate-glow min-h-11 px-6 py-2.5 text-[13px]"
           >
             <Zap className="size-4" />
             Độ kiếp lên {nextRealm.name}
@@ -174,7 +228,7 @@ export default function HubCenter({
           <button
             type="button"
             onClick={onAwaken}
-            className="btn-game shimmer px-6 py-2.5 text-[13px]"
+            className="btn-game shimmer min-h-11 px-6 py-2.5 text-[13px]"
           >
             <Sparkles className="size-4" />
             Khai quang linh căn
@@ -192,66 +246,26 @@ export default function HubCenter({
             Chưa khai quang linh căn - làm luôn cho kịp
           </button>
         )}
-        <p className="text-muted-foreground max-w-xs text-[11px] leading-snug">
-          {ready
-            ? "Tu vi đã tràn cảnh giới - phải qua thiên lôi mới bước tiếp được."
-            : c.ascended
-              ? "Đã phi thăng. Từ đây mỗi ngày là tự tại."
-              : `Còn ${c.toNext} tu vi nữa là tới ${c.nextLabel}.`}
-        </p>
-      </div>
-
-      {/* ------------------------------------------------------ chỉ số hôm nay */}
-      <div className="pointer-events-auto flex flex-wrap items-center justify-center gap-2">
-        <Stat
-          label="Nhiệm vụ"
-          value={`${stats.done}/${stats.total}`}
-          done={stats.done >= target}
-        />
-        <Stat
-          label="Nhập định"
-          value={formatDuration(stats.focusMin)}
-          done={stats.focusMin >= focusTarget}
-        />
-        <Stat label="Chuỗi ngày" value={`${streak}`} done={streak > 0} />
-      </div>
-      <NextPractice
-        onFocus={onFocusTask}
-        onResume={onFocus}
-        onNew={onNew}
-        onReview={() => onExplore("stats")}
-      />
-    </main>
-  );
-}
-
-function Stat({
-  label,
-  value,
-  done,
-}: {
-  label: string;
-  value: string;
-  done?: boolean;
-}) {
-  return (
-    <span
-      className={cn(
-        "glass-panel flex items-center gap-1.5 rounded-full px-3 py-1.5",
-        done && "gold-border",
-      )}
-    >
-      <span className="text-muted-foreground text-[10px] tracking-wide uppercase">
-        {label}
-      </span>
-      <strong
-        className={cn(
-          "tabular font-title text-[12.5px] font-bold",
-          done && "text-gold-bright",
+        {/* Một dòng, không phải một đoạn. Vòng tu vi đã hiện "340 / 900 tu vi"
+            rồi, nên ở đây chỉ nói thêm ĐÍCH ĐẾN - thứ duy nhất vòng không nói. */}
+        {!ready && !c.ascended && (
+          <p className="text-muted-foreground text-[11px] leading-snug">
+            Còn <b className="text-gold tabular">{c.toNext}</b> tu vi →{" "}
+            {c.nextLabel}
+          </p>
         )}
-      >
-        {value}
-      </strong>
-    </span>
+      </div>
+
+      {/*
+        Đã bỏ khỏi đây: dãy chỉ số và thẻ "Việc tiếp theo của bạn".
+        
+        Đo trên màn 360x640: sảnh nhồi 808px nội dung vào khung cao 423px, mà
+        chỉ 211px là việc thật. Dãy chỉ số (74px) lặp lại đúng thứ thanh đầu đã
+        hiện, còn thẻ "việc tiếp theo" (129px) lặp lại chính danh sách việc vừa
+        đưa lên trên - lại còn kém hơn vì ở đó tick được ngay.
+
+        Chuỗi ngày chuyển lên thanh đầu. Nhập định xem ở Tu Hành Lục.
+      */}
+    </main>
   );
 }
