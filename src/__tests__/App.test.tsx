@@ -252,9 +252,16 @@ describe('Ứng dụng web', () => {
     openPanel('Tra cứu nhiệm vụ');
     fireEvent.change(screen.getByPlaceholderText(/Tìm nhiệm vụ/), { target: { value: 'chạy bộ' } });
 
-    expect(await screen.findByRole('heading', { name: 'Kết quả tìm kiếm' })).toBeDefined();
-    expect(screen.getAllByText('Chạy bộ 5km').length).toBeGreaterThan(0);
-    expect(screen.queryByText('Họp daily với team')).toBeNull();
+    const bang = (await screen.findByRole('heading', { name: 'Kết quả tìm kiếm' })).closest('section')!;
+    expect(within(bang).getAllByText('Chạy bộ 5km').length).toBeGreaterThan(0);
+    /*
+     * Khoanh trong bảng kết quả chứ không quét cả tài liệu.
+     *
+     * Sảnh giờ có danh sách việc hôm nay, nên tên việc vẫn nằm trong DOM khi
+     * bảng tra cứu đang mở - nó chỉ bị `inert` và mờ đi, không bị gỡ. Quét cả
+     * tài liệu thì test đỏ vì lý do chẳng liên quan gì tới việc lọc.
+     */
+    expect(within(bang).queryByText('Họp daily với team')).toBeNull();
   });
 
   it('không cho hoàn thành nhiệm vụ của ngày mai, không bung hiệu ứng', async () => {

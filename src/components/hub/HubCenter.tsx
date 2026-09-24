@@ -1,4 +1,5 @@
 import NextPractice from "./NextPractice";
+import TodayList from "./TodayList";
 import type { Task, ViewKey } from "../../types";
 import { useState } from "react";
 import { useCountUp } from "../../lib/useCountUp";
@@ -66,6 +67,13 @@ export default function HubCenter({
       className="cultivation-hub pointer-events-none flex min-h-0 flex-col items-center justify-center text-center"
     >
       <h1 className="sr-only">Sơn Môn</h1>
+
+      {/* Việc hôm nay đứng ĐẦU sảnh.
+          Đặt ở cuối thì phải cuộn qua hết nhân vật, vòng cảnh giới và dãy chỉ
+          số mới thấy - tức là vẫn giữ nguyên cái lệch cần sửa: thứ làm 20 lần
+          mỗi ngày nằm sau thứ làm mỗi tháng một lần. Vỏ tu tiên là lớp sơn cho
+          việc thật, nên việc thật phải nằm trên. */}
+      <TodayList onOpenAll={() => onExplore("today")} onNew={onNew} />
       {/* ---------------------------------------------------- châm ngôn tiền bối */}
       {/* Châm ngôn tiền bối. Có chân dung thì xếp ngang, chưa có thì canh giữa
           như cũ - ArtImage tự ẩn nên layout không bị hụt chỗ. */}

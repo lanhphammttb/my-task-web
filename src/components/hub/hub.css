@@ -549,3 +549,128 @@
 @media (max-width: 420px) {
   .panel-shell { padding-right: 4rem; }
 }
+
+/* ==========================================================================
+   Việc hôm nay ngay trên sảnh
+
+   Sảnh trước đây không có lấy một nhiệm vụ nào - thứ làm 20 lần mỗi ngày nằm
+   sau một nút, còn thứ làm mỗi tháng một lần thì chiếm giữa màn hình.
+   ========================================================================== */
+
+.today-list {
+  width: 100%;
+  margin-top: 0.9rem;
+  padding: 0.75rem 0.85rem 0.7rem;
+  border: 1px solid color-mix(in oklab, var(--gold, #cbb994) 26%, transparent);
+  border-radius: 0.9rem;
+  background: color-mix(in oklab, var(--card, #140e09) 82%, transparent);
+  backdrop-filter: blur(6px);
+}
+
+.today-list-dau {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.55rem;
+}
+
+.today-list-tieu {
+  font-family: var(--font-title, inherit);
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--gold-bright, #e0a83c);
+}
+
+.today-list-dem {
+  font-size: 0.68rem;
+  color: color-mix(in oklab, currentColor 55%, transparent);
+}
+
+.today-list-ds {
+  display: grid;
+  gap: 0.3rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.today-dong {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.35rem 0.1rem;
+}
+
+/* Ô tick to hơn hẳn phần còn lại: đây là thao tác chính của cả ứng dụng, và
+   trên điện thoại thì ngón tay cần chỗ. */
+.today-dong-tick {
+  display: grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  flex-shrink: 0;
+  border: 1.5px solid;
+  border-radius: 0.4rem;
+  background: transparent;
+  transition: background 0.15s;
+}
+
+.today-dong-tick:hover,
+.today-dong-tick:focus-visible {
+  background: color-mix(in oklab, var(--gold, #cbb994) 18%, transparent);
+}
+
+.today-dong-tick:hover svg { opacity: 0.6; }
+
+.today-dong-ten {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.8rem;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.today-dong-xp {
+  flex-shrink: 0;
+  font-size: 0.68rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.today-list-trong {
+  margin: 0.1rem 0 0.2rem;
+  font-size: 0.75rem;
+  color: color-mix(in oklab, currentColor 58%, transparent);
+}
+
+.today-list-nut {
+  display: flex;
+  gap: 0.4rem;
+  margin-top: 0.6rem;
+}
+
+.today-list-them,
+.today-list-xem {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  border: 1px solid color-mix(in oklab, var(--gold, #cbb994) 34%, transparent);
+  background: transparent;
+}
+
+.today-list-them {
+  border-color: color-mix(in oklab, var(--gold-bright, #e0a83c) 70%, transparent);
+  color: var(--gold-bright, #e0a83c);
+}
+
+.today-list-them:hover,
+.today-list-xem:hover {
+  background: color-mix(in oklab, var(--gold, #cbb994) 14%, transparent);
+}

@@ -31,6 +31,18 @@ const RAW = (import.meta.env.VITE_API_URL as string | undefined)?.trim();
 const BASE = !RAW || RAW === '/' || RAW === 'same-origin' ? '' : RAW.replace(/\/+$/, '');
 
 /**
+ * Tiền tố đường dẫn API.
+ *
+ * Khi web và API nằm chung một tên miền (bản trên Vercel chuyển tiếp `/api/*`
+ * sang project backend), mọi lời gọi phải mang tiền tố `/api` - nếu không thì
+ * `/lenh` rơi vào chính trang web và trả về HTML.
+ *
+ * Chạy bằng server gộp ở máy thì không có tiền tố, vì ở đó Fastify phục vụ cả
+ * web lẫn API ngay tại gốc.
+ */
+const TIEN_TO = (import.meta.env.VITE_API_PREFIX as string | undefined)?.trim() ?? '';
+
+/**
  * Chưa khai báo `VITE_API_URL` thì mọi thứ chạy hoàn toàn ở máy, như cũ.
  *
  * Phân biệt "không khai báo" với "khai báo là `/`": cả hai đều cho `BASE` rỗng
@@ -132,7 +144,7 @@ export class ApiError extends Error {
 async function goi<T>(path: string, init?: RequestInit): Promise<T> {
   let res: Response;
   try {
-    res = await fetch(BASE + path, {
+    res = await fetch(BASE + TIEN_TO + path, {
       ...init,
       // Thẻ phiên nằm trong cookie httpOnly nên bắt buộc phải gửi kèm.
       credentials: 'include',
