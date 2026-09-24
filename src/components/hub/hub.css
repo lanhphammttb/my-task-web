@@ -700,6 +700,18 @@ body[data-scroll-locked] .world-rail {
   padding-right: 4.6rem;
 }
 
+/* Tấm trượt bám đáy thì không chừa lề phải cho dãy nút nữa - dãy nút nổi đè
+   lên mép tấm, đúng kiểu nút nổi của game. Chừa lề chỉ làm tấm hẹp lại. */
+@media (max-width: 767px) {
+  .panel-shell {
+    padding-right: 0;
+  }
+  /* Nội dung bên trong vẫn phải né dãy nút, nếu không chữ chui xuống dưới nó. */
+  .panel-shell .panel-noi-dung {
+    padding-right: 4.2rem;
+  }
+}
+
 @media (max-width: 420px) {
   .panel-shell { padding-right: 4rem; }
 }
@@ -990,6 +1002,22 @@ body[data-scroll-locked] .world-rail {
   gap: 10px;
   padding: 0 12px 4px;
   pointer-events: none;
+  /*
+   * Bề ngang phải ĐÓNG theo khung, không theo nội dung.
+   *
+   * Khung ngoài (`.hub-scroll`) đặt `align-items: center`, nghĩa là con của nó
+   * không bị kéo giãn ra mà tự co theo nội dung - và nội dung thì có thể dài
+   * bao nhiêu tuỳ người dùng đặt tên việc. Một cái tên bảy chục ký tự thổi cả
+   * sảnh ra 670px trong khung 390px: nhân vật văng khỏi màn, bảng nhiệm vụ
+   * tràn hai bên.
+   *
+   * `text-overflow: ellipsis` ở dòng tiêu đề việc không cứu được, vì nó chỉ
+   * cắt khi có một bề ngang để mà tràn. Chốt bề ngang ở đây là chốt cho cả
+   * chuỗi bên dưới.
+   */
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 .hub-mb > * {
   pointer-events: auto;
@@ -1013,6 +1041,7 @@ body[data-scroll-locked] .world-rail {
 
 /* --------------------------------------------------------- bảng nhiệm vụ */
 .hub-mb-bang {
+  min-width: 0;
   border: 1px solid color-mix(in srgb, var(--gold) 45%, transparent);
   border-radius: 14px;
   /* Nền mờ chứ không đặc: thấy được cảnh phía sau. */
@@ -1025,6 +1054,7 @@ body[data-scroll-locked] .world-rail {
 }
 .hub-mb-dau {
   display: flex;
+  min-width: 0;
   align-items: baseline;
   justify-content: space-between;
   gap: 8px;
@@ -1033,6 +1063,10 @@ body[data-scroll-locked] .world-rail {
   border-bottom: 1px solid color-mix(in srgb, var(--gold) 28%, transparent);
 }
 .hub-mb-ten {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-family: var(--font-title);
   font-size: 12px;
   font-weight: 800;
@@ -1053,6 +1087,7 @@ body[data-scroll-locked] .world-rail {
 }
 .hub-mb-dong {
   display: flex;
+  min-width: 0;
   align-items: center;
   gap: 2px;
 }
@@ -1109,6 +1144,7 @@ body[data-scroll-locked] .world-rail {
 
 .hub-mb-quay {
   display: flex;
+  min-width: 0;
   width: 100%;
   min-height: 2.75rem;
   align-items: center;
@@ -1172,4 +1208,19 @@ body[data-scroll-locked] .world-rail {
   text-transform: uppercase;
   color: var(--gold-bright);
   box-shadow: 0 0 22px var(--gold-glow);
+}
+
+/*
+ * Thanh đáy trên điện thoại chỉ còn công cụ.
+ *
+ * "Sơn Môn" là lối về sảnh, mà ở sảnh thì đã đang ở sảnh rồi - một nút không
+ * làm gì, chiếm một phần ba thanh. Dãy nút tròn bên phải mới là nơi đi lại.
+ */
+@media (max-width: 767px) {
+  .app-navigation .primary-destinations {
+    display: none;
+  }
+  .app-navigation {
+    justify-content: space-between;
+  }
 }

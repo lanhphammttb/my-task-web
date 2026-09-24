@@ -256,6 +256,40 @@ export function AppProvider({ children }: { children: ReactNode }) {
     dataRef.current = data;
   }, [data]);
 
+  /*
+   * Hiệu ứng cho những lệnh có kết quả NGẪU NHIÊN, dựng từ lời server.
+   *
+   * Máy và server tung xúc xắc riêng, nên hai bên bất đồng chừng một nửa số
+   * lần. Trạng thái tự chữa được - bản vá của server ghi đè lên bản dự đoán -
+   * nhưng hiệu ứng ăn mừng thì không: nó đã bung ra rồi. Kết quả là màn hình
+   * reo "độ kiếp thành công" xong số liệu lại báo thất bại.
+   *
+   * Nên khi có server thì máy KHÔNG đoán nữa: nó chỉ gửi ý định rồi chờ phán
+   * quyết. Độ kiếp vốn đã nằm sau một hộp thoại có đoạn phim, nên đợi thêm một
+   * vòng mạng không hề gợn.
+   */
+  const nhanKetQua = useCallback((ten: string, ketQua: unknown) => {
+    if (ten !== 'attemptTribulation' || !ketQua || typeof ketQua !== 'object') return;
+    const r = ketQua as { success?: boolean; loss?: number; chance?: number };
+    const d = dataRef.current;
+    const p = progressOf(d);
+    const chiSo = Math.min(ASCENSION_INDEX, p.gateRealm);
+    const canh = REALMS[chiSo];
+    setQueue((q) => [
+      ...q,
+      r.success
+        ? chiSo >= ASCENSION_INDEX
+          ? { kind: 'ascension', xp: p.net }
+          : { kind: 'realm-up', realm: canh.name, note: canh.note, realmIndex: chiSo, xp: p.net }
+        : {
+            kind: 'tribulation-failed',
+            loss: r.loss ?? 0,
+            nextChance: r.chance ?? 0,
+            realm: REALMS[Math.min(ASCENSION_INDEX, p.gateRealm + 1)].name,
+          },
+    ]);
+  }, []);
+
   const sync = useServerSync(
     useCallback((doi: (truoc: AppData) => AppData) => setData((truoc) => doi(truoc)), []),
     useCallback((message: string, tone?: 'ok' | 'warn') => {
@@ -263,7 +297,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
       else toast.success(message);
     }, []),
     useCallback(() => dataRef.current, []),
+    nhanKetQua,
   );
+
+  /*
+   * Server có đang làm trọng tài không, đọc được ngoài nhịp vẽ lại.
+   *
+   * `attemptTribulation` là một callback được ghi nhớ; đọc thẳng `sync` trong
+   * đó là đọc bản của lần dựng hình đã cũ, mà thêm `sync` vào deps thì callback
+   * mới lại mỗi lần trạng thái đồng bộ nhúc nhích.
+   */
+  const syncRef = useRef(sync.laTrongTai);
+  useEffect(() => {
+    syncRef.current = sync.laTrongTai;
+  }, [sync.laTrongTai]);
 
   useEffect(() => {
     // Tailwind bật chế độ tối qua class `dark` trên thẻ <html>.
@@ -1117,29 +1164,38 @@ export function AppProvider({ children }: { children: ReactNode }) {
         failStreak: success ? 0 : d.failStreak + 1,
       }));
 
-      if (success) {
-        setQueue((q) => [
-          ...q,
-          nextRealmIndex >= ASCENSION_INDEX
-            ? { kind: 'ascension', xp: p.net }
-            : {
-                kind: 'realm-up',
-                realm: nextRealm.name,
-                note: nextRealm.note,
-                realmIndex: nextRealmIndex,
-                xp: p.net,
-              },
-        ]);
-      } else {
-        setQueue((q) => [
-          ...q,
-          {
-            kind: 'tribulation-failed',
-            loss,
-            nextChance: tribulationChance(grade, data.failStreak + 1),
-            realm: nextRealm.name,
-          },
-        ]);
+      /*
+       * Có server thì hiệu ứng chờ server phán, ở đây không bung gì cả.
+       *
+       * Con `success` vừa tung ở trên vẫn dùng để vá lạc quan cho số liệu nhảy
+       * ngay, và bản vá của server sẽ ghi đè lên nếu nó tung ra kết quả khác.
+       * Nhưng hiệu ứng thì không rút lại được, nên nó phải đợi.
+       */
+      if (!syncRef.current) {
+        if (success) {
+          setQueue((q) => [
+            ...q,
+            nextRealmIndex >= ASCENSION_INDEX
+              ? { kind: 'ascension', xp: p.net }
+              : {
+                  kind: 'realm-up',
+                  realm: nextRealm.name,
+                  note: nextRealm.note,
+                  realmIndex: nextRealmIndex,
+                  xp: p.net,
+                },
+          ]);
+        } else {
+          setQueue((q) => [
+            ...q,
+            {
+              kind: 'tribulation-failed',
+              loss,
+              nextChance: tribulationChance(grade, data.failStreak + 1),
+              realm: nextRealm.name,
+            },
+          ]);
+        }
       }
       return success;
     },

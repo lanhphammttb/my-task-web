@@ -436,6 +436,17 @@ function Shell() {
         ) : null}
       </AnimatePresence>
 
+      {/*
+        Điện thoại + đang mở một khu: bỏ hẳn thanh đáy.
+
+        Tấm trượt bám tới mép dưới màn, nên thanh đáy nằm đè lên nội dung của
+        nó. Mà lúc ấy thanh đáy cũng không còn việc gì: "Sơn Môn" là về sảnh -
+        tấm trượt đã có nút đóng và phím Escape; "+" thêm việc thì đã có trong
+        từng khu.
+
+        Vẫn giữ khi đang TRA CỨU, vì ô tìm kiếm nằm chính trong thanh ấy.
+      */}
+      {!(laDienThoai && view !== null) && (
       <FooterMenu
         view={view}
         searching={searching}
@@ -447,6 +458,7 @@ function Shell() {
         query={query}
         onQuery={setQuery}
       />
+      )}
 
       <TaskEditorDialog
         open={editorOpen}

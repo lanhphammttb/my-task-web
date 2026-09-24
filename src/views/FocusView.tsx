@@ -56,7 +56,10 @@ export default function FocusView({ onNew }: { onNew: () => void }) {
 
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-4">
-      <div>
+      {/* Đầu bảng đã ghi "BẾ QUAN" ngay trên đây, nên trên điện thoại cả khối
+          này là nói lại cùng một tên bằng câu dài hơn. Số phút thì đồng hồ
+          khổng lồ ngay dưới đã hiện rồi. */}
+      <div className="chi-man-rong">
         <h2 className="text-lg font-bold tracking-tight">Bế quan tu luyện</h2>
         <p className="text-muted-foreground text-xs">
           {isWork
@@ -143,7 +146,9 @@ export default function FocusView({ onNew }: { onNew: () => void }) {
                 value={taskId ?? "free"}
                 onValueChange={(v) => onPickTask(v === "free" ? undefined : v)}
               >
-                <SelectTrigger>
+                {/* Chốt bề ngang: `SelectTrigger` mặc định là `w-fit`, nên
+                    tên nhiệm vụ dài bảy chục ký tự kéo cả ô ra ngoài khung. */}
+                <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -243,7 +248,10 @@ export default function FocusView({ onNew }: { onNew: () => void }) {
 
       {/* ------------------------------------------------ tiến độ hôm nay */}
       <Section icon={Crosshair} title="Nhập định hôm nay">
-        <div className="grid grid-cols-3 gap-3">
+        {/* Một cột trên màn hẹp. Ba cột trong tấm trượt rộng 250px thì mỗi ô
+            còn hơn bảy chục px, và "phiên lượt này" dựng đứng thành ba dòng
+            một chữ - đọc được nhưng trông như bị vỡ. */}
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 sm:gap-3">
           {[
             { value: String(rounds), label: "phiên lượt này" },
             { value: String(todaySessions.length), label: "phiên hôm nay" },
@@ -251,7 +259,7 @@ export default function FocusView({ onNew }: { onNew: () => void }) {
           ].map((s) => (
             <div
               key={s.label}
-              className="border-border bg-surface/60 rounded-xl border p-3 text-center"
+              className="border-border bg-surface/60 flex items-baseline justify-between gap-2 rounded-xl border px-3 py-2 text-left sm:block sm:p-3 sm:text-center"
             >
               <strong className="tabular block text-lg leading-none">
                 {s.value}
@@ -279,6 +287,7 @@ export default function FocusView({ onNew }: { onNew: () => void }) {
         icon={ListChecks}
         title="Chọn việc để bế quan"
         subtitle="Ưu tiên cao nằm trên cùng"
+        subtitleClassName="chi-man-rong"
       >
         {candidates.length === 0 ? (
           <div className="space-y-3 text-center">

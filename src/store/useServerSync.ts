@@ -59,6 +59,14 @@ export interface ServerSync {
   taiLai: () => Promise<void>;
   /** Gửi một lệnh lên server. Gọi sau khi đã tính xong ở máy. */
   gui: (name: string, args?: Record<string, unknown>) => void;
+  /**
+   * Server có đang làm trọng tài không.
+   *
+   * Khác `status === 'da-noi'`: khi đang gửi dở hàng đợi thì trạng thái là
+   * `dang-gui` nhưng server vẫn là trọng tài. Dùng để biết KẾT QUẢ NGẪU NHIÊN
+   * do ai quyết - xem `attemptTribulation` trong AppStore.
+   */
+  laTrongTai: boolean;
 }
 
 /**
@@ -121,6 +129,15 @@ export function useServerSync(
    * Không có thì mọi lần mở app đều tải lại đầy đủ - vẫn đúng, chỉ tốn.
    */
   layHienTai?: () => AppData,
+  /**
+   * Nhận kết quả server trả về cho từng lệnh.
+   *
+   * Cần cho những lệnh có KẾT QUẢ NGẪU NHIÊN. Máy và server tung xúc xắc riêng
+   * nên hai bên bất đồng chừng một nửa số lần; trạng thái thì tự chữa được vì
+   * bản vá của server ghi đè, nhưng hiệu ứng ăn mừng thì không - nó đã bung ra
+   * theo con xúc xắc của máy rồi. Có đường này thì chỗ gọi đợi server phán.
+   */
+  nhanKetQua?: (ten: string, ketQua: unknown) => void,
 ): ServerSync {
   const [status, setStatus] = useState<SyncStatus>(apiEnabled ? 'dang-noi' : 'tat');
   const [user, setUser] = useState<ApiUser | null>(null);
@@ -167,10 +184,12 @@ export function useServerSync(
    * giây. Bắt chỗ gọi phải tự ghi nhớ hàm là đặt một cái bẫy im lặng.
    */
   const layNay = useRef(layHienTai);
+  const ketQua = useRef(nhanKetQua);
   useEffect(() => {
     apply.current = apDungTrangThai;
     notify.current = baoTin;
     layNay.current = layHienTai;
+    ketQua.current = nhanKetQua;
   });
 
   /** Nuốt trọn một trạng thái đầy đủ từ server. */
@@ -281,6 +300,9 @@ export function useServerSync(
           queue.current.shift();
           setPending(queue.current.length);
           setLoi(null);
+          // Báo kết quả TRƯỚC khi vá: chỗ gọi chỉ dùng nó để bung hiệu ứng,
+          // mà hiệu ứng nên bám ngay sau thao tác chứ không đợi vá xong.
+          if (res.result !== undefined) ketQua.current?.(item.name, res.result);
           if (!va(res.thayDoi, res.kiemTra, res.version)) {
             // Bản ở máy đã lệch khỏi bản trên server. Bỏ hàng đợi rồi tải lại
             // đầy đủ - gửi tiếp mấy lệnh tính trên nền lệch chỉ lệch thêm.
@@ -435,6 +457,7 @@ export function useServerSync(
     dangXuat,
     nhapLenServer,
     taiLai,
+    laTrongTai: status === 'da-noi' || status === 'dang-gui',
     gui,
   };
 }

@@ -5,6 +5,8 @@ import { X } from "lucide-react";
 import ArtImage from "../ArtImage";
 import { requestOpenSection } from "../../lib/section";
 import { hasKeyboardLayer } from "../../lib/keyboard";
+import { useLaDienThoai } from "../../lib/thietBi";
+import { cn } from "@/lib/utils";
 
 interface Props {
   title: string;
@@ -34,6 +36,7 @@ export default function OverlayPanel({
   children,
 }: Props) {
   const scroller = useRef<HTMLDivElement>(null);
+  const mb = useLaDienThoai();
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -68,19 +71,48 @@ export default function OverlayPanel({
       role="dialog"
       aria-modal="false"
       aria-label={title}
-      initial={{ opacity: 0, y: 28 }}
+      /*
+       * Điện thoại: TRƯỢT HẲN TỪ ĐÁY LÊN, không phải nhô lên 28px.
+       *
+       * Đây là khác biệt tưởng nhỏ mà quyết định cảm giác. Thẻ hiện ra giữa
+       * màn là ngôn ngữ của hộp thoại trên máy tính; tấm trượt từ mép dưới là
+       * ngôn ngữ của app trên điện thoại - và nó còn đúng về mặt thân thể:
+       * ngón cái ở dưới, nội dung tới từ dưới.
+       */
+      initial={{ opacity: 0, y: mb ? "100%" : 28 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: 22 }}
-      transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+      exit={{ opacity: 0, y: mb ? "100%" : 22 }}
+      transition={{ duration: mb ? 0.3 : 0.24, ease: [0.22, 1, 0.36, 1] }}
       // Chừa chỗ theo chiều cao ĐO ĐƯỢC của HUD và thanh tab, không đóng cứng:
       // thanh tab trên điện thoại cao 129px chứ không phải 86px.
-      style={{
-        top: "calc(var(--hud-h, 92px) + 6px)",
-        bottom: "calc(var(--footer-h, 86px) + 6px)",
-      }}
-      className="panel-shell absolute inset-x-0 z-20 mx-auto flex min-h-0 w-full max-w-5xl flex-col px-2 sm:px-4"
+      style={
+        mb
+          ? // Tấm trượt bám đáy, chừa một khoảng trên để còn thấy cảnh phía sau
+            // - biết mình vẫn đang ở trong thế giới chứ không nhảy sang trang khác.
+            { top: "calc(var(--hud-h, 92px) + 40px)", bottom: 0 }
+          : {
+              top: "calc(var(--hud-h, 92px) + 6px)",
+              bottom: "calc(var(--footer-h, 86px) + 6px)",
+            }
+      }
+      className={cn(
+        "panel-shell absolute inset-x-0 z-20 mx-auto flex min-h-0 w-full max-w-5xl flex-col",
+        mb ? "px-0" : "px-2 sm:px-4",
+      )}
     >
-      <div className="glass-panel panel-solid flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl">
+      <div
+        className={cn(
+          "glass-panel panel-solid flex min-h-0 flex-1 flex-col overflow-hidden",
+          mb ? "rounded-t-2xl rounded-b-none" : "rounded-2xl",
+        )}
+      >
+        {/* Tay nắm: dấu hiệu quen thuộc của một tấm trượt trên điện thoại. */}
+        {mb && (
+          <span
+            aria-hidden
+            className="bg-gold/45 mx-auto mt-2 mb-0.5 h-1 w-10 shrink-0 rounded-full"
+          />
+        )}
         {/* ------------------------------------------------------------ đầu bảng */}
         <div className="relative shrink-0 overflow-hidden">
           {banner && (
@@ -126,7 +158,7 @@ export default function OverlayPanel({
         {/* Vùng cuộn duy nhất của bảng */}
         <div
           ref={scroller}
-          className="min-h-0 flex-1 overflow-y-auto px-3 py-4 sm:px-5"
+          className="panel-noi-dung min-h-0 flex-1 overflow-y-auto px-3 py-4 sm:px-5"
         >
           {children}
         </div>
