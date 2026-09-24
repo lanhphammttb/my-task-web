@@ -244,12 +244,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
    * "server phán quyết" thành hiện thực: bản tính ở máy chỉ sống tới lúc server
    * trả lời, sau đó con số của server là con số đúng.
    */
+  /*
+   * Bản đang giữ, đọc được từ ngoài nhịp vẽ lại.
+   *
+   * Đồng bộ cần nó để đối chiếu khi server báo "không có gì đổi". Phải là ref
+   * chứ không phải `data` truyền thẳng: `taiLai` chạy trong một callback được
+   * ghi nhớ, đọc `data` ở đó là đọc bản của lần dựng hình đã cũ.
+   */
+  const dataRef = useRef(data);
+  useEffect(() => {
+    dataRef.current = data;
+  }, [data]);
+
   const sync = useServerSync(
     useCallback((doi: (truoc: AppData) => AppData) => setData((truoc) => doi(truoc)), []),
     useCallback((message: string, tone?: 'ok' | 'warn') => {
       if (tone === 'warn') toast.warning(message);
       else toast.success(message);
     }, []),
+    useCallback(() => dataRef.current, []),
   );
 
   useEffect(() => {

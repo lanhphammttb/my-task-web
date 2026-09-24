@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AppData } from '../types';
-import { ApiError, api, apiEnabled, apThayDoi } from '../lib/api';
+import { ApiError, api, apiEnabled, apThayDoi, laKhongDoi } from '../lib/api';
 import type { ApiUser, KiemTra } from '../lib/api';
 import { todayKey } from '../lib/date';
 
@@ -80,10 +80,47 @@ function lechChoNao(data: AppData, kt: KiemTra): string | null {
   return xau.length === 0 ? null : xau.map(([t, a, b]) => `${t}: web ${a} ≠ server ${b}`).join(', ');
 }
 
+/**
+ * Chỗ nhớ số hiệu trạng thái giữa hai lần mở app.
+ *
+ * Chỉ một con số, nhưng nó là thứ cho phép hỏi "có gì mới không" thay vì tải
+ * lại cả hồ sơ mỗi lần mở. Để riêng khỏi hồ sơ chính vì nó thuộc về đường
+ * truyền chứ không thuộc về dữ liệu người dùng: xuất/nhập hồ sơ không nên mang
+ * theo số hiệu của một máy chủ nào đó.
+ */
+const KHOA_VERSION = 'my-task/dong-bo-version';
+
+function nhoVersion(v: number | undefined) {
+  try {
+    if (v === undefined) localStorage.removeItem(KHOA_VERSION);
+    else localStorage.setItem(KHOA_VERSION, String(v));
+  } catch {
+    // Hết chỗ hoặc bị chặn: mất số hiệu chỉ khiến lần sau tải đầy đủ, không sai.
+  }
+}
+
+function versionDaNho(): number | undefined {
+  try {
+    const raw = localStorage.getItem(KHOA_VERSION);
+    if (raw === null) return undefined;
+    const n = Number(raw);
+    return Number.isInteger(n) && n >= 0 ? n : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 export function useServerSync(
   /** Nhận hàm biến đổi chứ không nhận trạng thái: vá thì phải dựa trên bản đang giữ. */
   apDungTrangThai: (doi: (truoc: AppData) => AppData) => void,
   baoTin?: (message: string, tone?: 'ok' | 'warn') => void,
+  /**
+   * Bản đang giữ ở máy, đọc ngay lúc gọi.
+   *
+   * Cần để đối chiếu với con số server gửi về khi nó báo "không có gì đổi".
+   * Không có thì mọi lần mở app đều tải lại đầy đủ - vẫn đúng, chỉ tốn.
+   */
+  layHienTai?: () => AppData,
 ): ServerSync {
   const [status, setStatus] = useState<SyncStatus>(apiEnabled ? 'dang-noi' : 'tat');
   const [user, setUser] = useState<ApiUser | null>(null);
@@ -120,15 +157,27 @@ export function useServerSync(
    */
   const apply = useRef(apDungTrangThai);
   const notify = useRef(baoTin);
+  /*
+   * `layHienTai` cũng phải vào ref, không được vào deps của `taiLai`.
+   *
+   * Để nó trong deps thì mỗi lần chỗ gọi truyền một hàm mới - viết thẳng
+   * `() => data` là thành mới mỗi lần dựng hình - `taiLai` sẽ mới theo, effect
+   * nối lại chạy lại, `setUser` làm dựng hình lần nữa, và cứ thế. Lần đầu viết
+   * tôi để trong deps, test bắt được hai trăm nghìn lượt gọi mạng trong tám
+   * giây. Bắt chỗ gọi phải tự ghi nhớ hàm là đặt một cái bẫy im lặng.
+   */
+  const layNay = useRef(layHienTai);
   useEffect(() => {
     apply.current = apDungTrangThai;
     notify.current = baoTin;
+    layNay.current = layHienTai;
   });
 
   /** Nuốt trọn một trạng thái đầy đủ từ server. */
   const nuot = useCallback((data: AppData, v: number) => {
     version.current = v;
     banServer.current = data;
+    nhoVersion(v);
     apply.current(() => data);
   }, []);
 
@@ -152,12 +201,66 @@ export function useServerSync(
     }
     version.current = v;
     banServer.current = sau;
+    nhoVersion(v);
     apply.current(() => sau);
     return true;
   }, []);
 
+  /**
+   * Lấy trạng thái chuẩn từ server.
+   *
+   * Hỏi trước, tải sau. Hồ sơ lớn lên mãi - vài MB sau ba năm - mà phần lớn lần
+   * mở app là mở lại trên chính máy vừa dùng, lúc ấy không có gì đổi cả. Gửi kèm
+   * số hiệu đang giữ thì server trả về mấy con số thay vì cả hồ sơ.
+   *
+   * Vẫn phải ĐỐI CHIẾU chứ không tin suông: số hiệu khớp chỉ nói trạng thái
+   * trên server y nguyên, không nói bản ở máy này còn nguyên. Bản ở máy có thể
+   * đã lệch vì một lệnh chưa kịp gửi đi, vì ghi vào localStorage hỏng giữa
+   * chừng, hay vì người dùng tự sửa. Lệch thì gọi lại lần nữa không kèm số
+   * hiệu - mất thêm một vòng, đổi lấy việc không bao giờ chạy trên bản sai.
+   */
   const taiLai = useCallback(async () => {
+    const daBiet = version.current ?? versionDaNho();
+    const hienTai = layNay.current?.();
+
+    if (daBiet !== undefined && hienTai) {
+      const res = await api.trangThai(daBiet);
+      if (laKhongDoi(res)) {
+        /*
+         * Gắn lại `verified` trước khi đối chiếu.
+         *
+         * Trường này không được lưu xuống đĩa, nên sau khi nạp lại trang bản ở
+         * máy không có nó - mà máy cũng không tự tính lại được, vì sổ ghi ký
+         * bằng khoá nằm trên server. Không gắn vào thì tu vi hiện 0.
+         *
+         * Nghĩa là phép đối chiếu bên dưới thực chất soi BỐN con số đếm
+         * (nhiệm vụ, mục tiêu, phiên, bản ghi sổ), còn `taskXp` thành hiển
+         * nhiên khớp vì vừa lấy từ cùng một nguồn. Bốn con số ấy vẫn đủ: tu vi
+         * sinh ra từ sổ ghi, nên sổ lệch một dòng là lộ ngay.
+         */
+        const sau = { ...hienTai, verified: res.verified };
+        const lech = lechChoNao(sau, res.kiemTra);
+        if (!lech) {
+          version.current = res.version;
+          banServer.current = sau;
+          // Vá lên bản ĐANG hiện chứ không đắp đè bản chụp lúc nãy: giữa lúc
+          // hỏi server, người dùng có thể đã tick xong một việc.
+          apply.current((truoc) => ({ ...truoc, verified: res.verified }));
+          return;
+        }
+        console.warn('[đồng bộ] server bảo không đổi nhưng bản ở máy lệch, tải lại —', lech);
+      } else {
+        nuot(res.data, res.version);
+        if (!res.audit.ok) {
+          notify.current?.('Máy chủ báo sổ ghi có vấn đề, xem mục Toàn vẹn dữ liệu', 'warn');
+        }
+        return;
+      }
+    }
+
     const res = await api.trangThai();
+    // Không kèm số hiệu thì server luôn trả bản đầy đủ; nhánh kia không xảy ra.
+    if (laKhongDoi(res)) return;
     nuot(res.data, res.version);
     if (!res.audit.ok) {
       notify.current?.('Máy chủ báo sổ ghi có vấn đề, xem mục Toàn vẹn dữ liệu', 'warn');
@@ -269,6 +372,7 @@ export function useServerSync(
     queue.current = [];
     setPending(0);
     version.current = undefined;
+    nhoVersion(undefined);
     banServer.current = null;
     setUser(null);
     setStatus('chua-dang-nhap');

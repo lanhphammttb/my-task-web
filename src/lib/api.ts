@@ -75,6 +75,32 @@ export interface StateReply {
   audit: { ok: boolean; findings: { code: string; severity: string; message: string }[] };
 }
 
+/**
+ * Trả lời cho câu "có gì mới không".
+ *
+ * Gửi kèm số hiệu đang giữ mà server vẫn ở đúng số hiệu ấy thì nó không gửi hồ
+ * sơ về nữa - chỉ mấy con số đủ để máy tự đối chiếu bản đang giữ.
+ */
+export interface KhongDoiReply {
+  version: number;
+  khongDoi: true;
+  kiemTra: KiemTra;
+  /**
+   * Tổng tu vi đã vào sổ, do server đếm.
+   *
+   * Bắt buộc chứ không phải tuỳ chọn. Trường `verified` chỉ sống trong bộ nhớ -
+   * `loadData` dựng lại hồ sơ từng trường một nên nạp lại trang là mất - mà máy
+   * khách cũng không tự tính lại được, vì sổ ghi ký bằng khoá nằm trên server.
+   * Thiếu nó thì đi nhánh "không có gì đổi" xong tu vi hiện 0.
+   */
+  verified: NonNullable<AppData['verified']>;
+}
+
+export type TrangThaiReply = StateReply | KhongDoiReply;
+
+export const laKhongDoi = (r: TrangThaiReply): r is KhongDoiReply =>
+  (r as KhongDoiReply).khongDoi === true;
+
 /** Thêm/sửa/xoá trong một danh sách có khoá `id`. */
 export interface DanhSachDoi<T> {
   them?: T[];
@@ -186,7 +212,17 @@ export const api = {
 
   toiLaAi: () => goi<{ user: ApiUser }>('/auth/toi'),
 
-  trangThai: () => goi<StateReply>('/trang-thai'),
+  /**
+   * Trạng thái hiện tại.
+   *
+   * Biết số hiệu mình đang giữ thì truyền vào: server so trước, còn đúng số ấy
+   * thì trả về `khongDoi` kèm mấy con số thay vì cả hồ sơ. Không truyền gì thì
+   * luôn nhận bản đầy đủ.
+   */
+  trangThai: (version?: number) =>
+    goi<TrangThaiReply>(
+      version === undefined ? '/trang-thai' : `/trang-thai?version=${version}`,
+    ),
 
   /**
    * Gửi một lệnh.
