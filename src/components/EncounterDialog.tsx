@@ -91,6 +91,8 @@ export default function EncounterDialog() {
                 {result.kind === "pill" && result.pill && (
                   <div className="mt-3 flex items-center gap-2.5">
                     <img
+        loading="lazy"
+        decoding="async"
                       src={PILLS[result.pill].image}
                       alt=""
                       className="size-12 object-contain"

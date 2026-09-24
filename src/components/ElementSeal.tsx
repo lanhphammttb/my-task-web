@@ -51,6 +51,8 @@ export default function ElementSeal({
     >
       {hasArt ? (
         <img
+        loading="lazy"
+        decoding="async"
           src={`/art/element/${element}.png`}
           alt=""
           onError={() => setHasArt(false)}

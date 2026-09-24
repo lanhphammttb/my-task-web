@@ -185,6 +185,8 @@ export function EmptyState({
     >
       {showArt ? (
         <img
+        loading="lazy"
+        decoding="async"
           src={`/art/empty/${art}.png`}
           alt=""
           onError={() => setArtOk(false)}

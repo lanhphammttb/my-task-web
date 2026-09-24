@@ -38,9 +38,64 @@
       content="Mỗi việc hoàn thành là một phần tu vi - đi từ Luyện Khí tới Phi Thăng."
     />
     <meta name="twitter:image" content="/og.jpg" />
+    <style>
+      /* Màn hình chờ - phải nội tuyến, tách ra tệp riêng thì lại thêm một lượt
+         chờ mạng, đúng thứ đang cần tránh. */
+      .man-cho {
+        position: fixed;
+        inset: 0;
+        display: grid;
+        place-content: center;
+        gap: 0.9rem;
+        justify-items: center;
+        background: #0d0a08;
+        color: #cbb994;
+        font-family: system-ui, sans-serif;
+      }
+      .man-cho-an {
+        width: 4.5rem;
+        height: 4.5rem;
+        display: grid;
+        place-content: center;
+        border: 1px solid #cbb99455;
+        border-radius: 0.75rem;
+        font-size: 2.25rem;
+        line-height: 1;
+        color: #e0a83c;
+        background: radial-gradient(120% 120% at 50% 0%, #e0a83c22, transparent);
+        animation: man-cho-tho 2.4s ease-in-out infinite;
+      }
+      .man-cho-chu {
+        margin: 0;
+        font-size: 0.8rem;
+        letter-spacing: 0.08em;
+        opacity: 0.75;
+      }
+      @keyframes man-cho-tho {
+        0%, 100% { opacity: 0.55; transform: scale(0.97); }
+        50% { opacity: 1; transform: scale(1); }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .man-cho-an { animation: none; }
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!--
+        Màn hình chờ tĩnh.
+
+        Trước đây chỗ này là một thẻ div rỗng, nên từ lúc bấm vào link tới lúc
+        React dựng xong là màn hình TRẮNG - đo được 6,2 giây ở lần mở đầu. Vài
+        dòng HTML ở đây hiện ngay khi tài liệu về tới, trước cả khi JS tải.
+
+        React thay sạch phần bên trong `#root` lúc gắn vào, nên không phải dọn.
+      -->
+      <div class="man-cho" aria-hidden="true">
+        <div class="man-cho-an">道</div>
+        <p class="man-cho-chu">Đang mở sơn môn…</p>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

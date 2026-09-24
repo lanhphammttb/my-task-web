@@ -214,6 +214,8 @@ export default function CelebrationLayer() {
                   />
                 ) : badge && badgeOk ? (
                   <img
+        loading="lazy"
+        decoding="async"
                     src={badge}
                     alt=""
                     onError={() => setBadgeOk(false)}

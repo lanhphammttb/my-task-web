@@ -186,6 +186,8 @@ export default function TribulationDialog({
                         )}
                       >
                         <img
+        loading="lazy"
+        decoding="async"
                           src={pill.image}
                           alt=""
                           className="size-10 shrink-0 object-contain"

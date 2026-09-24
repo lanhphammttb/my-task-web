@@ -87,6 +87,8 @@ export default function AlchemySection() {
               className="flex flex-wrap items-center gap-3 rounded-xl border p-3"
             >
               <img
+        loading="lazy"
+        decoding="async"
                 src={pill.image}
                 alt=""
                 className="size-12 shrink-0 object-contain drop-shadow-lg"

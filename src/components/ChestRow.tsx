@@ -48,6 +48,8 @@ function ChestArt({ src, tone, dim }: { src: string; tone: string; dim: boolean 
   }
   return (
     <img
+        loading="lazy"
+        decoding="async"
       src={src}
       alt=""
       onError={() => setOk(false)}

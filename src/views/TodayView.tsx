@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import { AnimatePresence } from 'motion/react';
-import { CalendarCheck2, ChevronLeft, ChevronRight, Check, Gem, ListChecks, ScrollText } from 'lucide-react';
+import { CalendarCheck2, ChevronLeft, ChevronRight, Check, Gem, ListChecks, Quote, ScrollText } from 'lucide-react';
 import type { Task } from '../types';
 import { addDays, dateKey, formatDuration, longDate, parseKey, relativeDay, todayKey } from '../lib/date';
 import { dayStats, sortTasks, tasksOn } from '../lib/stats';
 import { questStates } from '../lib/quests';
+import { aphorismOfDay, elderPortrait } from '../lib/elders';
 import { useApp } from '../store/AppStore';
 import QuickAdd from '../components/QuickAdd';
 import ChestRow from '../components/ChestRow';
@@ -25,6 +27,13 @@ export default function TodayView({ date, onDateChange, onEdit, onFocus }: Props
   const done = list.filter(t => t.status === 'done');
   const remainMin = pending.reduce((s, t) => s + t.estimateMin, 0);
   const quests = questStates(data, date);
+  const aphorism = aphorismOfDay();
+  const portrait = elderPortrait(aphorism.elder);
+  // Chỉ xếp ngang khi ảnh tải được thật, nếu không chữ sẽ thụt vào mà bên cạnh
+  // chẳng có mặt ai.
+  const [portraitOk, setPortraitOk] = useState(true);
+  const showPortrait = !!portrait && portraitOk;
+
   return <div className="mx-auto flex w-full max-w-5xl flex-col gap-4">
     <div className="flex items-center gap-2">
       <Button variant="outline" size="icon" aria-label="Ngày trước" onClick={() => onDateChange(dateKey(addDays(parseKey(date), -1)))}><ChevronLeft className="size-4" /></Button>
@@ -37,6 +46,32 @@ export default function TodayView({ date, onDateChange, onEdit, onFocus }: Props
       <span><strong>{formatDuration(stats.focusMin)}</strong> nhập định</span>
       <span>{pending.length ? `${formatDuration(remainMin)} dự kiến còn lại` : done.length ? 'Đã làm xong. Nghỉ ngơi cũng là tu luyện.' : 'Chọn một việc vừa sức để bắt đầu.'}</span>
     </div>
+    {/* Lời tiền bối kèm chân dung.
+
+        Bộ `art/elder/` có 13 tấm, nhưng sau một lần sắp xếp lại thì màn này -
+        màn hay nhìn nhất - chỉ còn mỗi danh sách việc, còn chân dung thì lui
+        hết về Sơn Môn. Đưa về lại đây. Thiếu file thì lùi về icon nháy kép. */}
+    <blockquote className="border-gold/60 bg-card/70 text-muted-foreground flex items-start gap-3 rounded-r-lg border-l-2 px-3 py-2 text-xs">
+      {showPortrait ? (
+        <img
+          src={portrait}
+          alt=""
+          decoding="async"
+          onError={() => setPortraitOk(false)}
+          className="border-gold/45 size-11 shrink-0 rounded-full border object-cover shadow-[0_0_12px_var(--gold-glow)]"
+        />
+      ) : (
+        <Quote className="text-gold mt-0.5 size-3 shrink-0" />
+      )}
+      <div className="min-w-0">
+        <span className="italic">{aphorism.text}</span>
+        <cite className="mt-1 block text-[11px] not-italic">
+          <span className="text-gold/90 font-medium">— {aphorism.elder}</span>
+          <span className="opacity-70"> · {aphorism.title}</span>
+        </cite>
+      </div>
+    </blockquote>
+
     <div className="journal-write"><label className="mb-2 block text-xs font-medium">Ghi một việc đời thường vào sổ tu hành</label><QuickAdd date={date} /></div>
     <Section icon={ListChecks} title="Việc của bạn" subtitle="Chọn Bế Quan để tập trung. Chỉ đóng dấu hoàn thành khi đã làm xong ngoài đời.">
       {list.length === 0 ? <div className="journal-empty"><ScrollText className="size-7 text-gold" /><div><h3 className="font-title font-semibold">Trang sổ còn để ngỏ</h3><p>Đọc 10 trang sách, đi bộ 20 phút, hay hoàn thành một phần công việc. Viết điều bạn thực sự muốn làm vào ô phía trên.</p></div></div> : <div className="space-y-4">

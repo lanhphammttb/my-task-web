@@ -54,6 +54,8 @@ export default function MeditationScene({
         />
       ) : (
         <img
+        loading="lazy"
+        decoding="async"
           src="/art/scene/cave.jpg"
           alt=""
           className="h-full w-full object-cover object-[center_60%]"
