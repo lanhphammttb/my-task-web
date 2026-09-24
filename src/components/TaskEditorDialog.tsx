@@ -156,7 +156,7 @@ export default function TaskEditorDialog({
       <DialogContent className="max-h-[92vh] gap-0 overflow-y-auto sm:max-w-[640px]">
         <DialogHeader>
           <DialogTitle>{task ? "Sửa nhiệm vụ" : "Nhiệm vụ mới"}</DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="sr-only sm:not-sr-only">
             Càng cụ thể càng dễ bắt tay vào làm. Đặt hạn chót để app nhắc bạn
             đúng lúc.
           </DialogDescription>
@@ -389,7 +389,7 @@ export default function TaskEditorDialog({
           </ul>
         )}
 
-        <DialogFooter className="sm:justify-between">
+        <DialogFooter className="sticky bottom-0 z-10 -mx-4 -mb-4 mt-2 border-t border-border bg-popover px-4 pt-3 pb-4 sm:justify-between">
           {task ? (
             <Button
               variant="ghost"

@@ -434,6 +434,126 @@
    trọn phần giữa màn cho nhân vật với cảnh.
    ========================================================================== */
 
+/*
+ * Dải cảnh giới - hai dáng, chọn theo CHIỀU CAO màn.
+ *
+ * Mặc định là dáng NGANG (vòng nhỏ - chữ - đạo nhân), vì đó là dáng cứu được
+ * máy thấp. Máy đủ cao thì bung về dáng vòng lớn canh giữa, chữ nằm trong lòng
+ * vòng và đạo nhân đứng hẳn ra ngoài - đẹp hơn nhiều khi có chỗ.
+ */
+.realm-dai {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 540px;
+}
+.realm-dai .realm-vong {
+  position: relative;
+  flex: none;
+  width: 86px;
+}
+.realm-dai .realm-an-nho {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+}
+.realm-dai .realm-an-to {
+  display: none;
+}
+.realm-dai .realm-chu {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  text-align: left;
+}
+.realm-dai .realm-chu-trong {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+/* Đạo nhân là NHÂN VẬT của người chơi, không phải một cái icon: để nó cao hơn
+   cả vòng tu vi thì dải mới ra dáng thanh trạng thái của game. */
+.realm-dai .realm-chibi {
+  flex: none;
+  width: 92px;
+  margin-bottom: -6px;
+}
+.realm-dai .realm-thu {
+  flex: none;
+  width: 38px;
+  height: 38px;
+}
+
+@media (min-height: 720px) {
+  .realm-dai {
+    display: block;
+    width: auto;
+  }
+  .realm-dai .realm-vong {
+    width: 198px;
+  }
+  .realm-dai .realm-an-nho {
+    display: none;
+  }
+  .realm-dai .realm-an-to {
+    display: block;
+  }
+  .realm-dai .realm-chu {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    text-align: center;
+  }
+  .realm-dai .realm-chu-trong {
+    align-items: center;
+    gap: 6px;
+  }
+  /* Đạo nhân đứng CHỒNG lên mép vòng, không đứng hẳn ra ngoài.
+     Chỗ trống hai bên vòng chỉ còn hơn bốn chục px sau khi trừ dãy nút bên
+     phải, nên đẩy ra ngoài là nửa người bị cắt mất ngoài mép màn. */
+  .realm-dai .realm-chibi {
+    position: absolute;
+    bottom: -1.25rem;
+    left: -0.75rem;
+    width: 5.5rem;
+    margin-bottom: 0;
+  }
+  .realm-dai .realm-thu {
+    position: absolute;
+    right: -0.5rem;
+    bottom: -0.25rem;
+    width: 52px;
+    height: 52px;
+  }
+}
+
+/* Màn rộng thì mới đủ chỗ cho đạo nhân đứng hẳn ra ngoài vòng. */
+@media (min-height: 720px) and (min-width: 640px) {
+  .realm-dai .realm-chibi {
+    bottom: -1.5rem;
+    left: -8.5rem;
+    width: 9rem;
+  }
+  .realm-dai .realm-thu {
+    right: -1.5rem;
+    bottom: -0.5rem;
+    width: 64px;
+    height: 64px;
+  }
+}
+
+@media (min-height: 720px) and (min-width: 1024px) {
+  .realm-dai .realm-chibi {
+    left: -11rem;
+    width: 11rem;
+  }
+}
+
 .world-rail {
   position: fixed;
   top: calc(var(--hud-h, 92px) + 14px);
@@ -451,6 +571,22 @@
 }
 
 .world-rail::-webkit-scrollbar { display: none; }
+
+/*
+ * Hộp thoại mở ra thì dãy nút biến mất.
+ *
+ * Dãy nút để z-index 60 cho nó nằm trên BẢNG PHỦ - đứng trong một khu vẫn đi
+ * thẳng sang khu khác được. Nhưng hộp thoại của Radix chỉ ở z-index 50, nên
+ * sáu nút tròn nổi đè lên giữa bảng Cài đặt, Nhiệm vụ mới, Mục tiêu mới - vừa
+ * xấu vừa bấm nhầm.
+ *
+ * Mà đúng ra lúc ấy dãy nút KHÔNG nên bấm được: hộp thoại là thao tác dở dang,
+ * nhảy sang khu khác giữa chừng là mất những gì vừa gõ. Radix gắn
+ * `data-scroll-locked` lên body mỗi khi khoá nền, nên bám vào đó là đủ.
+ */
+body[data-scroll-locked] .world-rail {
+  display: none;
+}
 
 .world-rail-nut {
   display: flex;
@@ -729,4 +865,106 @@
 .today-list-them:hover,
 .today-list-xem:hover {
   background: color-mix(in oklab, var(--gold, #cbb994) 14%, transparent);
+}
+
+/*
+ * Thanh tab Động Phủ.
+ *
+ * Cuộn NGANG chứ không xuống dòng: tám tab mà xuống dòng thì thành hai ba hàng
+ * cao gần trăm rưỡi px, đúng thứ vừa dọn đi. Cuộn ngang thì thanh luôn cao một
+ * hàng, và trên điện thoại vuốt ngang là thao tác quen tay.
+ */
+.cave-tabs {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 2px;
+  /* Vuốt tới đâu dừng gọn tới đó, không trôi lưng chừng giữa hai tab. */
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+}
+.cave-tabs::-webkit-scrollbar {
+  display: none;
+}
+.cave-tab {
+  flex: none;
+  scroll-snap-align: start;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  width: 62px;
+  min-height: 2.75rem;
+  padding: 6px 2px 5px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  color: var(--muted-foreground);
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+.cave-tab:hover {
+  color: var(--gold-bright);
+}
+.cave-tab-vien {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+}
+.cave-tab-anh {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  /* Tab đang đứng mới sáng màu, còn lại lùi về sau cho đỡ rối. */
+  filter: grayscale(0.55) opacity(0.65);
+  transition: filter 0.15s;
+}
+.cave-tab-ten {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1.15;
+  text-align: center;
+}
+.cave-tab-cham {
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--gold-bright);
+  box-shadow: 0 0 8px var(--gold-glow);
+}
+.cave-tab-dang {
+  color: var(--gold-bright);
+  border-color: color-mix(in srgb, var(--gold) 55%, transparent);
+  background: color-mix(in srgb, var(--gold) 12%, transparent);
+}
+.cave-tab-dang .cave-tab-anh {
+  filter: none;
+}
+.cave-tab:focus-visible {
+  outline: 2px solid var(--gold-bright);
+  outline-offset: 2px;
+}
+
+/*
+ * Nút trong hộp thoại: đủ 44px trên điện thoại.
+ *
+ * Nút mặc định cao 32px - vừa mắt trên máy tính nhưng dưới ngưỡng ngón tay.
+ * Đây là những nút quyết định (Thêm nhiệm vụ, Lưu, Xoá), bấm trượt là mất công
+ * gõ lại cả form, nên chúng đáng được nới hơn bất kỳ nút nào khác.
+ */
+@media (max-width: 640px) {
+  [data-slot="dialog-footer"] button,
+  [data-slot="alert-dialog-footer"] button {
+    min-height: 2.75rem;
+    flex: 1;
+  }
+  /* Nút xoá đứng riêng một dòng, không tranh chỗ với cặp Huỷ / Lưu. */
+  [data-slot="dialog-footer"] {
+    flex-wrap: wrap;
+  }
 }

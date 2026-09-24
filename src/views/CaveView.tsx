@@ -27,9 +27,9 @@ import AlchemySection from '../components/cave/AlchemySection';
 import RootRefineSection from '../components/cave/RootRefineSection';
 import CaveUpgradeSection from '../components/cave/CaveUpgradeSection';
 import CaveRoom from '../components/cave/CaveRoom';
-import { requestOpenSection } from '../lib/section';
 import { cn } from '@/lib/utils';
-import SectionLinks from '../components/SectionLinks';
+import CaveTabs from '../components/cave/CaveTabs';
+import type { CaveTab } from '../components/cave/CaveTabs';
 
 /**
  * Động Phủ: nơi ở của người tu. Chứa linh căn, túi linh thạch và đàn linh thú.
@@ -38,6 +38,8 @@ import SectionLinks from '../components/SectionLinks';
 export default function CaveView() {
   const { data, awaken, rerollRoot, summon, feedBeast, setActiveBeast } = useApp();
   const [revealed, setRevealed] = useState<Beast | null>(null);
+  // Mở Động Phủ ra là đứng ở túi linh thạch - chỗ trả lời câu "tôi đang có gì".
+  const [tab, setTab] = useState('cave-stone');
 
   const stones = useMemo(() => stoneBreakdown(data), [data]);
   const stonesShown = useCountUp(stones.balance);
@@ -53,6 +55,19 @@ export default function CaveView() {
     if (beast) setRevealed(beast);
   };
 
+  /* Tẩy tuỷ chỉ có nghĩa khi đã khai quang linh căn, nên chưa khai quang thì
+     không bày ra - bớt được một tab trên màn hẹp. */
+  const tabs: CaveTab[] = [
+    { id: 'cave-stone', label: 'Linh thạch', art: railSrc('linh-thach'), Icon: Gem },
+    { id: 'cave-root', label: 'Linh căn', art: railSrc('linh-can'), Icon: Sparkles, goi: !root },
+    { id: 'cave-technique', label: 'Công pháp', art: '/art/section/cong-phap.png', Icon: Wand2 },
+    { id: 'cave-field', label: 'Linh điền', art: '/art/section/linh-dien.png', Icon: Star },
+    { id: 'cave-pill', label: 'Đan đường', art: railSrc('dan-duong'), Icon: Heart },
+    ...(root ? [{ id: 'cave-refine', label: 'Tẩy tuỷ', Icon: RefreshCw }] : []),
+    { id: 'cave-home', label: 'Nơi ở', art: railSrc('dong-phu'), Icon: Mountain },
+    { id: 'cave-beast', label: 'Linh thú', art: railSrc('linh-thu'), Icon: PawPrint },
+  ];
+
   return (
     <div className="stagger-in mx-auto flex w-full max-w-5xl flex-col gap-4">
       {/* Tiêu đề "Động Phủ" đã nằm ở h1 của bảng phủ, không lặp lại lần nữa.
@@ -61,34 +76,12 @@ export default function CaveView() {
           đoạn giải thích cơ chế. Đoạn văn cũ nói linh căn/công pháp/linh điền
           dùng để làm gì - mà ngay dưới đây mỗi mục đều đã tự giới thiệu, nên
           nó chỉ là một lớp chữ chắn giữa người chơi và nhà của họ. */}
-      <CaveRoom
-        onGo={(id) => {
-          const section = document.getElementById(id);
-          if (!section) return;
-          requestOpenSection(id);
-          requestAnimationFrame(() =>
-            section.scrollIntoView({
-              block: 'start',
-              behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches
-                ? 'auto'
-                : 'smooth',
-            }),
-          );
-        }}
-      />
+      <CaveRoom onGo={setTab} />
 
-      <SectionLinks label="Các mục trong Động Phủ" items={[
-        { id: 'cave-stone', label: 'Linh thạch' },
-        { id: 'cave-root', label: 'Linh căn' },
-        { id: 'cave-technique', label: 'Công pháp' },
-        { id: 'cave-field', label: 'Linh điền' },
-        { id: 'cave-pill', label: 'Đan đường' },
-        ...(root ? [{ id: 'cave-refine', label: 'Tẩy tuỷ' }] : []),
-        { id: 'cave-home', label: 'Nâng cấp nơi ở' },
-        { id: 'cave-beast', label: 'Linh thú' },
-      ]} />
+      <CaveTabs tabs={tabs} dang={tab} onChon={setTab} />
 
       {/* ------------------------------------------------------ túi linh thạch */}
+      {tab === 'cave-stone' && (
       <Section id="cave-stone" icon={Gem} title="Túi linh thạch" tone="accent">
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex items-center gap-3">
@@ -126,8 +119,10 @@ export default function CaveView() {
           </div>
         </div>
       </Section>
+      )}
 
       {/* ----------------------------------------------------------- linh căn */}
+      {tab === 'cave-root' && (
       <Section
         id="cave-root"
         icon={Sparkles}
@@ -256,17 +251,19 @@ export default function CaveView() {
           </div>
         )}
       </Section>
+      )}
 
       {/* Công pháp, linh điền, tẩy tuỷ, đan đường và bậc động phủ đều là mục
           riêng - mỗi cái một tệp trong components/cave/, để tệp này không phình
           thành hai nghìn dòng. */}
-      <TechniqueSection />
-      <RootRefineSection />
-      <FieldSection />
-      <AlchemySection />
-      <CaveUpgradeSection />
+      {tab === 'cave-technique' && <TechniqueSection />}
+      {tab === 'cave-refine' && <RootRefineSection />}
+      {tab === 'cave-field' && <FieldSection />}
+      {tab === 'cave-pill' && <AlchemySection />}
+      {tab === 'cave-home' && <CaveUpgradeSection />}
 
       {/* ---------------------------------------------------------- linh thú */}
+      {tab === 'cave-beast' && (
       <Section
         id="cave-beast"
         collapsible
@@ -384,6 +381,7 @@ export default function CaveView() {
           })}
         </div>
       </Section>
+      )}
 
       {revealed && (
         <p className="sr-only" aria-live="polite">
@@ -391,11 +389,6 @@ export default function CaveView() {
         </p>
       )}
 
-      <p className="text-muted-foreground flex items-start gap-2 text-[11px]">
-        <Mountain className="mt-0.5 size-3.5 shrink-0" />
-        Làm nhiệm vụ, tập trung và hoàn thành nhật khoá để tích luỹ linh thạch.
-        Tông môn, thám hiểm và kỳ ngộ cũng có thể mang về phần thưởng.
-      </p>
     </div>
   );
 }

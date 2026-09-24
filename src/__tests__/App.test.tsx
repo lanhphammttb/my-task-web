@@ -181,14 +181,28 @@ describe('Ứng dụng web', () => {
     expect(await screen.findByText('Toạ Vong Chi Cảnh')).toBeDefined();
   });
 
-  it('Linh thú nằm trong Động Phủ và mục lục mở đúng phần đang gập', async () => {
+  it('Động Phủ đổi hẳn nội dung theo tab, mỗi lúc chỉ một mục', async () => {
+    /*
+     * Trước đây tám mục nằm chồng trong một trang dài, dãy chip chỉ CUỘN tới
+     * chỗ cần. Trên màn 375x667 trang ấy dài gấp bốn lần màn hình.
+     *
+     * Điều đáng kiểm không phải là "bấm xong có thấy chữ không", mà là mục cũ
+     * có RỜI HẲN khỏi DOM không - đó mới là khác biệt giữa đổi trang và cuộn.
+     */
     render(<App />);
     openPanel('Động Phủ');
 
-    expect(await screen.findByRole('heading', { name: 'Động Phủ' })).toBeDefined();
-    fireEvent.click(await screen.findByRole('link', { name: 'Linh thú' }));
-    expect(await screen.findByRole('button', { name: 'Thu gọn Linh thú' })).toBeDefined();
+    // Bảng nạp lười: chờ chính thanh tab, không chờ tiêu đề bảng - tiêu đề
+    // hiện ngay còn nội dung thì tới sau.
+    expect(await screen.findByRole('tab', { name: 'Linh thạch' })).toBeDefined();
+    // Vào là đứng ở túi linh thạch; linh thú chưa hề được dựng.
+    expect(document.getElementById('cave-stone')).not.toBeNull();
+    expect(document.getElementById('cave-beast')).toBeNull();
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Linh thú' }));
+    expect(await screen.findByRole('heading', { name: 'Linh thú' })).toBeDefined();
     expect(document.getElementById('cave-beast')).not.toBeNull();
+    expect(document.getElementById('cave-stone')).toBeNull();
   });
 
   it('menu toàn web không trộn mục con vào, dù bản đồ có lối tắt riêng', () => {
@@ -235,11 +249,14 @@ describe('Ứng dụng web', () => {
   it('mục lục từng khu chỉ dẫn tới nội dung thực sự có trong khu đó', async () => {
     render(<App />);
     openPanel('Động Phủ');
-    const cave = await screen.findByRole('navigation', { name: 'Các mục trong Động Phủ' });
-    for (const link of within(cave).getAllByRole('link')) {
-      expect(document.getElementById(link.getAttribute('href')!.slice(1))).not.toBeNull();
+    const cave = await screen.findByRole('tablist', { name: 'Các mục trong Động Phủ' });
+    const tabs = within(cave).getAllByRole('tab');
+    // Chưa khai quang linh căn thì tẩy tuỷ chưa có nghĩa gì - không bày ra.
+    expect(tabs.map((t) => t.textContent)).not.toContain('Tẩy tuỷ');
+    for (const tab of tabs) {
+      fireEvent.click(tab);
+      expect(document.getElementById(tab.getAttribute('aria-controls')!)).not.toBeNull();
     }
-    expect(within(cave).queryByRole('link', { name: 'Tẩy tuỷ' })).toBeNull();
     openPanel('Tiên Lộ');
     const path = await screen.findByRole('navigation', { name: 'Các mục trong Tiên Lộ' });
     for (const link of within(path).getAllByRole('link')) {

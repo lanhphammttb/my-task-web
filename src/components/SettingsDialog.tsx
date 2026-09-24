@@ -96,7 +96,7 @@ export default function SettingsDialog({
       <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>Cài đặt</DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="sr-only sm:not-sr-only">
             Đặt nhật khoá vừa sức để chuỗi tu luyện không bị đứt oan.
           </DialogDescription>
         </DialogHeader>

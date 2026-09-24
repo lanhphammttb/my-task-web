@@ -330,7 +330,7 @@ export default function GoalsView({ onEdit, onFocus, onAddTask }: Props) {
 
       {/* ------------------------------------------------- form mục tiêu */}
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
-        <DialogContent className="sm:max-w-[520px]">
+        <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-[520px]">
           <DialogHeader>
             <DialogTitle>
               {editing ? "Sửa mục tiêu" : "Mục tiêu mới"}
@@ -393,7 +393,7 @@ export default function GoalsView({ onEdit, onFocus, onAddTask }: Props) {
               </div>
             </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="sticky bottom-0 z-10 -mx-4 -mb-4 mt-2 border-t border-border bg-popover px-4 pt-3 pb-4">
             <Button variant="outline" onClick={() => setFormOpen(false)}>
               Huỷ
             </Button>

@@ -136,19 +136,18 @@ export default function HubCenter({
 
       {/* ------------------------------------------------------ dải cảnh giới */}
       {/*
-        Trên điện thoại khối này xếp NGANG, không phải vòng tròn lớn xếp dọc.
+        Hai dáng, chọn theo CHIỀU CAO màn chứ không theo chiều ngang.
 
-        Đo trên màn 360x640: vòng tròn cùng chữ bên trong cao 198px - khối cao
-        nhất sảnh - trong khi cả khung chỉ có 423px. Mà bóp nhỏ vòng lại thôi
-        thì không xong: chữ "Tầng 2/9" và số tu vi hết chỗ nằm giữa lòng vòng.
+        Vòng lớn canh giữa cao 198px - khối cao nhất sảnh. Trên máy thấp (360x640,
+        375x667) nó đẩy mọi thứ xuống dưới mép màn, nên ở đó khối này xếp ngang
+        và chỉ còn 92px. Nhưng máy cao thì thừa chỗ, mà xếp ngang lại làm đạo
+        nhân teo lại bằng con tem - xấu hơn hẳn bản cũ.
 
-        Nên xếp ngang hẳn: vòng nhỏ bên trái (ấn cảnh giới nằm trong lòng), chữ
-        trải sang phải, chibi và linh thú đứng cuối dải - đúng kiểu thanh trạng
-        thái của game trên điện thoại, cao 92px thay vì 198px. Từ `sm` trở lên
-        vẫn là vòng lớn canh giữa với chữ nằm trong lòng vòng như cũ.
+        Nên mốc phải là chiều cao. Bề ngang không nói lên được gì ở đây: 390x844
+        hẹp mà vẫn thừa chỗ dựng vòng lớn. Chi tiết ở `.realm-dai` trong hub.css.
       */}
-      <div className="pointer-events-auto relative flex w-full max-w-[540px] items-center gap-3 sm:block sm:w-auto">
-        <div className="relative w-[92px] shrink-0 sm:w-[198px]">
+      <div className="realm-dai pointer-events-auto">
+        <div className="realm-vong">
           <ProgressRing
             value={c.ascended ? 1 : c.ratio}
             size={198}
@@ -161,8 +160,8 @@ export default function HubCenter({
             className="animate-float drop-shadow-[0_8px_28px_rgba(0,0,0,0.65)]"
             label=""
           />
-          {/* Vòng nhỏ trên điện thoại chỉ ôm vừa cái ấn, chữ đẩy ra ngoài */}
-          <span className="absolute inset-0 grid place-items-center sm:hidden">
+          {/* Dáng ngang: vòng nhỏ chỉ ôm vừa cái ấn, chữ đẩy ra ngoài */}
+          <span className="realm-an-nho">
             <RealmSeal
               name={c.realm.name}
               tier={c.ascended ? undefined : c.tier}
@@ -171,9 +170,9 @@ export default function HubCenter({
           </span>
         </div>
 
-        <span className="flex min-w-0 flex-1 flex-col items-start gap-0.5 text-left sm:absolute sm:inset-0 sm:grid sm:place-items-center sm:text-center">
-          <span className="flex flex-col items-start gap-0.5 sm:items-center sm:gap-1.5">
-            <span className="hidden sm:block">
+        <span className="realm-chu">
+          <span className="realm-chu-trong">
+            <span className="realm-an-to">
               <RealmSeal
                 name={c.realm.name}
                 tier={c.ascended ? undefined : c.tier}
@@ -191,12 +190,11 @@ export default function HubCenter({
           </span>
         </span>
 
-        {/* Đạo nhân chibi. Chưa có file thì ArtImage tự ẩn, layout không đổi.
-            Điện thoại: đứng cuối dải. Màn rộng: đứng hẳn ra ngoài vòng. */}
+        {/* Đạo nhân chibi. Chưa có file thì ArtImage tự ẩn, layout không đổi. */}
         <ArtImage
           src={`/art/chibi/${ready ? "breakthrough" : "idle"}.png`}
           alt=""
-          className="animate-float pointer-events-none w-12 shrink-0 drop-shadow-[0_8px_22px_rgba(0,0,0,0.65)] sm:absolute sm:-bottom-6 sm:-left-36 sm:w-36 lg:-left-44 lg:w-44"
+          className="realm-chibi animate-float pointer-events-none drop-shadow-[0_8px_22px_rgba(0,0,0,0.65)]"
         />
 
         {/* Linh thú đứng cạnh chủ nhân */}
@@ -205,7 +203,7 @@ export default function HubCenter({
             src={beast.image}
             alt={beast.name}
             title={`${beast.name} · cấp ${beastLevel(owned.fed)}`}
-            className="animate-float border-gold/50 bg-background/60 size-9 shrink-0 rounded-full border object-cover shadow-[0_0_18px_var(--gold-glow)] sm:absolute sm:-right-6 sm:-bottom-2 sm:size-16"
+            className="realm-thu animate-float border-gold/50 bg-background/60 rounded-full border object-cover shadow-[0_0_18px_var(--gold-glow)]"
             style={{ animationDelay: "1.2s" }}
           />
         )}
@@ -245,14 +243,6 @@ export default function HubCenter({
             <Sparkles className="size-3.5" />
             Chưa khai quang linh căn - làm luôn cho kịp
           </button>
-        )}
-        {/* Một dòng, không phải một đoạn. Vòng tu vi đã hiện "340 / 900 tu vi"
-            rồi, nên ở đây chỉ nói thêm ĐÍCH ĐẾN - thứ duy nhất vòng không nói. */}
-        {!ready && !c.ascended && (
-          <p className="text-muted-foreground text-[11px] leading-snug">
-            Còn <b className="text-gold tabular">{c.toNext}</b> tu vi →{" "}
-            {c.nextLabel}
-          </p>
         )}
       </div>
 

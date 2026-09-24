@@ -86,7 +86,7 @@ const PANEL: Record<ViewKey, PanelMeta> = {
   },
   cave: {
     title: "Động Phủ",
-    subtitle: "Linh căn, công pháp, linh điền, lò đan và đàn linh thú",
+    subtitle: "Nhà của bạn",
     banner: "/art/banner/cave.jpg",
   },
   awards: {
