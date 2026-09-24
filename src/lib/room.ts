@@ -44,6 +44,17 @@ export interface Prop {
   co: (d: AppData) => boolean;
   /** Câu hiện khi chưa có - nói thẳng phải làm gì để sắm được */
   dieuKien: string;
+  /**
+   * Thứ tự gợi ý "sắp có", nhỏ là gần tầm với. Bỏ trống thì không bao giờ gợi ý.
+   *
+   * Cần trường riêng chứ không xét theo thứ tự trong mảng, vì mảng xếp theo thứ
+   * tự VẼ (xa trước, gần sau) - chẳng liên quan gì tới dễ hay khó. Và ba bậc lò
+   * đan phải để trống: chúng là ba dáng của CÙNG một cái lò, không phải ba món
+   * sắm thêm. Không loại ra thì đứng ở bậc 5 với ngọc lô trong phòng mà app vẫn
+   * giục "sắp có: Đồng lô - nâng động phủ lên bậc 3", tức là chỉ ngược về sau
+   * lưng người chơi.
+   */
+  goiY?: number;
 }
 
 /**
@@ -57,6 +68,7 @@ export const PROPS: Prop[] = [
     x: 50, day: 40, w: 16,
     co: (d) => d.caveLevel >= 4,
     dieuKien: 'Nâng động phủ lên bậc 4',
+    goiY: 11,
   },
   {
     file: 'chuong-dong',
@@ -64,6 +76,7 @@ export const PROPS: Prop[] = [
     x: 84, day: 34, w: 9,
     co: (d) => currentStreak(d.tasks) >= 30,
     dieuKien: 'Giữ chuỗi 30 ngày liền',
+    goiY: 9,
   },
   {
     file: 'binh-phong',
@@ -71,6 +84,7 @@ export const PROPS: Prop[] = [
     x: 16, day: 68, w: 20,
     co: (d) => d.caveLevel >= 5,
     dieuKien: 'Nâng động phủ lên bậc 5',
+    goiY: 12,
   },
   {
     file: 'bia-thanh-tuu',
@@ -79,6 +93,7 @@ export const PROPS: Prop[] = [
     anchor: 'cave-home',
     co: (d) => unlockedIds(d).size >= 5,
     dieuKien: 'Đạt 5 thành tựu',
+    goiY: 5,
   },
   {
     file: 'gia-sach',
@@ -87,6 +102,7 @@ export const PROPS: Prop[] = [
     anchor: 'cave-technique',
     co: (d) => !!d.technique,
     dieuKien: 'Chọn một công pháp',
+    goiY: 1,
   },
   {
     file: 'thu-an',
@@ -95,6 +111,7 @@ export const PROPS: Prop[] = [
     anchor: 'cave-home',
     co: (d) => d.goals.filter((g) => !g.archived).length >= 3,
     dieuKien: 'Lập 3 đại nguyện',
+    goiY: 2,
   },
   {
     file: 'ngoc-sang',
@@ -103,6 +120,7 @@ export const PROPS: Prop[] = [
     anchor: 'cave-home',
     co: (d) => d.caveLevel >= 4,
     dieuKien: 'Nâng động phủ lên bậc 4',
+    goiY: 10,
   },
   {
     file: 'gia-kiem',
@@ -110,6 +128,7 @@ export const PROPS: Prop[] = [
     x: 63, day: 72, w: 11,
     co: (d) => cultivationOf(progressOf(d).xp).realmIndex >= 2,
     dieuKien: 'Tu tới Kim Đan',
+    goiY: 8,
   },
   {
     file: 'dinh-tram',
@@ -118,6 +137,7 @@ export const PROPS: Prop[] = [
     anchor: 'cave-home',
     co: (d) => verifiedFocusMinutes(d) >= 600,
     dieuKien: 'Nhập định đủ 10 giờ',
+    goiY: 6,
   },
   {
     file: 'lo-dan-3',
@@ -156,6 +176,7 @@ export const PROPS: Prop[] = [
     x: 19, day: 84, w: 24,
     co: (d) => d.caveLevel >= 3,
     dieuKien: 'Nâng động phủ lên bậc 3',
+    goiY: 7,
   },
   {
     file: 'chau-linh-thao',
@@ -164,6 +185,7 @@ export const PROPS: Prop[] = [
     anchor: 'cave-field',
     co: (d) => Object.values(d.herbs).reduce((a, b) => a + b, 0) >= 10,
     dieuKien: 'Hái 10 linh thảo',
+    goiY: 4,
   },
   {
     file: 'hom-chua',
@@ -171,6 +193,7 @@ export const PROPS: Prop[] = [
     x: 93, day: 87, w: 13,
     co: (d) => d.chestsOpened.length >= 5,
     dieuKien: 'Mở 5 hòm kỳ ngộ',
+    goiY: 3,
   },
 ];
 
@@ -209,7 +232,8 @@ export const dungTrongPhong = (d: AppData) => PROPS.filter((p) => p.co(d));
 
 /** Món sắp sắm được tiếp theo - dùng để nhắc người chơi có gì đáng cày. */
 export function monTiepTheo(d: AppData): Prop | null {
-  return PROPS.filter((p) => !p.co(d) && p.dieuKien).at(-1) ?? null;
+  const chua = PROPS.filter((p) => p.goiY !== undefined && !p.co(d));
+  return chua.sort((a, b) => a.goiY! - b.goiY!)[0] ?? null;
 }
 
 /**
@@ -245,7 +269,7 @@ export function theDaoNhan(d: AppData, tab?: string): TheDaoNhan {
   if (dem && (xongHet || s.total === 0)) {
     const co = d.caveLevel >= 4;
     return co
-      ? { file: 'ngu', mo: 'Đang ngủ trên ngọc sàng', x: 31, day: 76, w: 14 }
+      ? { file: 'ngu', mo: 'Đang ngủ trên ngọc sàng', x: 31, day: 71, w: 15 }
       : { file: 'ngu', mo: 'Đang ngủ', x: 38, day: 86, w: 14 };
   }
   if (xongHet) return { file: 'mung', mo: 'Xong hết việc hôm nay', x: 38, day: 86, w: 13 };
