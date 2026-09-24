@@ -211,3 +211,44 @@ export const dungTrongPhong = (d: AppData) => PROPS.filter((p) => p.co(d));
 export function monTiepTheo(d: AppData): Prop | null {
   return PROPS.filter((p) => !p.co(d) && p.dieuKien).at(-1) ?? null;
 }
+
+/**
+ * Đạo nhân đứng đâu trong phòng và đang làm gì.
+ *
+ * Bảy tư thế mà chỉ dùng mỗi `idle` thì phí, mà quan trọng hơn: căn phòng có
+ * người NGỒI THIỀN khác hẳn căn phòng có người đứng không. Tư thế chọn theo
+ * việc đang làm thật, không phải đổi ngẫu nhiên cho vui mắt.
+ *
+ * Thứ tự xét là thứ tự ưu tiên: việc đang làm ngay > mục đang xem > trạng thái
+ * trong ngày.
+ */
+export interface TheDaoNhan {
+  file: string;
+  mo: string;
+  x: number;
+  day: number;
+  w: number;
+}
+
+export function theDaoNhan(d: AppData, tab?: string): TheDaoNhan {
+  const s = dayStats(d.tasks, d.sessions, todayKey());
+  const gio = new Date().getHours();
+  const dem = gio >= 21 || gio < 5;
+  const xongHet = s.total > 0 && s.done === s.total;
+
+  // Ngồi ngay trên bồ đoàn, nên phải trùng chỗ với nó.
+  if (tab === 'cave-refine') return { file: 'ngoi-thien', mo: 'Đang tẩy tuỷ', x: 50, day: 81, w: 13 };
+  if (tab === 'cave-pill') return { file: 'luyen-dan', mo: 'Đang luyện đan', x: 63, day: 80, w: 13 };
+  if (tab === 'cave-technique') return { file: 'doc-sach', mo: 'Đang đọc ngọc giản', x: 79, day: 76, w: 12 };
+
+  // Đêm mà xong hết việc thì đi ngủ - nằm trên ngọc sàng nếu đã sắm được.
+  if (dem && (xongHet || s.total === 0)) {
+    const co = d.caveLevel >= 4;
+    return co
+      ? { file: 'ngu', mo: 'Đang ngủ trên ngọc sàng', x: 31, day: 76, w: 14 }
+      : { file: 'ngu', mo: 'Đang ngủ', x: 38, day: 86, w: 14 };
+  }
+  if (xongHet) return { file: 'mung', mo: 'Xong hết việc hôm nay', x: 38, day: 86, w: 13 };
+
+  return { file: 'idle', mo: 'Đạo nhân', x: 38, day: 86, w: 12 };
+}

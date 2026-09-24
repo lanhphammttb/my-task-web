@@ -91,12 +91,12 @@ const PANEL: Record<ViewKey, PanelMeta> = {
   },
   awards: {
     title: "Tiên Lộ",
-    subtitle: "Cảnh giới, thành tựu, tông môn và thám hiểm",
+    subtitle: "Đường tu của bạn",
     banner: "/art/banner/awards.jpg",
   },
   stats: {
     title: "Tu Hành Lục",
-    subtitle: "Sổ chép đường tu - số liệu không biết nói dối",
+    subtitle: "Sổ chép đường tu",
     banner: "/art/banner/stats.jpg",
   },
 };

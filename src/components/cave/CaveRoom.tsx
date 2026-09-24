@@ -12,6 +12,7 @@ import {
 } from "../../lib/room";
 import { activeBeast } from "../../lib/economy";
 import { beastById } from "../../lib/beasts";
+import { theDaoNhan } from "../../lib/room";
 import ArtImage from "../ArtImage";
 
 /**
@@ -30,9 +31,12 @@ import ArtImage from "../ArtImage";
  */
 export default function CaveRoom({
   onGo,
+  tab,
 }: {
-  /** Bấm vào một món đồ thì cuộn tới mục quản nó */
+  /** Bấm vào một món đồ thì mở mục quản nó */
   onGo?: (anchor: string) => void;
+  /** Mục đang xem - đạo nhân trong phòng đổi tư thế theo nó */
+  tab?: string;
 }) {
   const { data } = useApp();
   const bac = caveAt(data.caveLevel);
@@ -42,11 +46,16 @@ export default function CaveRoom({
   const sapCo = useMemo(() => monTiepTheo(data), [data]);
   const owned = activeBeast(data);
   const beast = owned ? beastById(owned.id) : undefined;
+  const the = theDaoNhan(data, tab);
 
   return (
     <section
       aria-label={`Động phủ bậc ${bac.level}: ${bac.name}`}
-      className="border-gold/30 relative aspect-video w-full overflow-hidden rounded-xl border shadow-[0_10px_40px_rgba(0,0,0,0.5)]"
+      /* Điện thoại dùng khung 4:3 chứ không 16:9: rộng 292px thì 16:9 chỉ cao
+         164px, mà dải chữ dưới đáy đã ăn mất 45px - còn lại không đủ thấy sàn,
+         tức là không thấy đồ đạc lẫn đạo nhân, đúng thứ căn phòng sinh ra để
+         khoe. Màn rộng thì 16:9 mới đẹp vì bề ngang đã đủ lớn. */
+      className="border-gold/30 relative aspect-[4/3] w-full overflow-hidden rounded-xl border shadow-[0_10px_40px_rgba(0,0,0,0.5)] sm:aspect-video"
     >
       {/* --------------------------------------------------------- nền phòng */}
       {/* Chưa có nền 16:9 riêng thì lùi về tranh vuông của bậc đó: bị cắt trên
@@ -74,16 +83,16 @@ export default function CaveRoom({
       {CHO_TREO.map((x, i) => (
         <span
           key={x}
-          className="pointer-events-none absolute -translate-x-1/2"
-          style={{ left: `${x}%`, top: "2%", width: "8%" }}
+          className="pointer-events-none absolute aspect-square -translate-x-1/2"
+          style={{ left: `${x}%`, top: "-1%", width: "9%" }}
         >
           <ArtImage
             src={`/art/prop/den-long-${i < sang ? "sang" : "tat"}.png`}
             alt=""
             className={
               i < sang
-                ? "animate-float w-full drop-shadow-[0_0_14px_var(--gold-glow)]"
-                : "w-full opacity-45"
+                ? "animate-float size-full object-contain object-top drop-shadow-[0_0_14px_var(--gold-glow)]"
+                : "size-full object-contain object-top opacity-45"
             }
             style={{ animationDelay: `${i * 0.4}s` }}
           />
@@ -91,13 +100,25 @@ export default function CaveRoom({
       ))}
 
       {/* --------------------------------------------------------- đồ đạc */}
+      {/*
+        Neo theo ĐÁY PHẦN VẼ, không phải đáy tệp ảnh.
+
+        Khâu xử lý ảnh thu mọi món về khung vuông theo kiểu `contain`, nên món
+        nào bè ngang thì bị đệm trong suốt trên dưới - bồ đoàn chỉ chiếm từ 18%
+        tới 80% chiều cao tệp. Neo theo đáy tệp là nó lơ lửng cách sàn một đoạn
+        bằng 20% chiều cao của chính nó.
+
+        `aspect-square` cộng `object-bottom` đẩy phần vẽ xuống sát đáy ô, nên
+        mọi món đều đứng đúng trên sàn mà không phải đo từng tệp một - và vẽ lại
+        ảnh khác tỷ lệ cũng không phải chỉnh gì.
+      */}
       {do_.map((p) => {
         const anh = (
           <ArtImage
             src={`/art/prop/${p.file}.png`}
             alt={p.ten}
             title={p.ten}
-            className="w-full drop-shadow-[0_6px_18px_rgba(0,0,0,0.55)]"
+            className="size-full object-contain object-bottom drop-shadow-[0_6px_18px_rgba(0,0,0,0.55)]"
           />
         );
         const style = {
@@ -114,7 +135,7 @@ export default function CaveRoom({
             type="button"
             onClick={() => onGo(p.anchor!)}
             aria-label={`${p.ten} — mở mục quản`}
-            className="absolute -translate-x-1/2 -translate-y-full transition-transform hover:scale-105 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--gold-bright)]"
+            className="absolute aspect-square -translate-x-1/2 -translate-y-full transition-transform hover:scale-105 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--gold-bright)]"
             style={style}
           >
             {anh}
@@ -122,13 +143,26 @@ export default function CaveRoom({
         ) : (
           <span
             key={p.file}
-            className="pointer-events-none absolute -translate-x-1/2 -translate-y-full"
+            className="pointer-events-none absolute aspect-square -translate-x-1/2 -translate-y-full"
             style={style}
           >
             {anh}
           </span>
         );
       })}
+
+      {/*
+        Đạo nhân sống trong phòng, và đổi tư thế theo việc đang làm: ngồi thiền
+        lúc bế quan, đứng bên lò lúc xem đan đường, đọc ngọc giản lúc xem công
+        pháp. Đây là chỗ biến căn phòng từ một bức tranh thành một nơi có người ở.
+      */}
+      <ArtImage
+        src={`/art/chibi/${the.file}.png`}
+        alt=""
+        title={the.mo}
+        className="animate-float pointer-events-none absolute aspect-square -translate-x-1/2 -translate-y-full object-contain object-bottom drop-shadow-[0_8px_20px_rgba(0,0,0,0.6)]"
+        style={{ left: `${the.x}%`, top: `${the.day}%`, width: `${the.w}%` }}
+      />
 
       {/* Linh thú nằm cạnh chủ nhân. Dùng lại ảnh linh thú sẵn có, không phải
           vẽ thêm - con nào đang mang theo thì con đó ở nhà. */}
@@ -137,7 +171,7 @@ export default function CaveRoom({
           src={beast.image}
           alt={beast.name}
           title={`${beast.name} đang ở trong động`}
-          className="animate-float pointer-events-none absolute -translate-x-1/2 -translate-y-full object-contain drop-shadow-[0_6px_18px_rgba(0,0,0,0.55)]"
+          className="animate-float pointer-events-none absolute aspect-square -translate-x-1/2 -translate-y-full rounded-full object-contain drop-shadow-[0_6px_18px_rgba(0,0,0,0.55)]"
           style={{ left: "61%", top: "88%", width: "11%", animationDelay: "1s" }}
         />
       )}

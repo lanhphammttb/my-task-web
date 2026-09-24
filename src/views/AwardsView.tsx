@@ -17,7 +17,9 @@ import ExpeditionSection from '../components/ExpeditionSection';
 import SectSection from '../components/SectSection';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import SectionLinks from '../components/SectionLinks';
+import KhuTabs from '../components/KhuTabs';
+import type { KhuTab } from '../components/KhuTabs';
+import { railSrc } from '../lib/icons';
 
 /**
  * Tiên Lộ: bậc thang cảnh giới từ Luyện Khí tới Phi Thăng, cộng với các kỳ ngộ
@@ -37,25 +39,28 @@ export default function AwardsView({ onTribulation }: { onTribulation: () => voi
   const streak = currentStreak(data.tasks);
   const focusTotal = data.sessions.reduce((s, x) => s + x.minutes, 0);
   const nextUp = locked[0];
-  const RealmIcon = c.realm.icon;
+  const [tab, setTab] = useState('awards-realm');
+
+  const tabs: KhuTab[] = [
+    { id: 'awards-realm', label: 'Cảnh giới', art: railSrc('tien-lo'), Icon: Route },
+    { id: 'awards-achievements', label: 'Thành tựu', art: '/art/award/perfect-week.png', Icon: Trophy,
+      goi: unlocked.length > 0 },
+    { id: 'awards-sect', label: 'Tông môn', art: '/art/section/son-mon.png', Icon: Flame },
+    { id: 'awards-expedition', label: 'Thám hiểm', art: '/art/section/bi-canh.png', Icon: Sparkles },
+  ];
 
   return (
     <div className="stagger-in mx-auto flex w-full max-w-5xl flex-col gap-4">
       {/* Không lặp lại tiêu đề "Tiên Lộ" ở đây: bảng phủ đã có sẵn một h1 đúng
-          chữ ấy ngay phía trên, để thêm h2 nữa là bộ đọc màn hình đọc hai lần. */}
-      <p className="text-muted-foreground text-xs">
-        Mỗi nhiệm vụ hoàn thành là một phần tu vi. Đường từ Luyện Khí tới Phi Thăng được xây bằng
-        những ngày bình thường.
-      </p>
+          chữ ấy ngay phía trên, để thêm h2 nữa là bộ đọc màn hình đọc hai lần.
 
-      <SectionLinks label="Các mục trong Tiên Lộ" items={[
-        { id: 'awards-realm', label: 'Cảnh giới' },
-        { id: 'awards-achievements', label: 'Thành tựu' },
-        { id: 'awards-sect', label: 'Tông môn' },
-        { id: 'awards-expedition', label: 'Thám hiểm' },
-      ]} />
+          Đoạn văn mở đầu cũng đã bỏ: nó nói "mỗi nhiệm vụ là một phần tu vi" -
+          đúng nhưng thẻ cảnh giới ngay dưới đã hiện đủ số tu vi và còn bao xa
+          nữa tới bậc sau, tức là nói cùng một điều bằng số. */}
+      <KhuTabs tabs={tabs} dang={tab} onChon={setTab} nhan="Các mục trong Tiên Lộ" />
 
       {/* ------------------------------------------------- thẻ cảnh giới */}
+      {tab === 'awards-realm' && (
       <section
         id="awards-realm"
         className="corner-marks relative overflow-hidden rounded-xl border"
@@ -65,7 +70,7 @@ export default function AwardsView({ onTribulation }: { onTribulation: () => voi
         }}
       >
         {/* Tranh sơn thuỷ của cảnh giới hiện tại, làm dải riêng phía trên */}
-        <div className="relative h-44 overflow-hidden sm:h-56">
+        <div className="relative h-32 overflow-hidden sm:h-56">
           <RealmScene realmIndex={c.realmIndex} />
           <div className="absolute bottom-3 left-5">
             <p className="font-heading text-lg font-bold drop-shadow-lg" style={{ color: c.realm.color }}>
@@ -77,7 +82,7 @@ export default function AwardsView({ onTribulation }: { onTribulation: () => voi
           </div>
         </div>
 
-        <div className="relative flex flex-col items-center gap-5 p-5 sm:flex-row">
+        <div className="relative flex flex-col items-center gap-3 p-3 sm:flex-row sm:gap-5 sm:p-5">
           <div className="relative shrink-0">
             <ProgressRing
               value={c.ascended ? 1 : c.ratio}
@@ -90,20 +95,15 @@ export default function AwardsView({ onTribulation }: { onTribulation: () => voi
             />
           </div>
           <div className="min-w-0 flex-1 space-y-3">
+            {/* Tên cảnh giới đã nằm trên tranh và trong lòng vòng tu vi ngay
+                cạnh đây - ba lần một cái tên trong cùng một thẻ. Giữ ấn cảnh
+                giới (là hình, không phải chữ) cùng dòng đạo hiệu và tu vi. */}
             <div className="flex flex-wrap items-center gap-3">
               <RealmSeal name={c.realm.name} tier={c.ascended ? undefined : c.tier} size="md" />
-              <div className="min-w-0">
-                <p
-                  className="font-heading flex items-center gap-1.5 text-base font-bold"
-                  style={{ color: c.realm.color }}
-                >
-                  <RealmIcon className="size-4 shrink-0" /> {c.realm.name}
-                </p>
-                <p className="text-muted-foreground text-xs">
-                  <span className="text-gold font-medium">{data.settings.daoName || 'Đạo hữu'}</span> ·{' '}
-                  <span className="tabular">{xp}</span> tu vi
-                </p>
-              </div>
+              <p className="text-muted-foreground min-w-0 text-xs">
+                <span className="text-gold font-medium">{data.settings.daoName || 'Đạo hữu'}</span> ·{' '}
+                <span className="tabular">{xp}</span> tu vi
+              </p>
             </div>
 
             <p className="text-sm leading-relaxed italic">“{c.realm.note}”</p>
@@ -162,7 +162,7 @@ export default function AwardsView({ onTribulation }: { onTribulation: () => voi
           </div>
         </div>
 
-        <div className="relative grid grid-cols-2 gap-2 px-5 pb-5 sm:grid-cols-4">
+        <div className="relative grid grid-cols-2 gap-2 px-3 pb-3 sm:px-5 sm:pb-5 sm:grid-cols-4">
           <StatTile label="Chuỗi tu luyện" value={streak} hint="ngày liên tiếp" icon={Flame} />
           <StatTile label="Kỷ lục chuỗi" value={bestStreak(data.tasks)} hint="ngày" icon={Trophy} />
           <StatTile
@@ -174,8 +174,10 @@ export default function AwardsView({ onTribulation }: { onTribulation: () => voi
           <StatTile label="Đã nhập định" value={formatDuration(focusTotal)} hint="tổng thời gian" icon={Sparkles} />
         </div>
       </section>
+      )}
 
       {/* ---------------------------------------------------- bậc thang */}
+      {tab === 'awards-realm' && (
       <Section icon={Route} title="Đạo lộ" subtitle="Chín cảnh giới, mỗi cảnh giới chín tầng, rồi phi thăng">
         <ol className="space-y-2">
           {ladder.map((r) => (
@@ -183,15 +185,17 @@ export default function AwardsView({ onTribulation }: { onTribulation: () => voi
           ))}
         </ol>
       </Section>
+      )}
 
       {/* Tông môn trước, thám hiểm sau: danh phận rồi mới tới chuyện đi lại. */}
-      <SectSection />
+      {tab === 'awards-sect' && <SectSection />}
 
       {/* Thám hiểm đặt ngay trên kỳ ngộ: một bên là cơ duyên tự đến, một bên
           là mình chủ động đi tìm - để cạnh nhau thì đọc ra ngay là một cặp. */}
-      <ExpeditionSection />
+      {tab === 'awards-expedition' && <ExpeditionSection />}
 
       {/* ------------------------------------------------------- kỳ ngộ */}
+      {tab === 'awards-achievements' && (
       <Section id="awards-achievements" icon={Trophy} title={`Thành tựu đã mở (${unlocked.length}/${all.length})`}>
         {unlocked.length === 0 ? (
           <p className="text-muted-foreground text-sm">
@@ -205,7 +209,9 @@ export default function AwardsView({ onTribulation }: { onTribulation: () => voi
           </div>
         )}
       </Section>
+      )}
 
+      {tab === 'awards-achievements' && (
       <Section icon={Lock} title={`Chưa mở (${locked.length})`} subtitle="Sắp xếp theo mức độ gần đạt">
         {nextUp && (
           <p className="border-primary/30 bg-primary/[0.07] mb-3 rounded-lg border px-3 py-2 text-xs">
@@ -221,6 +227,7 @@ export default function AwardsView({ onTribulation }: { onTribulation: () => voi
           ))}
         </div>
       </Section>
+      )}
     </div>
   );
 }
@@ -234,13 +241,13 @@ function RealmRow({ row }: { row: RealmProgress }) {
   return (
     <li
       className={cn(
-        'flex items-center gap-3 rounded-xl border p-3 transition-colors',
+        'flex items-center gap-2.5 rounded-xl border p-2.5 transition-colors sm:gap-3 sm:p-3',
         isCurrent ? 'bg-card' : 'border-border bg-card/50',
       )}
       style={isCurrent ? { borderColor: `${row.realm.color}66`, background: `${row.realm.color}12` } : undefined}
     >
       {/* Ảnh thu nhỏ của cảnh giới: khoá thì phủ mờ và hiện ổ khoá */}
-      <span className="border-border relative h-14 w-20 shrink-0 overflow-hidden rounded-lg border">
+      <span className="border-border relative h-11 w-16 shrink-0 overflow-hidden rounded-lg border sm:h-14 sm:w-20">
         <RealmScene realmIndex={row.index} variant="thumb" />
         <span
           className={cn(
@@ -274,7 +281,11 @@ function RealmRow({ row }: { row: RealmProgress }) {
           )}
           {isDone && <Check className="text-success size-3.5" strokeWidth={3} />}
         </div>
-        <p className="text-muted-foreground mt-0.5 text-[11.5px] leading-snug">{row.realm.note}</p>
+        {/* Gói hai dòng trên màn hẹp: mười bậc, mỗi bậc một câu dài bốn
+            dòng thì riêng cái thang đã 1437px - dài gấp đôi màn hình. */}
+        <p className="text-muted-foreground mt-0.5 line-clamp-2 text-[11.5px] leading-snug sm:line-clamp-none">
+          {row.realm.note}
+        </p>
         {isCurrent && row.realm.tiers > 1 && (
           <div className="mt-2">
             <Meter value={row.ratio} height={4} barClassName="bg-primary" />

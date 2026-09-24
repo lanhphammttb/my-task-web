@@ -868,13 +868,13 @@ body[data-scroll-locked] .world-rail {
 }
 
 /*
- * Thanh tab Động Phủ.
+ * Thanh tab của một khu nhiều mục.
  *
  * Cuộn NGANG chứ không xuống dòng: tám tab mà xuống dòng thì thành hai ba hàng
  * cao gần trăm rưỡi px, đúng thứ vừa dọn đi. Cuộn ngang thì thanh luôn cao một
  * hàng, và trên điện thoại vuốt ngang là thao tác quen tay.
  */
-.cave-tabs {
+.khu-tabs {
   display: flex;
   gap: 6px;
   overflow-x: auto;
@@ -884,10 +884,10 @@ body[data-scroll-locked] .world-rail {
   scroll-snap-type: x proximity;
   -webkit-overflow-scrolling: touch;
 }
-.cave-tabs::-webkit-scrollbar {
+.khu-tabs::-webkit-scrollbar {
   display: none;
 }
-.cave-tab {
+.khu-tab {
   flex: none;
   scroll-snap-align: start;
   display: flex;
@@ -902,17 +902,17 @@ body[data-scroll-locked] .world-rail {
   color: var(--muted-foreground);
   transition: color 0.15s, border-color 0.15s, background 0.15s;
 }
-.cave-tab:hover {
+.khu-tab:hover {
   color: var(--gold-bright);
 }
-.cave-tab-vien {
+.khu-tab-vien {
   position: relative;
   display: grid;
   place-items: center;
   width: 34px;
   height: 34px;
 }
-.cave-tab-anh {
+.khu-tab-anh {
   width: 100%;
   height: 100%;
   object-fit: contain;
@@ -920,14 +920,14 @@ body[data-scroll-locked] .world-rail {
   filter: grayscale(0.55) opacity(0.65);
   transition: filter 0.15s;
 }
-.cave-tab-ten {
+.khu-tab-ten {
   font-size: 9.5px;
   font-weight: 700;
   letter-spacing: 0.02em;
   line-height: 1.15;
   text-align: center;
 }
-.cave-tab-cham {
+.khu-tab-cham {
   position: absolute;
   top: -1px;
   right: -1px;
@@ -937,15 +937,15 @@ body[data-scroll-locked] .world-rail {
   background: var(--gold-bright);
   box-shadow: 0 0 8px var(--gold-glow);
 }
-.cave-tab-dang {
+.khu-tab-dang {
   color: var(--gold-bright);
   border-color: color-mix(in srgb, var(--gold) 55%, transparent);
   background: color-mix(in srgb, var(--gold) 12%, transparent);
 }
-.cave-tab-dang .cave-tab-anh {
+.khu-tab-dang .khu-tab-anh {
   filter: none;
 }
-.cave-tab:focus-visible {
+.khu-tab:focus-visible {
   outline: 2px solid var(--gold-bright);
   outline-offset: 2px;
 }

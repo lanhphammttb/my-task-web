@@ -1,9 +1,9 @@
 import type { LucideIcon } from "lucide-react";
-import ArtImage from "../ArtImage";
+import ArtImage from "./ArtImage";
 import { cn } from "@/lib/utils";
 
 /**
- * Thanh tab của Động Phủ.
+ * Thanh tab dùng chung cho các khu nhiều mục (Động Phủ, Tiên Lộ).
  *
  * Thay cho dãy chip cũ: chip ấy bấm vào chỉ CUỘN tới một mục nằm đâu đó trong
  * một trang dài tám mục. Đó là lối của trang tài liệu, không phải của game -
@@ -18,7 +18,7 @@ import { cn } from "@/lib/utils";
  * dùng cho dãy nút tròn bên rìa.
  */
 
-export interface CaveTab {
+export interface KhuTab {
   id: string;
   label: string;
   /** Ảnh riêng; thiếu file thì tự lùi về icon nét */
@@ -28,20 +28,23 @@ export interface CaveTab {
   goi?: boolean;
 }
 
-export default function CaveTabs({
+export default function KhuTabs({
   tabs,
   dang,
   onChon,
+  nhan,
 }: {
-  tabs: CaveTab[];
+  tabs: KhuTab[];
   dang: string;
   onChon: (id: string) => void;
+  /** Nhãn trợ năng, ví dụ "Các mục trong Động Phủ" */
+  nhan: string;
 }) {
   return (
     <div
       role="tablist"
-      aria-label="Các mục trong Động Phủ"
-      className="cave-tabs"
+      aria-label={nhan}
+      className="khu-tabs"
     >
       {tabs.map((t) => (
         <button
@@ -50,18 +53,18 @@ export default function CaveTabs({
           role="tab"
           aria-selected={t.id === dang}
           aria-controls={t.id}
-          className={cn("cave-tab", t.id === dang && "cave-tab-dang")}
+          className={cn("khu-tab", t.id === dang && "khu-tab-dang")}
           onClick={() => onChon(t.id)}
         >
-          <span className="cave-tab-vien">
+          <span className="khu-tab-vien">
             {t.art ? (
-              <ArtImage src={t.art} alt="" className="cave-tab-anh" />
+              <ArtImage src={t.art} alt="" className="khu-tab-anh" />
             ) : (
               <t.Icon className="size-5" />
             )}
-            {t.goi && <i className="cave-tab-cham" />}
+            {t.goi && <i className="khu-tab-cham" />}
           </span>
-          <span className="cave-tab-ten">{t.label}</span>
+          <span className="khu-tab-ten">{t.label}</span>
         </button>
       ))}
     </div>

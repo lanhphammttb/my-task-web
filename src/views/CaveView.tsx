@@ -28,8 +28,8 @@ import RootRefineSection from '../components/cave/RootRefineSection';
 import CaveUpgradeSection from '../components/cave/CaveUpgradeSection';
 import CaveRoom from '../components/cave/CaveRoom';
 import { cn } from '@/lib/utils';
-import CaveTabs from '../components/cave/CaveTabs';
-import type { CaveTab } from '../components/cave/CaveTabs';
+import KhuTabs from '../components/KhuTabs';
+import type { KhuTab } from '../components/KhuTabs';
 
 /**
  * Động Phủ: nơi ở của người tu. Chứa linh căn, túi linh thạch và đàn linh thú.
@@ -57,7 +57,7 @@ export default function CaveView() {
 
   /* Tẩy tuỷ chỉ có nghĩa khi đã khai quang linh căn, nên chưa khai quang thì
      không bày ra - bớt được một tab trên màn hẹp. */
-  const tabs: CaveTab[] = [
+  const tabs: KhuTab[] = [
     { id: 'cave-stone', label: 'Linh thạch', art: railSrc('linh-thach'), Icon: Gem },
     { id: 'cave-root', label: 'Linh căn', art: railSrc('linh-can'), Icon: Sparkles, goi: !root },
     { id: 'cave-technique', label: 'Công pháp', art: '/art/section/cong-phap.png', Icon: Wand2 },
@@ -76,9 +76,9 @@ export default function CaveView() {
           đoạn giải thích cơ chế. Đoạn văn cũ nói linh căn/công pháp/linh điền
           dùng để làm gì - mà ngay dưới đây mỗi mục đều đã tự giới thiệu, nên
           nó chỉ là một lớp chữ chắn giữa người chơi và nhà của họ. */}
-      <CaveRoom onGo={setTab} />
+      <CaveRoom onGo={setTab} tab={tab} />
 
-      <CaveTabs tabs={tabs} dang={tab} onChon={setTab} />
+      <KhuTabs tabs={tabs} dang={tab} onChon={setTab} nhan="Các mục trong Động Phủ" />
 
       {/* ------------------------------------------------------ túi linh thạch */}
       {tab === 'cave-stone' && (

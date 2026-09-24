@@ -29,6 +29,9 @@ import { PRIORITY_ORDER, PRIORITY_UI } from "../lib/ui";
 import { useApp } from "../store/AppStore";
 import ProgressRing from "../components/ProgressRing";
 import { EmptyState, Meter, Section, StatTile } from "../components/primitives";
+import KhuTabs from "../components/KhuTabs";
+import type { KhuTab } from "../components/KhuTabs";
+import { railSrc } from "../lib/icons";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
   Tooltip,
@@ -117,17 +120,26 @@ export default function StatsView() {
     .filter((b) => b.total >= 2)
     .sort((a, b) => b.rate - a.rate)[0];
 
+  const [tab, setTab] = useState('tu-dao-hanh');
+
+  const tabs: KhuTab[] = [
+    { id: 'tu-dao-hanh', label: 'Đạo hạnh', art: railSrc('thong-ke'), Icon: BarChart3 },
+    { id: 'tu-thoi-quen', label: 'Thói quen', art: railSrc('be-quan'), Icon: CalendarRange },
+    { id: 'tu-nguyen', label: 'Đại nguyện', art: railSrc('linh-can'), Icon: Target },
+  ];
+
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-4">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h2 className="text-lg font-bold tracking-tight">
-            Thống kê hiệu suất
-          </h2>
-          <p className="text-muted-foreground text-xs">
-            Nhìn vào số liệu để biết nên siết chỗ nào.
-          </p>
-        </div>
+      {/*
+        Đây là SỔ CHÉP ĐƯỜNG TU, không phải bảng điều khiển năng suất.
+
+        Tiêu đề cũ "Thống kê hiệu suất - nhìn vào số liệu để biết nên siết chỗ
+        nào" là giọng của phần mềm quản trị, mà lại nằm ngay dưới một cái h1 đã
+        ghi "Tu Hành Lục". Bỏ hẳn: bảng phủ đã có tên, còn ba tab ngay dưới nói
+        rõ trong sổ có những gì.
+      */}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <KhuTabs tabs={tabs} dang={tab} onChon={setTab} nhan="Các phần trong Tu Hành Lục" />
         <ToggleGroup
           type="single"
           value={String(days)}
@@ -141,21 +153,22 @@ export default function StatsView() {
         </ToggleGroup>
       </div>
 
+      {tab === 'tu-dao-hanh' && (
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <StatTile
-          label="Tỷ lệ hoàn thành"
+          label="Đạo tâm"
           value={`${Math.round(rate * 100)}%`}
           hint={`${done}/${inRange.length} nhiệm vụ`}
           icon={TrendingUp}
         />
         <StatTile
-          label="Chuỗi hiện tại"
+          label="Chuỗi tu luyện"
           value={currentStreak(data.tasks)}
           hint={`Kỷ lục ${bestStreak(data.tasks)} ngày`}
           icon={Flame}
         />
         <StatTile
-          label="Thời gian nhập định"
+          label="Bế quan"
           value={formatDuration(focusMin)}
           hint={`~${formatDuration(Math.round(focusMin / days))}/ngày`}
           icon={Crosshair}
@@ -167,11 +180,13 @@ export default function StatsView() {
           icon={cultivation.realm.icon}
         />
       </div>
+      )}
 
       {/* ------------------------------------------------- biểu đồ theo ngày */}
+      {tab === 'tu-dao-hanh' && (
       <Section
         icon={BarChart3}
-        title="Nhiệm vụ hoàn thành theo ngày"
+        title="Nhật ký hành công"
         subtitle="Cột vàng: việc xong · cột ngọc: phút bế quan"
       >
         <div className="flex h-40 items-end gap-[3px]">
@@ -208,9 +223,11 @@ export default function StatsView() {
           ))}
         </div>
       </Section>
+      )}
 
+      {tab === 'tu-thoi-quen' && (
       <div className="grid gap-4 lg:grid-cols-2">
-        <Section icon={Target} title="Theo mức ưu tiên">
+        <Section icon={Target} title="Theo mức khẩn">
           <div className="space-y-2.5">
             {byPriority.map((r) => (
               <Row
@@ -242,9 +259,11 @@ export default function StatsView() {
           </div>
         </Section>
       </div>
+      )}
 
+      {tab === 'tu-nguyen' && (
       <div className="grid gap-4 lg:grid-cols-2">
-        <Section icon={Target} title="Tiến độ theo mục tiêu">
+        <Section icon={Target} title="Tiến độ đại nguyện">
           {data.goals.length === 0 ? (
             <EmptyState
               icon={Target}
@@ -281,7 +300,7 @@ export default function StatsView() {
           )}
         </Section>
 
-        <Section icon={Tag} title="Nhãn được dùng nhiều">
+        <Section icon={Tag} title="Nhãn thường dùng">
           {tagRows.length === 0 ? (
             <EmptyState icon={Tag} title="Chưa gắn nhãn nào" />
           ) : (
@@ -298,6 +317,7 @@ export default function StatsView() {
           )}
         </Section>
       </div>
+      )}
     </div>
   );
 }

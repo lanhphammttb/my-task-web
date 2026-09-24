@@ -1,9 +1,8 @@
 /**
  * Clean transparent UI illustrations without redrawing them.
  *
- * - preserves the current files in art-src before the first write;
+ * - uses the cleaned master files in art-src;
  * - snaps nearly-clear/solid alpha to 0/255, removing compression haze;
- * - removes the rectangular edge haze from the high-grade pill;
  * - applies a very mild output sharpen for small UI rendering.
  *
  * Every pass starts from the preserved originals, so reruns are deterministic.
@@ -19,7 +18,6 @@ const BACKUP = 'art-src';
 const GROUPS = ['empty', 'pill', 'section'];
 
 function cleanAlpha(raw, width, height, relative) {
-  const specialPill = relative === 'pill/thuong.png';
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       const i = (y * width + x) * 4;
@@ -28,22 +26,6 @@ function cleanAlpha(raw, width, height, relative) {
       // Remove nearly invisible residue and restore fully solid subject pixels.
       if (alpha <= 5) alpha = 0;
       else if (alpha >= 248) alpha = 255;
-
-      if (specialPill && alpha > 0) {
-        // The source glow was painted on a square layer. Fade only the outer
-        // ellipse so the orb, lotus base and luminous rings stay untouched.
-        const dx = (x + 0.5 - width / 2) / (width / 2);
-        const dy = (y + 0.5 - height / 2) / (height / 2);
-        const radius = Math.sqrt(dx * dx + dy * dy);
-        const start = 0.76;
-        const end = 0.99;
-        if (radius >= end) alpha = 0;
-        else if (radius > start) {
-          const t = (radius - start) / (end - start);
-          const smooth = t * t * (3 - 2 * t);
-          alpha = Math.round(alpha * (1 - smooth));
-        }
-      }
 
       raw[i + 3] = alpha;
       if (alpha === 0) {
@@ -68,12 +50,12 @@ for (const group of GROUPS) {
     const backup = path.join(BACKUP, group, file);
     if (!fs.existsSync(backup)) fs.copyFileSync(input, backup);
 
-    const relative = `${group}/${file}`;
     const { data, info } = await sharp(backup)
+      .resize(512, 512, { fit: 'fill', kernel: sharp.kernel.lanczos3 })
       .ensureAlpha()
       .raw()
       .toBuffer({ resolveWithObject: true });
-    cleanAlpha(data, info.width, info.height, relative);
+    cleanAlpha(data, info.width, info.height);
 
     const temporary = `${input}.cleaning.png`;
     await sharp(data, {
@@ -87,4 +69,4 @@ for (const group of GROUPS) {
   }
 }
 
-console.log(`Đã làm sạch ${changed} ảnh UI; bản trước sửa nằm trong ${BACKUP}/.`);
+console.log(`Đã xuất ${changed} ảnh UI từ bản tách nền sạch trong ${BACKUP}/.`);

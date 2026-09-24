@@ -165,7 +165,7 @@ describe('Ứng dụng web', () => {
 
     openPanel('Tu Hành Lục');
     expect(await screen.findByRole('heading', { name: 'Tu Hành Lục' })).toBeDefined();
-    expect(await screen.findByText('Tỷ lệ hoàn thành')).toBeDefined();
+    expect(await screen.findByText('Đạo tâm')).toBeDefined();
   });
 
   it('mở được bảng Tiên Lộ với bậc thang cảnh giới và kỳ ngộ', async () => {
@@ -176,6 +176,9 @@ describe('Ứng dụng web', () => {
     // Bậc thang phải liệt kê đủ từ cảnh giới đầu tới đích phi thăng.
     expect((await screen.findAllByText('Luyện Khí')).length).toBeGreaterThan(0);
     expect(await screen.findByText('Phi Thăng')).toBeDefined();
+
+    // Thành tựu nằm ở tab riêng từ khi Tiên Lộ bỏ lối cuộn một trang dài.
+    fireEvent.click(await screen.findByRole('tab', { name: 'Thành tựu' }));
     // Dữ liệu mẫu đã có việc hoàn thành nên kỳ ngộ đầu tiên phải được mở.
     expect(await screen.findByText('Nhập Đạo')).toBeDefined();
     expect(await screen.findByText('Toạ Vong Chi Cảnh')).toBeDefined();
@@ -258,12 +261,11 @@ describe('Ứng dụng web', () => {
       expect(document.getElementById(tab.getAttribute('aria-controls')!)).not.toBeNull();
     }
     openPanel('Tiên Lộ');
-    const path = await screen.findByRole('navigation', { name: 'Các mục trong Tiên Lộ' });
-    for (const link of within(path).getAllByRole('link')) {
-      expect(document.getElementById(link.getAttribute('href')!.slice(1))).not.toBeNull();
-    }
-    fireEvent.click(within(path).getByRole('link', { name: 'Thám hiểm' }));
+    const path = await screen.findByRole('tablist', { name: 'Các mục trong Tiên Lộ' });
+    fireEvent.click(within(path).getByRole('tab', { name: 'Thám hiểm' }));
     expect(screen.getByRole('heading', { name: 'Thám hiểm' })).toBeDefined();
+    // Đổi tab là mục cũ rời hẳn DOM, y như Động Phủ.
+    expect(document.getElementById('awards-realm')).toBeNull();
   });
 
   it('tìm kiếm mở bảng tra cứu và lọc đúng nhiệm vụ theo tên', async () => {

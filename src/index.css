@@ -730,3 +730,67 @@
   .sanctuary-record { font-size: 10px; margin-top: 12px; }
   .journal-chapters button { padding: 10px 5px; }
 }
+
+/*
+ * Hành Sự Đường trên điện thoại.
+ *
+ * Cả khối `.sanctuary*` trước đây không có lấy một media query, nên trên màn
+ * 375 nó giữ nguyên số đo của màn rộng: dải tranh cao 240px, chữ tiêu đề 23px,
+ * lề 28px, và ba tab con mỗi cái hai dòng - cộng lại hơn 400px chắn trước danh
+ * sách việc, tức là thứ cần làm bị đẩy khỏi màn hình ngay khi vừa mở ra.
+ *
+ * Giữ lại tranh và câu tiêu đề (đó là không khí), bỏ những dòng chỉ giải thích
+ * lại thứ đang nhìn thấy.
+ */
+@media (max-width: 640px) {
+  .sanctuary-scene {
+    min-height: 146px;
+  }
+  .sanctuary-scene-copy {
+    padding: 14px;
+  }
+  /* Lặp đúng tiêu đề bảng ngay phía trên. */
+  .sanctuary-eyebrow {
+    display: none;
+  }
+  .sanctuary-scene h2 {
+    font-size: 18px;
+    margin: 0 0 6px;
+  }
+  /* "Đọc sách, vận động, chăm sóc bản thân..." - kể ví dụ, không phải việc. */
+  .sanctuary-scene-copy > p {
+    display: none;
+  }
+  .sanctuary-record {
+    margin-top: 10px;
+    font-size: 10.5px;
+  }
+  .sanctuary-seals {
+    right: 10px;
+    bottom: 10px;
+    width: auto;
+    gap: 4px;
+  }
+  .sanctuary-seals > span {
+    width: 26px;
+    height: 26px;
+  }
+  .sanctuary-seals small {
+    display: none;
+  }
+  /* Phụ đề dưới mỗi tab làm tab đang chọn cao gấp đôi và xuống ba dòng. */
+  .journal-chapters button {
+    padding: 0 4px;
+    min-height: 2.75rem;
+  }
+  .journal-chapters strong {
+    font-size: 12px;
+  }
+  .journal-chapters span {
+    display: none;
+  }
+  .sanctuary-journal {
+    padding: 12px;
+    background-image: none;
+  }
+}
