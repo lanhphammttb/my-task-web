@@ -48,14 +48,50 @@ export default function CaveRoom({
   const beast = owned ? beastById(owned.id) : undefined;
   const the = theDaoNhan(data, tab);
 
+  /*
+    Dải chữ dựng riêng vì hai cỡ màn đặt nó ở HAI CHỖ khác nhau.
+
+    Màn rộng: đè lên đáy tranh, đẹp và không tốn thêm chiều cao.
+    Màn hẹp: nằm hẳn dưới khung phòng. Ở đó tranh chỉ cao hơn hai trăm px, mà
+    đồ đạc và đạo nhân đều đứng ở khoảng 80-88% chiều cao - tức là đúng dải bị
+    chữ che. Che mất đồ đạc thì căn phòng không còn lý do tồn tại.
+  */
+  const chu = (
+    <>
+      <div className="min-w-0 text-left">
+        <p className="font-title text-gold-bright text-[11px] font-bold tracking-[0.18em] uppercase">
+          Bậc {bac.level} · {bac.name}
+        </p>
+        <p className="text-[10.5px] text-white/70">
+          {sang}/{SO_DEN} đèn sáng · {do_.length} món trong phòng
+        </p>
+      </div>
+      {/* Nói thẳng món kế tiếp sắm được là gì: đó là lý do để cày tiếp. */}
+      {sapCo && (
+        <p className="shrink-0 text-left text-[10.5px] text-white/70 sm:text-right">
+          Sắp có: <b className="text-gold-bright">{sapCo.ten}</b>
+          <span className="text-white/55"> · {sapCo.dieuKien}</span>
+        </p>
+      )}
+      {!sapCo && sau && (
+        <p className="shrink-0 text-left text-[10.5px] text-white/70 sm:text-right">
+          Bậc sau: <b className="text-gold-bright">{sau.name}</b>
+        </p>
+      )}
+    </>
+  );
+
   return (
     <section
       aria-label={`Động phủ bậc ${bac.level}: ${bac.name}`}
+      className="border-gold/30 overflow-hidden rounded-xl border shadow-[0_10px_40px_rgba(0,0,0,0.5)]"
+    >
+    <div
       /* Điện thoại dùng khung 4:3 chứ không 16:9: rộng 292px thì 16:9 chỉ cao
          164px, mà dải chữ dưới đáy đã ăn mất 45px - còn lại không đủ thấy sàn,
          tức là không thấy đồ đạc lẫn đạo nhân, đúng thứ căn phòng sinh ra để
          khoe. Màn rộng thì 16:9 mới đẹp vì bề ngang đã đủ lớn. */
-      className="border-gold/30 relative aspect-[4/3] w-full overflow-hidden rounded-xl border shadow-[0_10px_40px_rgba(0,0,0,0.5)] sm:aspect-video"
+      className="relative aspect-[4/3] w-full overflow-hidden sm:aspect-video"
     >
       {/* --------------------------------------------------------- nền phòng */}
       {/* Chưa có nền 16:9 riêng thì lùi về tranh vuông của bậc đó: bị cắt trên
@@ -176,29 +212,14 @@ export default function CaveRoom({
         />
       )}
 
-      {/* --------------------------------------------------------- lớp chữ */}
-      <div className="absolute inset-x-0 bottom-0 flex flex-col gap-0.5 bg-gradient-to-t from-black/80 to-transparent p-2.5 sm:flex-row sm:items-end sm:justify-between sm:gap-3 sm:p-3">
-        <div className="min-w-0 text-left">
-          <p className="font-title text-gold-bright text-[11px] font-bold tracking-[0.18em] uppercase">
-            Bậc {bac.level} · {bac.name}
-          </p>
-          <p className="text-[10.5px] text-white/70">
-            {sang}/{SO_DEN} đèn sáng · {do_.length} món trong phòng
-          </p>
-        </div>
-        {/* Nói thẳng món kế tiếp sắm được là gì: đó là lý do để cày tiếp. */}
-        {sapCo && (
-          <p className="shrink-0 text-left text-[10.5px] text-white/70 sm:text-right">
-            Sắp có: <b className="text-gold-bright">{sapCo.ten}</b>
-            <span className="text-white/55"> · {sapCo.dieuKien}</span>
-          </p>
-        )}
-        {!sapCo && sau && (
-          <p className="shrink-0 text-left text-[10.5px] text-white/70 sm:text-right">
-            Bậc sau: <b className="text-gold-bright">{sau.name}</b>
-          </p>
-        )}
+      {/* Màn rộng: chữ đè lên đáy tranh */}
+      <div className="absolute inset-x-0 bottom-0 hidden bg-gradient-to-t from-black/80 to-transparent p-3 sm:flex sm:items-end sm:justify-between sm:gap-3">
+        {chu}
       </div>
+    </div>
+
+    {/* Màn hẹp: chữ nằm hẳn dưới khung phòng, không che đồ đạc */}
+    <div className="flex flex-col gap-0.5 bg-black/55 p-2.5 sm:hidden">{chu}</div>
     </section>
   );
 }
