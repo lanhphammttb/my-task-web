@@ -223,18 +223,6 @@
 }
 
 @layer base {
-  /* Khoảng lùi của khu giữa hub: máy hẹp có hai hàng icon nằm dưới HUD, máy
-     rộng thì hai cột icon nằm hai bên nên không cần lùi. */
-  :root {
-    --rail-offset: 192px;
-  }
-
-  @media (min-width: 1024px) {
-    :root {
-      --rail-offset: 8px;
-    }
-  }
-
   * {
     @apply border-border outline-ring/50;
   }
@@ -680,9 +668,6 @@
 
 /* A compact, scrollable hub keeps every destination reachable on short screens. */
 .hub-scroll { scrollbar-width: thin; scrollbar-color: var(--gold) transparent; }
-.destination-card { height: clamp(116px, 15vh, 168px); background: #10202a; transition: border-color 200ms, box-shadow 200ms; }
-.destination-card:hover { border-color: var(--gold-bright); box-shadow: 0 5px 24px #0006, 0 0 18px #d9b06118; }
-.world-destinations { margin-top: 8px; }
 
 .practice-card { background: color-mix(in oklab, var(--background) 92%, transparent); box-shadow: inset 3px 0 0 var(--gold), 0 8px 32px #0003; backdrop-filter: blur(12px); }
 /* Nested backdrop blurs over the WebGL canvas produced rectangular light bands

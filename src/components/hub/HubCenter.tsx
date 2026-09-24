@@ -1,9 +1,8 @@
-import WorldDestinations from "./WorldDestinations";
 import NextPractice from "./NextPractice";
 import type { Task, ViewKey } from "../../types";
 import { useState } from "react";
 import { useCountUp } from "../../lib/useCountUp";
-import { ChevronRight, Quote, Sparkles, Zap } from "lucide-react";
+import { Quote, Sparkles, Zap } from "lucide-react";
 import { useApp } from "../../store/AppStore";
 import { ASCENSION_INDEX, REALMS, cultivationOf } from "../../lib/cultivation";
 import { activeBeast, progressOf } from "../../lib/economy";
@@ -30,7 +29,14 @@ interface Props {
  * một vòng tu vi lớn ở giữa, nút hành động chính ngay dưới, và các chỉ số ngày
  * hôm nay bám quanh. Mọi thứ khác chỉ là icon quanh rìa màn hình.
  */
-export default function HubCenter({ onTribulation, onFocus, onAwaken, onExplore, onFocusTask, onNew }: Props) {
+export default function HubCenter({
+  onTribulation,
+  onFocus,
+  onAwaken,
+  onExplore,
+  onFocusTask,
+  onNew,
+}: Props) {
   const { data } = useApp();
   const progress = progressOf(data);
   const c = cultivationOf(progress.xp);
@@ -55,20 +61,25 @@ export default function HubCenter({ onTribulation, onFocus, onAwaken, onExplore,
   const ready = progress.readyForTribulation;
 
   return (
-    <div className="pointer-events-none flex min-h-0 flex-col items-center justify-center gap-3 px-4 py-2 text-center">
+    <main
+      aria-label="Sảnh tu luyện"
+      className="cultivation-hub pointer-events-none flex min-h-0 flex-col items-center justify-center text-center"
+    >
+      <h1 className="sr-only">Sơn Môn</h1>
       {/* ---------------------------------------------------- châm ngôn tiền bối */}
       {/* Châm ngôn tiền bối. Có chân dung thì xếp ngang, chưa có thì canh giữa
           như cũ - ArtImage tự ẩn nên layout không bị hụt chỗ. */}
       <blockquote
+        aria-label="Lời tiền bối"
         className={cn(
-          "glass-panel pointer-events-auto mx-auto max-w-md rounded-xl px-4 py-2.5",
+          "elder-teaching glass-panel pointer-events-auto mx-auto rounded-xl",
           showPortrait && "flex items-center gap-3 text-left",
         )}
       >
         {showPortrait ? (
           <img
             src={portrait}
-            alt=""
+            alt={`Chân dung ${aph.elder}`}
             onError={() => setPortraitOk(false)}
             className="border-gold/50 size-12 shrink-0 rounded-full border object-cover shadow-[0_0_14px_var(--gold-glow)]"
           />
@@ -82,6 +93,9 @@ export default function HubCenter({ onTribulation, onFocus, onAwaken, onExplore,
           <footer className="text-gold/80 font-title mt-1 text-[10px] font-bold tracking-widest uppercase">
             {aph.elder}
           </footer>
+          <span className="text-muted-foreground mt-1 block text-[10px]">
+            {aph.title}
+          </span>
         </span>
       </blockquote>
 
@@ -157,16 +171,7 @@ export default function HubCenter({ onTribulation, onFocus, onAwaken, onExplore,
             <Sparkles className="size-4" />
             Khai quang linh căn
           </button>
-        ) : (
-          <button
-            type="button"
-            onClick={onFocus}
-            className="btn-game px-6 py-2.5 text-[13px]"
-          >
-            Bế quan tu luyện
-            <ChevronRight className="size-4" />
-          </button>
-        )}
+        ) : null}
 
         {/* Việc phụ vẫn nhắc, nhưng không tranh chỗ với nút chính */}
         {ready && !data.root && (
@@ -192,7 +197,7 @@ export default function HubCenter({ onTribulation, onFocus, onAwaken, onExplore,
       <div className="pointer-events-auto flex flex-wrap items-center justify-center gap-2">
         <Stat
           label="Nhiệm vụ"
-          value={`${stats.done}/${Math.max(stats.total, target)}`}
+          value={`${stats.done}/${stats.total}`}
           done={stats.done >= target}
         />
         <Stat
@@ -202,9 +207,13 @@ export default function HubCenter({ onTribulation, onFocus, onAwaken, onExplore,
         />
         <Stat label="Chuỗi ngày" value={`${streak}`} done={streak > 0} />
       </div>
-      <NextPractice onFocus={onFocusTask} onResume={onFocus} onNew={onNew} onReview={() => onExplore("stats")} />
-      <WorldDestinations onExplore={onExplore} />
-    </div>
+      <NextPractice
+        onFocus={onFocusTask}
+        onResume={onFocus}
+        onNew={onNew}
+        onReview={() => onExplore("stats")}
+      />
+    </main>
   );
 }
 

@@ -1,3 +1,9 @@
+import { configure } from '@testing-library/dom';
+
+// Whole-app tests load views on demand and wait for real exit animations.
+// Leave room for those transitions when the suite runs on a busy machine.
+configure({ asyncUtilTimeout: 5000 });
+
 /**
  * Node 25 tự gắn một `localStorage` thử nghiệm rỗng vào global, đè lên bản của
  * jsdom nên mọi lời gọi getItem/setItem đều hỏng. Ta cấp một Storage trong bộ

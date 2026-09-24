@@ -15,14 +15,9 @@ import { todayKey } from "./lib/date";
 import { dayStats, sortTasks } from "./lib/stats";
 import { AppProvider, useApp } from "./store/AppStore";
 import { cultivationOf } from "./lib/cultivation";
-import { effectiveXp, progressOf } from "./lib/economy";
-import { achievementStates, isPerfectDay } from "./lib/achievements";
+import { effectiveXp } from "./lib/economy";
+import { isPerfectDay } from "./lib/achievements";
 import { chestsForDay, pendingChests } from "./lib/chest";
-import { questStates } from "./lib/quests";
-import { missionState } from "./lib/sect";
-import { expeditionState } from "./lib/expedition";
-import { verifiedFocusMinutes, verifiedTaskCount } from "./lib/economy";
-import { PILL_ORDER } from "./lib/pills";
 import CelebrationLayer from "./components/CelebrationLayer";
 import SettingsDialog from "./components/SettingsDialog";
 import TribulationDialog from "./components/TribulationDialog";
@@ -34,8 +29,7 @@ import HubScene from "./components/hub/HubScene";
 import { SCENE_FALLBACK } from "./lib/realmArt";
 import HeaderHUD from "./components/hub/HeaderHUD";
 import HubCenter from "./components/hub/HubCenter";
-import HubIcon from "./components/hub/HubIcon";
-import SideRail from "./components/hub/SideRail";
+import WorldRail from "./components/hub/WorldRail";
 import OverlayPanel from "./components/hub/OverlayPanel";
 import WorkSanctuary from "./components/hub/WorkSanctuary";
 import FooterMenu from "./components/hub/FooterMenu";
@@ -43,6 +37,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { skyForRealm } from "./lib/sky";
 import { cn } from "@/lib/utils";
+import { hasKeyboardLayer } from "./lib/keyboard";
 const TodayView = lazy(() => import("./views/TodayView"));
 const WeekView = lazy(() => import("./views/WeekView"));
 const MonthView = lazy(() => import("./views/MonthView"));
@@ -95,7 +90,7 @@ const PANEL: Record<ViewKey, PanelMeta> = {
   },
   awards: {
     title: "Tiên Lộ",
-    subtitle: "Chín cảnh giới và những kỳ ngộ đã mở",
+    subtitle: "Cảnh giới, thành tựu, tông môn và thám hiểm",
     banner: "/art/banner/awards.jpg",
   },
   stats: {
@@ -129,6 +124,7 @@ function Shell() {
   const [tribulationOpen, setTribulationOpen] = useState(false);
   const { pickTask: setFocusTaskId } = useFocusTimer();
   const [query, setQuery] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
 
   const open = useCallback((v: ViewKey, at?: string) => {
     setQuery("");
@@ -144,16 +140,19 @@ function Shell() {
 
   const closePanel = useCallback(() => {
     setView(null);
+    setAnchor(undefined);
     setQuery("");
   }, []);
 
   const openNew = useCallback(() => {
+    if (view !== "today" && view !== "week" && view !== "month") setDate(todayKey());
     setEditorGoalId(undefined);
     setEditorTask(null);
     setEditorOpen(true);
-  }, []);
+  }, [view]);
 
   const openEdit = useCallback((t: Task) => {
+    setEditorGoalId(undefined);
     setEditorTask(t);
     setEditorOpen(true);
   }, []);
@@ -181,10 +180,12 @@ function Shell() {
         !!el &&
         (["INPUT", "TEXTAREA", "SELECT"].includes(el.tagName) ||
           el.isContentEditable);
-      if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
+      if (typing || e.metaKey || e.ctrlKey || e.altKey || e.repeat ||
+        hasKeyboardLayer()) return;
 
       if (e.key === "/") {
         e.preventDefault();
+        setSearchOpen(true);
         document.getElementById("search-input")?.focus();
         return;
       }
@@ -230,19 +231,12 @@ function Shell() {
     celebration?.kind === "realm-up" || celebration?.kind === "ascension";
 
   const isDark = data.settings.theme === "dark";
-  const progress = progressOf(data);
   const c = cultivationOf(effectiveXp(data));
   const searching = query.trim().length > 0;
   const panelOpen = searching || view !== null;
 
   // Chỉ số nhỏ gắn lên icon: cho người dùng biết chỗ nào đang cần ghé.
   const stats = dayStats(data.tasks, data.sessions, todayKey());
-  const questsLeft = questStates(data, todayKey()).filter(
-    (q) => !q.done,
-  ).length;
-  const unlocked = achievementStates(data).filter((a) => a.unlocked).length;
-  const pills = PILL_ORDER.reduce((s, g) => s + (data.pills[g] ?? 0), 0);
-  const beastCount = data.beasts.length;
 
   /**
    * Chấm báo trên icon Tiên Lộ.
@@ -252,11 +246,6 @@ function Shell() {
    * Thế thì nó là cái bẫy chứ không phải công cụ cam kết. Báo khi sắp hết hạn,
    * khi đã đạt để vào lấy thưởng, và khi đoàn thám hiểm đã về tới nơi.
    */
-  const DAY_MS = 86400000;
-  const taskCount = verifiedTaskCount(data);
-  const mission = data.mission
-    ? missionState(data.mission, taskCount, verifiedFocusMinutes(data))
-    : null;
   // Hòm kỳ ngộ nằm trong Nhật Khoá. Không báo ra ngoài thì xong việc rồi vẫn
   // phải mở bảng mới biết có hòm - mà cái hay của nó nằm đúng ở chỗ biết ngay
   // là có thứ đang chờ mình.
@@ -271,9 +260,6 @@ function Shell() {
       ),
     ) > 0;
 
-  const pathAlert =
-    (!!mission && (mission.met || mission.msLeft < DAY_MS)) ||
-    (!!data.expedition && !!expeditionState(data.expedition, taskCount)?.ready);
 
   return (
     <div
@@ -304,88 +290,21 @@ function Shell() {
         <button className="underline" onClick={retrySave}>Thử lưu lại</button>
       </div>}
 
-      {/* ----------------------------------------------------- hai cột icon */}
-      <SideRail side="left" label="Hoạt động tu luyện" collapsed={panelOpen}>
-        <HubIcon
-          icon="nhat-khoa"
-          label="Tông Khoá"
-          badge={questsLeft}
-          active={view === "today" && anchor === "quests"}
-          onClick={() => { setDate(todayKey()); open("today", "quests"); }}
-        />
-        <HubIcon
-          icon="tien-lo"
-          label="Tiên Lộ"
-          badge={unlocked}
-          alert={pathAlert}
-          active={view === "awards"}
-          onClick={() => toggle("awards")}
-        />
-        <HubIcon
-          icon="thong-ke"
-          label="Tu Hành Lục"
-          active={view === "stats"}
-          onClick={() => toggle("stats")}
-        />
-      </SideRail>
-
-      <SideRail
-        side="right"
-        label="Đạo thể và tài nguyên"
-        collapsed={panelOpen}
-      >
-        <HubIcon
-          icon="linh-can"
-          label="Linh Căn"
-          alert={!data.root}
-          active={view === "cave" && anchor === "cave-root"}
-          onClick={() => open("cave", "cave-root")}
-        />
-        <HubIcon
-          icon="linh-thu"
-          label="Linh Thú"
-          badge={beastCount}
-          active={view === "cave" && anchor === "cave-beast"}
-          onClick={() => open("cave", "cave-beast")}
-        />
-        <HubIcon
-          icon="dan-duong"
-          label="Đan Đường"
-          badge={pills}
-          alert={progress.readyForTribulation && pills === 0}
-          active={view === "cave" && anchor === "cave-pill"}
-          onClick={() => open("cave", "cave-pill")}
-        />
-        <HubIcon
-          icon="dong-phu"
-          label="Động Phủ"
-          // Công pháp là lựa chọn đáng giá nhất trong động phủ và lần đầu chọn
-          // lại miễn phí, nhưng nằm lẫn giữa tám mục nên người mới không biết
-          // mà vào. Báo cho tới khi họ chọn xong, giống hệt chấm báo linh căn.
-          alert={!data.technique}
-          active={view === "cave" && !anchor}
-          onClick={() => toggle("cave")}
-        />
-      </SideRail>
-
       {/* --------------------------------------------------- khu trung tâm */}
       <div
         // inert: khi bảng đang mở, hub phía sau phải rời hẳn khỏi luồng Tab và
         // khỏi cây trợ năng, không chỉ mờ đi.
         inert={panelOpen}
-        // Máy hẹp: hai hàng icon nằm dưới HUD nên khu giữa phải lùi thêm.
         style={{
-          top: "calc(var(--hud-h, 92px) + var(--rail-offset, 192px))",
+          top: "calc(var(--hud-h, 92px) + 12px)",
           bottom: "calc(var(--footer-h, 86px) + 10px)",
         }}
         className={cn(
-          "hub-scroll absolute inset-x-0 z-10 flex flex-col items-center overflow-y-auto overscroll-contain transition-opacity duration-300 lg:right-24 lg:left-24",
+          "hub-scroll absolute inset-x-0 z-10 flex flex-col items-center overflow-y-auto overscroll-contain transition-opacity duration-300",
           panelOpen && "pointer-events-none opacity-0",
         )}
       >
-        {/* my-auto thay cho items-center: căn giữa mà vẫn cuộn được tới đỉnh
-            khi màn hình thấp, thay vì bị cắt mất phần trên. */}
-        <div className="my-auto w-full shrink-0">
+        <div className="mx-auto my-auto w-full max-w-5xl shrink-0">
           <HubCenter
             onTribulation={() => setTribulationOpen(true)}
             onFocusTask={startFocus}
@@ -396,6 +315,12 @@ function Shell() {
           />
         </div>
       </div>
+
+      {/* Dãy nút tròn bám mép phải.
+          Đặt NGOÀI khu cuộn để nó đứng yên khi nội dung cuộn, và LUÔN hiện kể
+          cả lúc bảng đang mở: ẩn đi thì muốn sang nơi khác phải đóng bảng rồi
+          mở lại, đúng kiểu lạc đường mà cả đợt sửa này sinh ra để dẹp. */}
+      <WorldRail view={view} onSelect={(v, at) => { if (v === "today") setDate(todayKey()); open(v, at); }} />
 
       {/* ------------------------------------------------------ bảng phủ */}
       <AnimatePresence mode="wait">
@@ -472,7 +397,7 @@ function Shell() {
               <GoalsView onEdit={openEdit} onFocus={startFocus} onAddTask={(goalId) => { setEditorGoalId(goalId); setDate(todayKey()); setEditorTask(null); setEditorOpen(true); }} />
             )}
             {view === "focus" && (
-              <FocusView />
+              <FocusView onNew={openNew} />
             )}
             {view === "cave" && <CaveView />}
             {view === "awards" && (
@@ -486,7 +411,10 @@ function Shell() {
       </AnimatePresence>
 
       <FooterMenu
-        view={searching ? null : view}
+        view={view}
+        searching={searching}
+        searchOpen={searchOpen}
+        onSearchOpenChange={setSearchOpen}
         alerts={{ today: chestAlert }}
         onSelect={(v) => { if (v === null) closePanel(); else { if (v === "today") setDate(todayKey()); open(v); } }}
         onNew={openNew}

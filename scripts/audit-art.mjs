@@ -23,6 +23,6 @@ for (const file of files) {
   } catch (e) { invalid.push({file,error:e.message}); }
  } else if (/\.(mp4|mp3|webm|ogg)$/i.test(file)) media.push({file,bytes});
 }
-const report = {checkedAt:new Date().toISOString(),images:images.length,imageBytes:images.reduce((s,x)=>s+x.bytes,0),media,missing,invalid,largestImages:images.sort((a,b)=>b.bytes-a.bytes).slice(0,8),scope:'All image files decoded; literal source references checked. Dynamic URLs additionally verified through browser navigation.'};
+const report = {checkedAt:new Date().toISOString(),images:images.length,imageBytes:images.reduce((s,x)=>s+x.bytes,0),media,missing,invalid,largestImages:images.sort((a,b)=>b.bytes-a.bytes).slice(0,8),scope:'All image files decoded; literal source references checked. Dynamic URLs and browser rendering require a separate browser check.'};
 console.log(JSON.stringify(report,null,2));
 if (missing.length || invalid.length) process.exitCode=1;

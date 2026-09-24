@@ -73,8 +73,12 @@ export default function ExpeditionSection() {
       title="Thám hiểm"
       subtitle={state ? `Đang ở ${state.site.name}` : "Chưa lên đường"}
     >
+      {/* Tấm `world/expedition-gate-v1` vẽ đúng cảnh cổng bí cảnh mở ra giữa
+          mây núi, mà từ lúc làm xong chưa chỗ nào dùng tới. Đặt đúng chỗ của
+          nó; thiếu file thì lùi về tấm cũ. */}
       <SectionArt
-        src="/art/section/bi-canh.png"
+        src="/art/world/expedition-gate-v1.webp"
+        fallback="/art/section/bi-canh.png"
         caption="Cửa bí cảnh"
         tone="#5aa9c9"
       >

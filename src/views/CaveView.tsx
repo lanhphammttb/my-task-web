@@ -27,6 +27,7 @@ import AlchemySection from '../components/cave/AlchemySection';
 import RootRefineSection from '../components/cave/RootRefineSection';
 import CaveUpgradeSection from '../components/cave/CaveUpgradeSection';
 import { cn } from '@/lib/utils';
+import SectionLinks from '../components/SectionLinks';
 
 /**
  * Động Phủ: nơi ở của người tu. Chứa linh căn, túi linh thạch và đàn linh thú.
@@ -55,8 +56,19 @@ export default function CaveView() {
       {/* Tiêu đề "Động Phủ" đã nằm ở h1 của bảng phủ, không lặp lại lần nữa. */}
       <p className="text-muted-foreground text-xs">
         Linh căn quyết định tốc độ hấp thu, công pháp quyết định lối tu, linh điền nuôi thuốc cho lò
-        đan. Linh thạch chỉ đến từ việc bạn thật sự làm xong.
+        đan. Dùng linh thạch tích luỹ để nuôi dưỡng và nâng cấp.
       </p>
+
+      <SectionLinks label="Các mục trong Động Phủ" items={[
+        { id: 'cave-stone', label: 'Linh thạch' },
+        { id: 'cave-root', label: 'Linh căn' },
+        { id: 'cave-technique', label: 'Công pháp' },
+        { id: 'cave-field', label: 'Linh điền' },
+        { id: 'cave-pill', label: 'Đan đường' },
+        ...(root ? [{ id: 'cave-refine', label: 'Tẩy tuỷ' }] : []),
+        { id: 'cave-home', label: 'Nâng cấp nơi ở' },
+        { id: 'cave-beast', label: 'Linh thú' },
+      ]} />
 
       {/* ------------------------------------------------------ túi linh thạch */}
       <Section id="cave-stone" icon={Gem} title="Túi linh thạch" tone="accent">
@@ -363,8 +375,8 @@ export default function CaveView() {
 
       <p className="text-muted-foreground flex items-start gap-2 text-[11px]">
         <Mountain className="mt-0.5 size-3.5 shrink-0" />
-        Mọi linh thạch đều sinh ra từ nhiệm vụ đã hoàn thành, phiên bế quan và nhật khoá — không có
-        cách nào khác để có chúng.
+        Làm nhiệm vụ, tập trung và hoàn thành nhật khoá để tích luỹ linh thạch.
+        Tông môn, thám hiểm và kỳ ngộ cũng có thể mang về phần thưởng.
       </p>
     </div>
   );

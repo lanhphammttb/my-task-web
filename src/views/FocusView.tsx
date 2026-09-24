@@ -30,10 +30,22 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
-export default function FocusView() {
+export default function FocusView({ onNew }: { onNew: () => void }) {
   const { data, setStatus } = useApp();
-  const { focusLength, dailyFocusTarget } = data.settings;
-  const { mode, seconds, running, rounds, totalSeconds, taskId, pickTask: onPickTask, reset, toggle, stopEarly } = useFocusTimer();
+  const { dailyFocusTarget } = data.settings;
+  const {
+    mode,
+    seconds,
+    running,
+    inSession,
+    rounds,
+    totalSeconds,
+    taskId,
+    pickTask: onPickTask,
+    reset,
+    toggle,
+    stopEarly,
+  } = useFocusTimer();
   const task = data.tasks.find((t) => t.id === taskId);
   const candidates = sortTasks(
     data.tasks.filter((t) => t.status !== "done" && t.date <= todayKey()),
@@ -47,7 +59,10 @@ export default function FocusView() {
       <div>
         <h2 className="text-lg font-bold tracking-tight">Bế quan tu luyện</h2>
         <p className="text-muted-foreground text-xs">
-          Nhập định {focusLength} phút với đúng một việc. Đồng hồ tiếp tục chạy khi bạn xem lịch hoặc chuyển tab.
+          {isWork
+            ? `Nhập định ${totalSeconds / 60} phút với đúng một việc.`
+            : `Điều tức ${totalSeconds / 60} phút trước khi tiếp tục.`}{" "}
+          Đồng hồ tiếp tục chạy khi bạn xem lịch hoặc chuyển tab.
         </p>
       </div>
 
@@ -60,7 +75,7 @@ export default function FocusView() {
             : "border-success/35 bg-gradient-to-br from-success/14 to-card",
         )}
       >
-        <div className="relative flex flex-col items-center gap-7 sm:flex-row sm:items-center sm:gap-9">
+        <div className="relative flex flex-col items-center gap-7 lg:flex-row lg:items-center lg:gap-9">
           {/* Đồng hồ ôm quanh đạo nhân đang ngồi thiền trong động phủ */}
           <div className="border-border relative aspect-[4/3] w-full shrink-0 overflow-hidden rounded-xl border sm:aspect-auto sm:h-[288px] sm:w-[340px]">
             <MeditationScene
@@ -111,8 +126,12 @@ export default function FocusView() {
                   ? "Đang nhập định"
                   : "Đang điều tức"
                 : isWork
-                  ? "Sẵn sàng nhập định"
-                  : "Sẵn sàng điều tức"}
+                  ? inSession
+                    ? "Đang tạm dừng"
+                    : "Sẵn sàng nhập định"
+                  : inSession
+                    ? "Tạm dừng điều tức"
+                    : "Sẵn sàng điều tức"}
             </span>
           </div>
 
@@ -120,6 +139,7 @@ export default function FocusView() {
             <div className="grid gap-2">
               <Label>Nhiệm vụ đang làm</Label>
               <Select
+                disabled={inSession}
                 value={taskId ?? "free"}
                 onValueChange={(v) => onPickTask(v === "free" ? undefined : v)}
               >
@@ -128,6 +148,14 @@ export default function FocusView() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="free">Tập trung tự do</SelectItem>
+                  {task &&
+                    !candidates.some(
+                      (candidate) => candidate.id === task.id,
+                    ) && (
+                      <SelectItem value={task.id}>
+                        {task.title} · đã chọn
+                      </SelectItem>
+                    )}
                   {candidates.map((t) => (
                     <SelectItem key={t.id} value={t.id}>
                       {t.title}
@@ -159,40 +187,39 @@ export default function FocusView() {
                     </MetaChip>
                   )}
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="gap-1.5"
-                  onClick={() => {
-                    if (setStatus(task.id, "done")) {
-                      stopEarly();
-                      onPickTask(undefined);
-                    }
-                  }}
-                >
-                  <CheckCircle2 className="size-3.5" /> Đánh dấu hoàn thành
-                </Button>
+                {task.status !== "done" && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5"
+                    onClick={() => {
+                      if (setStatus(task.id, "done")) {
+                        stopEarly();
+                        onPickTask(undefined);
+                      }
+                    }}
+                  >
+                    <CheckCircle2 className="size-3.5" /> Đánh dấu hoàn thành
+                  </Button>
+                )}
               </div>
             )}
 
             <div className="flex flex-wrap gap-2">
-              <Button
-                size="lg"
-                className="gap-2"
-                onClick={toggle}
-              >
+              <Button size="lg" className="gap-2" onClick={toggle}>
                 {running ? (
                   <Pause className="size-4" />
                 ) : (
                   <Play className="size-4" />
                 )}
-                {running ? "Tạm dừng" : "Bắt đầu"}
+                {running ? "Tạm dừng" : inSession ? "Tiếp tục" : "Bắt đầu"}
               </Button>
               <Button
                 variant="outline"
                 size="lg"
                 className="gap-2"
                 onClick={stopEarly}
+                disabled={!inSession}
               >
                 <Square className="size-3.5" /> Kết thúc & ghi nhận
               </Button>
@@ -203,7 +230,11 @@ export default function FocusView() {
                 onClick={() => reset(isWork ? "break" : "work")}
               >
                 <ArrowLeftRight className="size-4" />
-                {isWork ? "Sang nghỉ" : "Sang làm"}
+                {isWork
+                  ? inSession
+                    ? "Ghi nhận & nghỉ"
+                    : "Sang nghỉ"
+                  : "Sang làm"}
               </Button>
             </div>
           </div>
@@ -250,18 +281,32 @@ export default function FocusView() {
         subtitle="Ưu tiên cao nằm trên cùng"
       >
         {candidates.length === 0 ? (
-          <EmptyState
-            icon={PartyPopper}
-            art="all-done"
-            title="Không còn nhiệm vụ nào đang chờ"
-            hint="Đạo tâm thanh tịnh. Nghỉ ngơi hoặc lên kế hoạch cho ngày mai."
-          />
+          <div className="space-y-3 text-center">
+            <EmptyState
+              icon={PartyPopper}
+              art="all-done"
+              title={
+                data.tasks.length
+                  ? "Không còn nhiệm vụ nào đang chờ"
+                  : "Chưa có việc để chọn"
+              }
+              hint={
+                data.tasks.length
+                  ? "Bạn vẫn có thể tập trung tự do hoặc lên kế hoạch cho việc tiếp theo."
+                  : "Thêm việc bạn muốn làm, hoặc bắt đầu đồng hồ để tập trung tự do."
+              }
+            />
+            <Button variant="outline" onClick={onNew}>
+              Thêm việc cần tập trung
+            </Button>
+          </div>
         ) : (
           <div className="grid gap-2 sm:grid-cols-2">
             {candidates.slice(0, 8).map((t: Task) => (
               <button
                 key={t.id}
                 onClick={() => onPickTask(t.id)}
+                disabled={inSession}
                 className={cn(
                   "flex items-center gap-2.5 rounded-xl border p-3 text-left transition-colors",
                   t.id === taskId

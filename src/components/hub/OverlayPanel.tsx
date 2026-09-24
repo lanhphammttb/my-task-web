@@ -4,6 +4,7 @@ import { motion } from "motion/react";
 import { X } from "lucide-react";
 import ArtImage from "../ArtImage";
 import { requestOpenSection } from "../../lib/section";
+import { hasKeyboardLayer } from "../../lib/keyboard";
 
 interface Props {
   title: string;
@@ -36,7 +37,7 @@ export default function OverlayPanel({
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape" && !e.defaultPrevented && !hasKeyboardLayer()) onClose();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -77,7 +78,7 @@ export default function OverlayPanel({
         top: "calc(var(--hud-h, 92px) + 6px)",
         bottom: "calc(var(--footer-h, 86px) + 6px)",
       }}
-      className="absolute inset-x-0 z-20 mx-auto flex min-h-0 w-full max-w-5xl flex-col px-2 sm:px-4"
+      className="panel-shell absolute inset-x-0 z-20 mx-auto flex min-h-0 w-full max-w-5xl flex-col px-2 sm:px-4"
     >
       <div className="glass-panel panel-solid flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl">
         {/* ------------------------------------------------------------ đầu bảng */}

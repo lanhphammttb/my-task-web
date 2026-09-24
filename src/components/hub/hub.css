@@ -1,0 +1,551 @@
+/* Shared navigation and home layout */
+.app-navigation {
+  position: absolute;
+  z-index: 30;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 10px max(16px, env(safe-area-inset-right))
+    max(10px, env(safe-area-inset-bottom));
+  border-radius: 20px 20px 0 0;
+  background: color-mix(in srgb, var(--background) 96%, transparent);
+}
+.navigation-tools {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.navigation-tool {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--gold-bright);
+}
+.navigation-brand {
+  font-family: var(--font-title);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--gold);
+}
+.primary-destinations {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  max-width: 680px;
+  margin: 0 auto;
+  gap: 4px;
+}
+.primary-destination {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 4px;
+  padding: 7px 4px;
+  border-radius: 12px;
+  color: var(--muted-foreground);
+  font-size: 11px;
+  font-weight: 600;
+  transition:
+    background 150ms,
+    color 150ms;
+}
+.primary-destination:hover,
+.primary-destination[aria-current] {
+  color: var(--gold-bright);
+  background: color-mix(in srgb, var(--gold) 12%, transparent);
+}
+.primary-destination small {
+  font-size: 9px;
+  font-weight: 400;
+}
+.destination-icon {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 24px;
+}
+.nav-notification {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  right: -6px;
+  top: -2px;
+  background: var(--gold-bright);
+}
+.navigation-add {
+  min-height: 44px;
+  padding: 10px 14px;
+  font-size: 12px;
+  border-radius: 12px;
+}
+.navigation-search:not([hidden]) {
+  display: flex;
+}
+.navigation-search {
+  flex-basis: 100%;
+  align-items: center;
+  gap: 10px;
+  max-width: 680px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--card);
+}
+.navigation-search input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  outline: none;
+  font-size: 14px;
+}
+.navigation-search button {
+  min-width: 32px;
+  min-height: 32px;
+  display: grid;
+  place-items: center;
+}
+.navigation-search kbd {
+  color: var(--muted-foreground);
+  font-size: 11px;
+}
+.world-menu {
+  width: min(380px, calc(100vw - 24px));
+  max-height: min(640px, var(--radix-popover-content-available-height));
+  overflow-y: auto;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--background);
+  box-shadow: 0 20px 70px #0007;
+}
+.world-menu-heading {
+  display: flex;
+  gap: 12px;
+  padding: 4px 0 14px;
+  color: var(--gold-bright);
+  border-bottom: 1px solid var(--border);
+}
+.world-menu-heading h2 {
+  font-family: var(--font-title);
+  font-size: 18px;
+  font-weight: 700;
+}
+.world-menu-heading p {
+  color: var(--muted-foreground);
+  font-size: 11px;
+  margin-top: 4px;
+}
+.world-menu nav button {
+  width: 100%;
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 8px;
+  border-radius: 10px;
+  text-align: left;
+}
+.world-menu nav button:hover,
+.world-menu nav button[aria-current] {
+  background: color-mix(in srgb, var(--gold) 10%, transparent);
+}
+.world-menu strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+}
+.world-menu small {
+  display: block;
+  font-size: 11px;
+  color: var(--muted-foreground);
+  margin-top: 3px;
+}
+.world-attention {
+  font-size: 9px;
+  color: var(--gold-bright);
+  white-space: nowrap;
+}
+/* The center remains a scene, with a compact foreground rather than dashboard panels. */
+.cultivation-hub {
+  max-width: 900px;
+  margin: 0 auto;
+  gap: 20px;
+  padding: 16px 24px;
+}
+.cultivation-hub .elder-teaching {
+  width: min(100%, 540px);
+  padding: 16px 20px;
+  border-color: color-mix(in srgb, var(--gold) 45%, transparent);
+}
+.cultivation-hub .elder-teaching p {
+  font-family: "Noto Serif", Georgia, serif;
+  font-size: 15px;
+  line-height: 1.7;
+}
+.cultivation-hub .practice-card {
+  max-width: 620px;
+}
+.primary-destination .destination-icon {
+  width: 38px;
+  height: 36px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--gold) 7%, transparent);
+}
+.primary-destination[aria-current] .destination-icon {
+  border-color: var(--gold);
+  box-shadow: 0 0 16px var(--gold-glow);
+}
+.app-navigation button:focus-visible,
+.world-menu button:focus-visible,
+.cultivation-hub button:focus-visible {
+  outline: 2px solid var(--gold-bright);
+  outline-offset: 3px;
+}
+@media (max-width: 900px) {
+  .navigation-brand,
+  .navigation-add > span {
+    display: none;
+  }
+}
+@media (max-width: 600px) {
+  .app-navigation {
+    gap: 4px;
+    padding: 6px 8px max(6px, env(safe-area-inset-bottom));
+    border-radius: 16px 16px 0 0;
+  }
+  .primary-destinations {
+    gap: 0;
+  }
+  .primary-destination {
+    font-size: 9px;
+    padding: 7px 2px;
+    gap: 5px;
+  }
+  .primary-destination small {
+    display: none;
+  }
+  .primary-destination .destination-icon {
+    width: 30px;
+    height: 30px;
+  }
+  .navigation-tool,
+  .navigation-add {
+    width: 36px;
+    min-width: 36px;
+    height: 44px;
+    padding: 0;
+  }
+  .cultivation-hub {
+    padding: 10px 16px 16px;
+    gap: 16px;
+  }
+  .cultivation-hub .elder-teaching {
+    padding: 12px;
+    gap: 12px;
+  }
+  .cultivation-hub .elder-teaching p {
+    font-size: 13px;
+  }
+  .app-hud {
+    flex-wrap: wrap;
+  }
+  .hud-profile {
+    width: 100%;
+  }
+  .hud-profile .hud-bar {
+    width: auto;
+    flex: 1;
+  }
+  .hud-resources {
+    width: 100%;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .hud-resources > div {
+    flex-wrap: wrap;
+  }
+  .hud-resources button {
+    min-width: 40px;
+    min-height: 40px;
+  }
+}
+
+/* ==========================================================================
+   Bản đồ tiên giới
+
+   Màn chính. Mọi nơi nằm cùng một mặt phẳng để bỏ hẳn tầng "tab nhỏ" - trước
+   đây phải nhớ Hành Sự nằm trong tab nào, Linh Điền nằm trong mục gập nào của
+   Động Phủ. Ở đây nhìn một phát thấy hết.
+   ========================================================================== */
+
+.world-map {
+  width: 100%;
+  margin-top: 1.25rem;
+}
+
+.world-map-title {
+  font-family: var(--font-title, inherit);
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gold-bright, #e0a83c);
+}
+
+.world-map-hint {
+  margin: 0.15rem 0 0.75rem;
+  font-size: 0.7rem;
+  color: color-mix(in oklab, currentColor 55%, transparent);
+}
+
+.world-map-grid {
+  display: grid;
+  /* Hai cột trên điện thoại, tự giãn ra trên màn rộng. Không đặt số cột cứng:
+     bản đồ mà cuộn dọc mãi thì lại thành danh sách, đúng thứ đang muốn bỏ. */
+  grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.world-place {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  text-align: left;
+  border: 1px solid color-mix(in oklab, var(--gold, #cbb994) 22%, transparent);
+  border-radius: 0.85rem;
+  background: color-mix(in oklab, var(--card, #140e09) 88%, transparent);
+  transition: border-color 0.18s, transform 0.18s, box-shadow 0.18s;
+}
+
+.world-place:hover,
+.world-place:focus-visible {
+  border-color: color-mix(in oklab, var(--gold, #cbb994) 60%, transparent);
+  transform: translateY(-2px);
+}
+
+.world-place-art {
+  width: 100%;
+  height: 4.5rem;
+  object-fit: cover;
+  /* Ảnh chỉ là nền gợi không khí; chữ mới là thứ phải đọc được. */
+  opacity: 0.55;
+}
+
+.world-place-noi {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.55rem 0.65rem 0.7rem;
+}
+
+.world-place-ten {
+  font-family: var(--font-title, inherit);
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--gold-bright, #e0a83c);
+}
+
+/* Dòng nói thẳng nơi này để làm gì. Người ta nhớ được là nhờ dòng này, không
+   phải nhờ cái tên Hán Việt - nên nó không được nhỏ tới mức bỏ qua. */
+.world-place-phu {
+  font-size: 0.68rem;
+  line-height: 1.35;
+  color: color-mix(in oklab, currentColor 62%, transparent);
+}
+
+.world-place-trang {
+  margin-top: 0.3rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: color-mix(in oklab, currentColor 48%, transparent);
+}
+
+.world-place-trang-goi {
+  color: var(--gold-bright, #e0a83c);
+}
+
+.world-place-goi {
+  border-color: color-mix(in oklab, var(--gold, #cbb994) 55%, transparent);
+  box-shadow: 0 0 18px -8px var(--gold-glow, #e0a83c);
+}
+
+.world-place-goi .world-place-art {
+  opacity: 0.75;
+}
+
+.world-place-cham {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 999px;
+  background: var(--gold-bright, #e0a83c);
+  box-shadow: 0 0 8px var(--gold-glow, #e0a83c);
+  animation: pulse-dot 1.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .world-place-cham { animation: none; }
+  .world-place:hover { transform: none; }
+}
+
+/* ==========================================================================
+   Dãy nút tròn bám mép phải
+
+   Thay cho thanh tab dưới đáy. Thanh tab là kiểu app công việc; game tu tiên
+   để nút tròn dọc mép phải, nhận ra bằng ảnh chứ không phải bằng chữ, và chừa
+   trọn phần giữa màn cho nhân vật với cảnh.
+   ========================================================================== */
+
+.world-rail {
+  position: fixed;
+  top: calc(var(--hud-h, 92px) + 14px);
+  right: 0.5rem;
+  /* Trên cả bảng phủ: dãy nút phải bấm được kể cả khi đang đứng trong một khu,
+     nếu không thì đi đâu cũng phải quay về sảnh trước. */
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  /* Cuộn được khi màn thấp, nhưng không chiếm chỗ bằng thanh cuộn. */
+  max-height: calc(100dvh - var(--hud-h, 92px) - var(--footer-h, 86px) - 28px);
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.world-rail::-webkit-scrollbar { display: none; }
+
+.world-rail-nut {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  width: 4.1rem;
+  padding: 0.15rem 0;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.world-rail-vien {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 2.9rem;
+  height: 2.9rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in oklab, var(--gold, #cbb994) 34%, transparent);
+  background: radial-gradient(
+    120% 120% at 50% 0%,
+    color-mix(in oklab, var(--gold, #cbb994) 16%, transparent),
+    color-mix(in oklab, #0d0a08 88%, transparent)
+  );
+  backdrop-filter: blur(6px);
+  transition: border-color 0.18s, transform 0.18s, box-shadow 0.18s;
+}
+
+.world-rail-nut:hover .world-rail-vien,
+.world-rail-nut:focus-visible .world-rail-vien {
+  border-color: color-mix(in oklab, var(--gold, #cbb994) 75%, transparent);
+  transform: scale(1.06);
+}
+
+.world-rail-anh {
+  width: 1.85rem;
+  height: 1.85rem;
+  object-fit: contain;
+}
+
+/* Tên để rất nhỏ dưới nút: nhận diện chính là cái ảnh tròn, chữ chỉ để chắc
+   chắn lần đầu và cho người không quen biểu tượng. */
+.world-rail-ten {
+  font-size: 0.56rem;
+  line-height: 1.15;
+  text-align: center;
+  letter-spacing: 0.01em;
+  color: color-mix(in oklab, currentColor 62%, transparent);
+}
+
+.world-rail-goi .world-rail-vien {
+  border-color: color-mix(in oklab, var(--gold-bright, #e0a83c) 85%, transparent);
+  box-shadow: 0 0 16px -4px var(--gold-glow, #e0a83c);
+}
+
+.world-rail-goi .world-rail-ten {
+  color: var(--gold-bright, #e0a83c);
+}
+
+.world-rail-dang-o .world-rail-vien {
+  border-color: var(--gold-bright, #e0a83c);
+}
+
+/* Huy hiệu đếm: góc trên phải của nút tròn, đúng chỗ mắt quen tìm. */
+.world-rail-so {
+  position: absolute;
+  top: -0.15rem;
+  right: -0.15rem;
+  min-width: 1.05rem;
+  height: 1.05rem;
+  padding: 0 0.25rem;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--gold-bright, #e0a83c);
+  color: #1a1206;
+  font-size: 0.6rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+@media (max-width: 420px) {
+  .world-rail-nut { width: 3.5rem; }
+  .world-rail-vien { width: 2.5rem; height: 2.5rem; }
+  .world-rail-anh { width: 1.6rem; height: 1.6rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .world-rail-nut:hover .world-rail-vien { transform: none; }
+}
+
+/* Chừa chỗ cho dãy nút tròn.
+   Không có lề này thì thẻ lời tiền bối và dãy chỉ số chui xuống dưới nút,
+   chữ bị che mất một khúc bên phải. */
+.hub-scroll {
+  padding-right: 4.6rem;
+  padding-left: 0.35rem;
+}
+
+@media (max-width: 420px) {
+  .hub-scroll { padding-right: 4rem; }
+}
+
+/* Bảng phủ cũng phải chừa chỗ cho dãy nút tròn - nếu không thì nội dung bên
+   trong khu chui xuống dưới nút y như ở sảnh. */
+.panel-shell {
+  padding-right: 4.6rem;
+}
+
+@media (max-width: 420px) {
+  .panel-shell { padding-right: 4rem; }
+}

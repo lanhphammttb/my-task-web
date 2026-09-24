@@ -1,29 +1,45 @@
 import { seedData } from "../lib/seed";
-import { fireEvent, render, screen } from '@testing-library/react';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { fireEvent, render, screen, within } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import App from '../App';
+import { aphorismOfDay, elderPortrait } from '../lib/elders';
 
-/** Hub là màn hình mặc định; mọi bảng đều mở từ icon hoặc thanh tab dưới. */
+/**
+ * Hub là màn hình mặc định. Mọi NƠI đều mở từ dãy nút tròn bám mép phải;
+ * thanh dưới chỉ còn hành động (tra cứu, về sảnh, thêm việc).
+ *
+ * Nhãn trợ năng của nút tròn có dạng "Tên — phụ đề", nên khớp theo đầu chuỗi.
+ */
 function openPanel(label: string) {
-  fireEvent.click(screen.getByRole('button', { name: label }));
+  const rail = screen.queryByRole('navigation', { name: 'Các nơi trong tiên giới' });
+  const nut = rail && within(rail).queryByRole('button', { name: new RegExp('^' + label) });
+  fireEvent.click(nut ?? screen.getByRole('button', { name: label }));
 }
 
 describe('Ứng dụng web', () => {
-  beforeEach(() => { localStorage.clear(); localStorage.setItem('my-task-planner/v1', JSON.stringify(seedData())); });
+  beforeEach(() => {
+    localStorage.clear();
+    localStorage.setItem('my-task-planner/v1', JSON.stringify(seedData()));
+    vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue();
+    vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {});
+  });
 
-  it('khởi động vào hub tu luyện với HUD, châm ngôn và hai cột icon', () => {
+  it('khởi động vào sảnh tu tiên với lời tiền bối, chân dung và vòng tu vi', () => {
     render(<App />);
 
     // HUD nhân vật
     expect(screen.getByText('Đạo hữu')).toBeDefined();
     // Vòng tu vi ở giữa hiển thị cảnh giới khởi đầu
     expect(screen.getAllByText('Luyện').length).toBeGreaterThan(0);
-    // Hai cột icon hai bên
-    expect(screen.getByRole('navigation', { name: 'Hoạt động tu luyện' })).toBeDefined();
-    expect(screen.getByRole('navigation', { name: 'Đạo thể và tài nguyên' })).toBeDefined();
+    expect(screen.getByRole('main', { name: 'Sảnh tu luyện' })).toBeDefined();
+    const aphorism = aphorismOfDay();
+    const teaching = screen.getByLabelText('Lời tiền bối');
+    expect(within(teaching).getByText(`“${aphorism.text}”`)).toBeDefined();
+    expect(within(teaching).getByText(aphorism.elder)).toBeDefined();
+    expect(within(teaching).getByText(aphorism.title)).toBeDefined();
+    expect(within(teaching).getByRole('img', { name: `Chân dung ${aphorism.elder}` }).getAttribute('src')).toBe(elderPortrait(aphorism.elder));
+    expect(screen.getByRole('navigation', { name: 'Các nơi trong tiên giới' })).toBeDefined();
     expect(screen.getByRole('navigation', { name: 'Thanh điều hướng chính' })).toBeDefined();
-    // Châm ngôn tiền bối luôn có mặt trên hub
-    expect(screen.getByRole('button', { name: 'Bế Quan' })).toBeDefined();
   });
 
   it('mở bảng Hôm nay từ thanh tab và thấy dữ liệu mẫu', async () => {
@@ -32,6 +48,76 @@ describe('Ứng dụng web', () => {
 
     expect(await screen.findByRole('heading', { name: 'Hành Sự Đường' })).toBeDefined();
     expect((await screen.findAllByText('Chốt tài liệu bàn giao module thanh toán')).length).toBeGreaterThan(0);
+  });
+
+  it('giữ một menu Bế Quan và không lặp nút chung ở sảnh', async () => {
+    render(<App />);
+    // Đúng MỘT lối vào Bế Quan, và nó nằm trên dãy nút tròn.
+    expect(screen.getAllByRole('button', { name: /^Bế Quan Động/ })).toHaveLength(1);
+    expect(screen.queryByRole('button', { name: 'Bế quan tu luyện' })).toBeNull();
+    openPanel('Bế Quan Động');
+    expect(await screen.findByRole('heading', { name: 'Bế quan tu luyện' })).toBeDefined();
+    openPanel('Sơn Môn');
+    expect(await screen.findByRole('button', { name: 'Tập trung việc này' })).toBeDefined();
+  });
+
+  it('phím / mở ô tìm kiếm và đóng tra cứu xoá bộ lọc', async () => {
+    render(<App />);
+    fireEvent.keyDown(document.body, { key: '/' });
+    const input = screen.getByRole('searchbox', { name: 'Tìm nhiệm vụ hoặc nhãn' });
+    expect(document.activeElement).toBe(input);
+    expect(screen.getByRole('button', { name: 'Đóng tra cứu' }).getAttribute('aria-expanded')).toBe('true');
+    fireEvent.change(input, { target: { value: 'chạy bộ' } });
+    expect(await screen.findByRole('heading', { name: 'Kết quả tìm kiếm' })).toBeDefined();
+    const nav = screen.getByRole('navigation', { name: 'Thanh điều hướng chính' });
+    expect(nav.querySelector('[aria-current="page"]')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Đóng tra cứu' }));
+    expect((input as HTMLInputElement).value).toBe('');
+    expect(within(nav).getByRole('button', { name: 'Sơn Môn' }).getAttribute('aria-current')).toBe('page');
+  });
+
+  it('không chuyển bảng bằng phím số khi đang sửa nhiệm vụ', async () => {
+    render(<App />);
+    openPanel('Hành Sự Đường');
+    await screen.findByRole('heading', { name: 'Hành Sự Đường' });
+    openPanel('Nhiệm vụ mới');
+    expect(document.querySelector('[data-slot="dialog-content"]')).not.toBeNull();
+    fireEvent.keyDown(document.body, { key: '5' });
+    // Hộp thoại đang mở thì phím số không được đổi bảng phía sau.
+    expect(screen.queryByRole('heading', { name: 'Hành Sự Đường' })).toBeNull();
+    fireEvent.keyDown(document.activeElement ?? document.body, { key: 'Escape' });
+    expect(await screen.findByRole('heading', { name: 'Hành Sự Đường' })).toBeDefined();
+  });
+
+  it('dãy nút tròn dùng được cả khi đang đứng trong một khu', async () => {
+    /*
+     * Lúc đầu tôi ẩn dãy nút khi bảng mở, cho đỡ chồng lớp. Nhưng thế thì muốn
+     * sang nơi khác phải đóng bảng rồi mở lại - đúng kiểu lạc đường mà cả đợt
+     * sửa này sinh ra để dẹp. Nó phải luôn bấm được.
+     */
+    render(<App />);
+    openPanel('Hành Sự Đường');
+    await screen.findByRole('heading', { name: 'Hành Sự Đường' });
+
+    // Nhảy thẳng sang khu khác, không phải quay về sảnh trước.
+    openPanel('Đại Nguyện');
+    expect(await screen.findByRole('heading', { name: 'Đại Nguyện' })).toBeDefined();
+
+    fireEvent.keyDown(document.activeElement ?? document.body, { key: 'Escape' });
+    expect(screen.getByRole('navigation', { name: 'Các nơi trong tiên giới' })).toBeDefined();
+  });
+
+  it('giữ phiên tập trung khi rời bảng và trở lại đúng trạng thái tạm dừng', async () => {
+    render(<App />);
+    openPanel('Tập trung việc này');
+    fireEvent.click(await screen.findByRole('button', { name: 'Bắt đầu' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Tạm dừng' }));
+    openPanel('Sơn Môn');
+    fireEvent.click(await screen.findByRole('button', { name: 'Về phiên bế quan' }));
+    expect(await screen.findByRole('button', { name: 'Tiếp tục' })).toBeDefined();
+    expect((screen.getByRole('combobox') as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.click(screen.getByRole('button', { name: 'Kết thúc & ghi nhận' }));
+    expect(screen.getByRole('button', { name: 'Bắt đầu' })).toBeDefined();
   });
 
   it('thêm nhiệm vụ qua ô thêm nhanh và lưu vào localStorage', async () => {
@@ -93,18 +179,77 @@ describe('Ứng dụng web', () => {
     expect(await screen.findByText('Toạ Vong Chi Cảnh')).toBeDefined();
   });
 
-  it('icon Linh Thú mở Động Phủ đúng mục linh thú', async () => {
+  it('Linh thú nằm trong Động Phủ và mục lục mở đúng phần đang gập', async () => {
     render(<App />);
-    openPanel('Linh Thú');
+    openPanel('Động Phủ');
 
     expect(await screen.findByRole('heading', { name: 'Động Phủ' })).toBeDefined();
-    expect(await screen.findByText('Linh thú')).toBeDefined();
+    fireEvent.click(await screen.findByRole('link', { name: 'Linh thú' }));
+    expect(await screen.findByRole('button', { name: 'Thu gọn Linh thú' })).toBeDefined();
     expect(document.getElementById('cave-beast')).not.toBeNull();
+  });
+
+  it('menu toàn web không trộn mục con vào, dù bản đồ có lối tắt riêng', () => {
+    /*
+     * Nguyên tắc đã đổi có chủ ý.
+     *
+     * Trước đây mỗi khu chỉ được có ĐÚNG MỘT lối vào, kể cả ở sảnh. Nhưng điều
+     * hướng ba tầng ấy chính là thứ người dùng kêu khó nhớ, nên sảnh giờ là một
+     * bản đồ bấm thẳng tới từng nơi - kể cả lối tắt vào Linh Điền nằm sâu trong
+     * Động Phủ.
+     *
+     * Thứ VẪN phải giữ: dãy nút không được phình ra vô hạn. Nó chỉ mang các
+     * khu lớn cộng vài lối tắt đáng giá; mục con như Linh Căn hay Đan Đường
+     * vẫn nằm trong Động Phủ chứ không leo lên đây.
+     */
+    render(<App />);
+    const rail = screen.getByRole('navigation', { name: 'Các nơi trong tiên giới' });
+    const nut = within(rail).getAllByRole('button');
+    expect(nut.length).toBeLessThanOrEqual(9);
+    expect(within(rail).queryByRole('button', { name: /^Linh Căn/ })).toBeNull();
+    expect(within(rail).queryByRole('button', { name: /^Đan Đường/ })).toBeNull();
+    // Thanh dưới chỉ còn hành động, không còn là nơi chốn.
+    const duoi = screen.getByRole('navigation', { name: 'Thanh điều hướng chính' });
+    expect(within(duoi).queryByRole('button', { name: 'Tiên giới' })).toBeNull();
+  });
+
+  it('dãy nút tròn bấm thẳng tới từng nơi, nhãn kèm dòng nói rõ nơi đó là gì', () => {
+    render(<App />);
+    const rail = screen.getByRole('navigation', { name: 'Các nơi trong tiên giới' });
+    const noi = within(rail).getAllByRole('button');
+    expect(noi.length).toBeGreaterThanOrEqual(6);
+
+    // Tên Hán Việt giữ nguyên cho đúng chất, nhưng nhãn trợ năng nào cũng phải
+    // kèm dòng nói thẳng nơi đó là gì - nhớ được là nhờ dòng ấy, không nhờ tên.
+    for (const n of noi) {
+      expect(n.getAttribute('aria-label')).toMatch(/ — .+/);
+      expect(n.querySelector('.world-rail-ten')?.textContent?.trim()).toBeTruthy();
+    }
+
+    fireEvent.click(within(rail).getByRole('button', { name: /^Hành Sự Đường/ }));
+    expect(screen.getByRole('heading', { name: 'Hành Sự Đường' })).toBeTruthy();
+  });
+
+  it('mục lục từng khu chỉ dẫn tới nội dung thực sự có trong khu đó', async () => {
+    render(<App />);
+    openPanel('Động Phủ');
+    const cave = await screen.findByRole('navigation', { name: 'Các mục trong Động Phủ' });
+    for (const link of within(cave).getAllByRole('link')) {
+      expect(document.getElementById(link.getAttribute('href')!.slice(1))).not.toBeNull();
+    }
+    expect(within(cave).queryByRole('link', { name: 'Tẩy tuỷ' })).toBeNull();
+    openPanel('Tiên Lộ');
+    const path = await screen.findByRole('navigation', { name: 'Các mục trong Tiên Lộ' });
+    for (const link of within(path).getAllByRole('link')) {
+      expect(document.getElementById(link.getAttribute('href')!.slice(1))).not.toBeNull();
+    }
+    fireEvent.click(within(path).getByRole('link', { name: 'Thám hiểm' }));
+    expect(screen.getByRole('heading', { name: 'Thám hiểm' })).toBeDefined();
   });
 
   it('tìm kiếm mở bảng tra cứu và lọc đúng nhiệm vụ theo tên', async () => {
     render(<App />);
-
+    openPanel('Tra cứu nhiệm vụ');
     fireEvent.change(screen.getByPlaceholderText(/Tìm nhiệm vụ/), { target: { value: 'chạy bộ' } });
 
     expect(await screen.findByRole('heading', { name: 'Kết quả tìm kiếm' })).toBeDefined();

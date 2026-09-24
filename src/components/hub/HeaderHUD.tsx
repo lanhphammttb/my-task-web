@@ -36,10 +36,10 @@ export default function HeaderHUD({ onSettings }: { onSettings: () => void }) {
   return (
     <header
       ref={ref}
-      className="pointer-events-none absolute inset-x-0 top-0 z-30 flex items-start justify-between gap-2 p-2 sm:p-3"
+      className="app-hud pointer-events-none absolute inset-x-0 top-0 z-30 flex items-start justify-between gap-2 p-2 sm:p-3"
     >
       {/* ------------------------------------------------ cụm đạo nhân bên trái */}
-      <div className="glass-panel pointer-events-auto flex max-w-[62vw] items-center gap-2.5 rounded-full py-1.5 pr-3.5 pl-1.5 sm:gap-3">
+      <div className="hud-profile glass-panel pointer-events-auto flex min-w-0 items-center gap-2.5 rounded-full py-1.5 pr-3.5 pl-1.5 sm:gap-3">
         <span className="relative shrink-0">
           <ArtImage
             src={`/art/avatar/avatar-${avatarTier}.png`}
@@ -78,7 +78,7 @@ export default function HeaderHUD({ onSettings }: { onSettings: () => void }) {
 
           {/* Thanh tu vi kiểu thanh máu trong game */}
           <div className="mt-1 flex items-center gap-1.5">
-            <div className="hud-bar h-2 w-28 sm:w-40">
+            <div className="hud-bar h-2 w-28 min-w-0 sm:w-40">
               <span style={{ width: `${Math.round(c.ratio * 100)}%` }} />
             </div>
             <span className="text-muted-foreground tabular text-[9.5px] whitespace-nowrap">
@@ -89,9 +89,9 @@ export default function HeaderHUD({ onSettings }: { onSettings: () => void }) {
       </div>
 
       {/* ----------------------------------------------- cụm tài nguyên bên phải */}
-      <div className="pointer-events-auto flex flex-col items-end gap-1.5">
+      <div className="hud-resources pointer-events-auto flex flex-col items-end gap-1.5">
         <div className="flex items-center gap-1.5">
-          <span className="glass-panel flex items-center gap-1.5 rounded-full py-1 pr-2.5 pl-1.5">
+          <span aria-label={`${stones} linh thạch`} title="Linh thạch" className="glass-panel flex items-center gap-1.5 rounded-full py-1 pr-2.5 pl-1.5">
             <ArtImage
               src={railSrc("linh-thach")}
               alt=""
@@ -104,6 +104,7 @@ export default function HeaderHUD({ onSettings }: { onSettings: () => void }) {
           <span
             className="glass-panel flex items-center gap-1.5 rounded-full py-1 pr-2.5 pl-1.5"
             title="Đan dược trong túi"
+            aria-label={`${pills} đan dược`}
           >
             <img src="/art/pill/trung.png" alt="" className="size-5" />
             <span className="text-gold-bright tabular text-[12px] font-bold">

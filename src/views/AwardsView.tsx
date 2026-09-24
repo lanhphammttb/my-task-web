@@ -17,6 +17,7 @@ import ExpeditionSection from '../components/ExpeditionSection';
 import SectSection from '../components/SectSection';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import SectionLinks from '../components/SectionLinks';
 
 /**
  * Tiên Lộ: bậc thang cảnh giới từ Luyện Khí tới Phi Thăng, cộng với các kỳ ngộ
@@ -47,8 +48,16 @@ export default function AwardsView({ onTribulation }: { onTribulation: () => voi
         những ngày bình thường.
       </p>
 
+      <SectionLinks label="Các mục trong Tiên Lộ" items={[
+        { id: 'awards-realm', label: 'Cảnh giới' },
+        { id: 'awards-achievements', label: 'Thành tựu' },
+        { id: 'awards-sect', label: 'Tông môn' },
+        { id: 'awards-expedition', label: 'Thám hiểm' },
+      ]} />
+
       {/* ------------------------------------------------- thẻ cảnh giới */}
       <section
+        id="awards-realm"
         className="corner-marks relative overflow-hidden rounded-xl border"
         style={{
           borderColor: `${c.realm.color}4d`,
@@ -183,7 +192,7 @@ export default function AwardsView({ onTribulation }: { onTribulation: () => voi
       <ExpeditionSection />
 
       {/* ------------------------------------------------------- kỳ ngộ */}
-      <Section icon={Trophy} title={`Kỳ ngộ đã mở (${unlocked.length}/${all.length})`}>
+      <Section id="awards-achievements" icon={Trophy} title={`Thành tựu đã mở (${unlocked.length}/${all.length})`}>
         {unlocked.length === 0 ? (
           <p className="text-muted-foreground text-sm">
             Chưa có kỳ ngộ nào. Hoàn thành nhiệm vụ đầu tiên là mở được chiếc đầu tiên.
@@ -306,6 +315,8 @@ function AwardCard({ award }: { award: AchievementState }) {
           {hasArt ? (
             <>
               <img
+        loading="lazy"
+        decoding="async"
                 src={`/art/award/${award.id}.png`}
                 alt=""
                 onError={() => setHasArt(false)}
