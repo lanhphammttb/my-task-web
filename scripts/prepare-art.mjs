@@ -91,6 +91,22 @@ const GROUPS = {
    * như lò đan chiếm gần nửa chiều cao phòng trên màn lớn.
    */
   prop: { kind: 'png', w: 768, h: 768, fit: 'contain', maxKB: 220 },
+  /**
+   * Ấn cảnh giới. Thay cho ô CSS đổ màu in tên bằng chữ thường - thứ duy nhất
+   * trên màn hình trông như một widget web chứ không như món đồ trong game.
+   *
+   * Hiện ở cỡ 44px là chính, nhưng giữ 512 vì thẻ cảnh giới ở Tiên Lộ phóng to
+   * hơn, và vì bậc cao có quầng sáng cần chỗ.
+   */
+  seal: { kind: 'png', w: 512, h: 512, fit: 'contain', maxKB: 160 },
+  /**
+   * Hoa văn khung. Không vuông và không cùng tỷ lệ với nhau, nên mỗi tệp giữ
+   * đúng kích thước gốc của nó - xem `public/art/khung/README.md`.
+   *
+   * KHÔNG qua khâu thu về một khung chung: kéo dải ngang 1024x96 về ô vuông là
+   * hỏng hẳn. Nhóm này chỉ nén lại cho nhẹ.
+   */
+  khung: { kind: 'png', giuKichThuoc: true, maxKB: 180 },
 };
 
 /**
@@ -255,8 +271,8 @@ for (const dir of groups) {
     const kbNow = Math.round(fs.statSync(p).size / 1024);
     const done =
       meta.format === spec.kind &&
-      meta.width === spec.w &&
-      meta.height === spec.h &&
+      // Nhóm giữ nguyên kích thước thì không có khung chuẩn để mà so.
+      (spec.giuKichThuoc || (meta.width === spec.w && meta.height === spec.h)) &&
       p === target &&
       (!spec.maxKB || kbNow <= spec.maxKB);
     if (done) continue;
@@ -285,6 +301,10 @@ for (const dir of groups) {
       });
     } else if (spec.kind === 'jpeg' || spec.kind === 'webp') {
       pipe = sharp(p).flatten({ background: INK }).resize(spec.w, spec.h, { fit: 'cover', position: 'centre' });
+    } else if (spec.giuKichThuoc) {
+      // Giữ nguyên bề ngang và chiều cao gốc, chỉ nén lại. Dùng cho nhóm mà mỗi
+      // tệp một tỷ lệ khác nhau - dải ngang 1024x96 mà ép về ô vuông là hỏng.
+      pipe = sharp(p).ensureAlpha();
     } else if (spec.fit === 'contain') {
       // Cắt lề trong suốt trước để vật thể lấp đầy khung, rồi thu vừa khung
       // vuông — ảnh không vuông mà dùng 'cover' sẽ bị cắt mất một phần.
