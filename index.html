@@ -8,6 +8,12 @@
     <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
 
+    <!-- Cài lên màn hình chính, và mở được khi mất mạng. -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Đạo Trình" />
+
     <title>Đạo Trình · Kế hoạch & tu luyện</title>
     <meta
       name="description"
@@ -97,5 +103,56 @@
       </div>
     </div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      /*
+       * Đăng ký service worker.
+       *
+       * Đợi `load` rồi mới đăng ký: lần mở ĐẦU tiên mà chen vào thì nó tranh
+       * băng thông với chính mấy tệp đang cần để vẽ trang.
+       *
+       * Nuốt lỗi có chủ ý - chạy qua http:// hoặc trong tab ẩn danh là trình
+       * duyệt từ chối, mà đó không phải lý do để app không mở được.
+       */
+      if ('serviceWorker' in navigator) {
+        addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').catch(() => {});
+
+          /*
+           * Nói cho worker biết trang này đang dùng những tệp nào.
+           *
+           * Không có bước này thì lần mở đầu tiên chẳng có gì vào kho (worker
+           * nắm quyền sau khi tệp đã tải xong), và mất mạng là trắng màn hình.
+           */
+          navigator.serviceWorker.ready.then((reg) => {
+            /*
+             * Lấy danh sách từ Performance API, KHÔNG phải từ thẻ <script>.
+             *
+             * Phần lớn mã nằm trong chunk nạp động (primitives, Scene3D, từng
+             * màn hình) - chúng không có thẻ nào trong HTML, nên quét DOM chỉ
+             * thấy đúng tệp vào. Thiếu chúng thì mất mạng vẫn trắng màn hình:
+             * HTML có, tệp vào có, nhưng nó lại đi tìm chunk không có trong kho.
+             *
+             * Gửi hai lần: lần đầu ngay khi tải xong, lần sau chờ mấy chunk
+             * nạp muộn (lớp cảnh 3D, màn hình mở sau).
+             */
+            const gui = () => {
+              const urls = performance
+                .getEntriesByType('resource')
+                .map((r) => r.name)
+                .filter((u) => {
+                  if (new URL(u).origin !== location.origin) return false;
+                  return /\.(js|css|woff2?)(\?|$)/.test(new URL(u).pathname);
+                });
+              (reg.active ?? navigator.serviceWorker.controller)?.postMessage({
+                kieu: 'uom-kho',
+                urls,
+              });
+            };
+            gui();
+            setTimeout(gui, 6000);
+          });
+        });
+      }
+    </script>
   </body>
 </html>

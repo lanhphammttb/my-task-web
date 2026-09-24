@@ -5,6 +5,8 @@
  */
 import sharp from 'sharp';
 import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 sharp.cache(false);
 
 const dirs = process.argv.slice(2);
@@ -31,8 +33,9 @@ const bgTiles = Array.from({ length: COLS * rows }, (_, i) =>
     : null,
 ).filter(Boolean);
 
+const output = path.join(os.tmpdir(), 'art-check.jpg');
 await sharp({ create: { width: S * COLS, height: S * rows, channels: 3, background: '#17110b' } })
   .composite([...bgTiles, ...tiles])
   .jpeg({ quality: 90 })
-  .toFile('/tmp/art-check.jpg');
-console.log(`${files.length} ảnh → /tmp/art-check.jpg`);
+  .toFile(output);
+console.log(`${files.length} ảnh → ${output}`);
