@@ -968,3 +968,208 @@ body[data-scroll-locked] .world-rail {
     flex-wrap: wrap;
   }
 }
+
+/* ===================================================== SẢNH TRÊN ĐIỆN THOẠI
+ *
+ * Dựng riêng, không phải bản co lại của màn rộng. Xem `HubMobile.tsx` để biết
+ * vì sao. Ở đây chỉ nói về phần nhìn:
+ *
+ *  - KHÔNG dùng thẻ xám đặc. Bảng việc trong suốt một nửa, viền vàng, để bức
+ *    tranh nền vẫn nhìn thấy được - đó là thứ phân biệt một cái game với một
+ *    trang quản lý việc tô màu tối.
+ *  - Ô tick là VÒNG TRÒN. Ô vuông đọc ra là biểu mẫu.
+ *  - Mọi chỗ chạm đều đủ 44px, kể cả khi trông nhỏ hơn thế.
+ */
+.hub-mb {
+  position: relative;
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 0 12px 4px;
+  pointer-events: none;
+}
+.hub-mb > * {
+  pointer-events: auto;
+}
+
+/* Khoảng trống dành cho cảnh: nhân vật đứng ở đây, không có thẻ nào che. */
+.hub-mb-canh {
+  position: relative;
+  flex: 1;
+  min-height: 92px;
+  pointer-events: none;
+}
+.hub-mb-nguoi {
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  width: min(66%, 260px);
+  transform: translateX(-50%);
+  filter: drop-shadow(0 10px 26px rgba(0, 0, 0, 0.7));
+}
+
+/* --------------------------------------------------------- bảng nhiệm vụ */
+.hub-mb-bang {
+  border: 1px solid color-mix(in srgb, var(--gold) 45%, transparent);
+  border-radius: 14px;
+  /* Nền mờ chứ không đặc: thấy được cảnh phía sau. */
+  background: color-mix(in oklab, var(--background) 62%, transparent);
+  backdrop-filter: blur(7px);
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.45),
+    inset 0 0 0 1px color-mix(in srgb, var(--gold) 12%, transparent);
+  padding: 8px 10px 10px;
+}
+.hub-mb-dau {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding-bottom: 6px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid color-mix(in srgb, var(--gold) 28%, transparent);
+}
+.hub-mb-ten {
+  font-family: var(--font-title);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--gold-bright);
+  text-shadow: 0 0 12px var(--gold-glow);
+}
+.hub-mb-dem {
+  font-variant-numeric: tabular-nums;
+  font-size: 11.5px;
+  color: var(--muted-foreground);
+}
+
+.hub-mb-ds {
+  display: flex;
+  flex-direction: column;
+}
+.hub-mb-dong {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.hub-mb-tick,
+.hub-mb-than {
+  min-height: 2.75rem;
+  display: flex;
+  align-items: center;
+}
+.hub-mb-tick {
+  width: 2.75rem;
+  justify-content: center;
+  flex: none;
+}
+/* Ô tick trông 26px nhưng vùng chạm là cả 44px của nút bao ngoài. */
+.hub-mb-o {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 2px solid;
+  border-radius: 999px;
+  transition: background 0.15s;
+}
+.hub-mb-tick:active .hub-mb-o {
+  background: color-mix(in srgb, var(--gold) 30%, transparent);
+}
+.hub-mb-than {
+  min-width: 0;
+  flex: 1;
+  gap: 8px;
+  justify-content: space-between;
+  text-align: left;
+}
+.hub-mb-tieu {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13.5px;
+}
+.hub-mb-xp {
+  flex: none;
+  font-variant-numeric: tabular-nums;
+  font-size: 11.5px;
+  font-weight: 700;
+}
+.hub-mb-trong {
+  padding: 10px 2px;
+  font-size: 12.5px;
+  color: var(--muted-foreground);
+}
+
+.hub-mb-quay {
+  display: flex;
+  width: 100%;
+  min-height: 2.75rem;
+  align-items: center;
+  gap: 8px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--gold) 45%, transparent);
+  background: color-mix(in srgb, var(--gold) 12%, transparent);
+  padding: 0 10px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--gold-bright);
+  margin-bottom: 6px;
+}
+
+.hub-mb-nut {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+.hub-mb-them,
+.hub-mb-xem {
+  display: inline-flex;
+  min-height: 2.75rem;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.hub-mb-them {
+  border-color: color-mix(in srgb, var(--gold) 55%, transparent);
+  color: var(--gold-bright);
+}
+.hub-mb-xem {
+  color: var(--muted-foreground);
+  flex: 0 1 34%;
+}
+
+/* Nút việc gấp nhất: chỉ hiện khi có thật, nên được phép to và sáng. */
+.hub-mb-chinh {
+  display: flex;
+  width: 100%;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 12px;
+  border: 1px solid var(--gold);
+  background: linear-gradient(
+    140deg,
+    color-mix(in srgb, var(--gold) 26%, transparent),
+    transparent 70%
+  );
+  font-family: var(--font-title);
+  font-size: 12.5px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gold-bright);
+  box-shadow: 0 0 22px var(--gold-glow);
+}

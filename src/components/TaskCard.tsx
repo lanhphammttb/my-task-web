@@ -114,7 +114,7 @@ export default function TaskCard({ task, onEdit, onFocus, showDate }: Props) {
             onClick={handleToggle}
             aria-label={done ? "Bỏ đánh dấu hoàn thành" : "Đánh dấu hoàn thành"}
             className={cn(
-              "mt-0.5 grid size-[22px] place-items-center rounded-md border-2 transition-all",
+              "o-tick mt-0.5 grid size-[22px] place-items-center rounded-full border-2 transition-all",
               "focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
               done
                 ? "border-success bg-success text-white animate-check-pop"

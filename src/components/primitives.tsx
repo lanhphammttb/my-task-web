@@ -37,6 +37,7 @@ export function Section({
   id,
   title,
   subtitle,
+  subtitleClassName,
   icon: Icon,
   action,
   children,
@@ -49,6 +50,11 @@ export function Section({
   id?: string;
   title?: string;
   subtitle?: string;
+  /**
+   * Lớp thêm cho dòng phụ đề. Dùng `chi-man-rong` cho những câu chỉ giải thích
+   * cách dùng - trên điện thoại chúng chắn mất nội dung mà không nói thêm gì.
+   */
+  subtitleClassName?: string;
   icon?: LucideIcon;
   action?: ReactNode;
   children: ReactNode;
@@ -136,7 +142,7 @@ export function Section({
               </h3>
             )}
               {subtitle && (
-                <p className="text-muted-foreground mt-0.5 text-xs">
+                <p className={cn("text-muted-foreground mt-0.5 text-xs", subtitleClassName)}>
                   {subtitle}
                 </p>
               )}

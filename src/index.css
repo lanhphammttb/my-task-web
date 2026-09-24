@@ -794,3 +794,66 @@
     background-image: none;
   }
 }
+
+/*
+ * Chữ chỉ dành cho màn rộng.
+ *
+ * Trên điện thoại, mở Hành Sự Đường ra là hơn năm trăm px dẫn nhập trước khi
+ * thấy việc đầu tiên: tiêu đề, phụ đề, dải tranh, ba tab, tên sổ, dòng đếm,
+ * lời tiền bối (đã hiện ở sảnh rồi), nhãn ô nhập. Từng câu một đều hợp lý, gộp
+ * lại thì người dùng phải cuộn qua cả một bài văn mới tới chỗ làm việc.
+ *
+ * Nên cắt theo thiết bị chứ không cắt hẳn: màn rộng thừa chỗ, mấy câu ấy giúp
+ * người mới hiểu app. Màn hẹp thì mỗi dòng thêm vào là một việc bị đẩy khỏi
+ * tầm mắt.
+ */
+@media (max-width: 767px) {
+  /* Cảnh sáng hơn trên điện thoại.
+     Màn rộng có chỗ cho cả cảnh lẫn bảng số nên nền phải lùi lại; điện thoại
+     thì cảnh GẦN NHƯ là toàn bộ màn hình, làm mờ nó đi là còn lại một mảng
+     tối. Ngược đời: bức tranh đắt nhất bị giấu ở nơi nó có nhiều đất nhất. */
+  :root {
+    --scene-dim: 0.04;
+  }
+
+  .chi-man-rong {
+    display: none !important;
+  }
+  /* Lời tiền bối đã nằm ở sảnh - màn hay nhìn nhất. Lặp lần nữa trong bảng
+     việc là hai lần cùng một câu trên cùng một màn hình điện thoại. */
+  .loi-tien-boi {
+    display: none;
+  }
+}
+
+/*
+ * Ô tick: vòng tròn, và vùng chạm rộng hơn phần nhìn thấy.
+ *
+ * Đây là nút bấm nhiều nhất của cả app, mà nó chỉ có 22px - một nửa mức tối
+ * thiểu cho ngón tay. Không nới bằng padding vì thế thì cả hàng xô lệch; dùng
+ * lớp giả phủ ra ngoài nên bố cục không đổi một pixel nào.
+ *
+ * Và vòng tròn chứ không phải ô vuông: ô vuông đọc ra là biểu mẫu, vòng tròn
+ * là nút trong game.
+ */
+.o-tick {
+  position: relative;
+}
+.o-tick::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 2.75rem;
+  height: 2.75rem;
+  transform: translate(-50%, -50%);
+}
+
+@media (max-width: 767px) {
+  /* "0 việc đã làm · 0 phút nhập định hôm nay" trên dải tranh, trong khi ngay
+     dưới đó đã có "0/1 việc đã hoàn thành · 0p nhập định". Cùng một số, hai
+     lần, cách nhau chưa tới trăm px. */
+  .sanctuary-record {
+    display: none;
+  }
+}

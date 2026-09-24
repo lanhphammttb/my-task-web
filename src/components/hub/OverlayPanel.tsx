@@ -106,7 +106,7 @@ export default function OverlayPanel({
                 {title}
               </h1>
               {subtitle && (
-                <p className="text-muted-foreground truncate text-[11px]">
+                <p className="text-muted-foreground chi-man-rong truncate text-[11px]">
                   {subtitle}
                 </p>
               )}

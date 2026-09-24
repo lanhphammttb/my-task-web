@@ -26,6 +26,8 @@ import TaskCard from "./components/TaskCard";
 import TaskEditorDialog from "./components/TaskEditorDialog";
 import { EmptyState } from "./components/primitives";
 import HubScene from "./components/hub/HubScene";
+import HubMobile from "./components/hub/HubMobile";
+import { useLaDienThoai } from "./lib/thietBi";
 import { nenPhong, nenPhongLui } from "./lib/room";
 import { SCENE_FALLBACK } from "./lib/realmArt";
 import HeaderHUD from "./components/hub/HeaderHUD";
@@ -235,6 +237,7 @@ function Shell() {
   const c = cultivationOf(effectiveXp(data));
   const searching = query.trim().length > 0;
   const panelOpen = searching || view !== null;
+  const laDienThoai = useLaDienThoai();
 
   // Chỉ số nhỏ gắn lên icon: cho người dùng biết chỗ nào đang cần ghé.
   const stats = dayStats(data.tasks, data.sessions, todayKey());
@@ -308,19 +311,35 @@ function Shell() {
           bottom: "calc(var(--footer-h, 86px) + 10px)",
         }}
         className={cn(
-          "hub-scroll absolute inset-x-0 z-10 flex flex-col items-center overflow-y-auto overscroll-contain transition-opacity duration-300",
+          "hub-scroll absolute inset-x-0 z-10 flex flex-col items-center overscroll-contain transition-opacity duration-300",
+          // Sảnh điện thoại tự vừa màn, không có gì để cuộn; bật cuộn ở đó chỉ
+          // tạo ra cái thanh nảy lên nảy xuống khi chạm.
+          laDienThoai ? "overflow-hidden" : "overflow-y-auto",
           panelOpen && "pointer-events-none opacity-0",
         )}
       >
-        <div className="mx-auto my-auto w-full max-w-5xl shrink-0">
-          <HubCenter
+        {/* Hai sảnh khác hẳn nhau, không phải một sảnh co giãn.
+            Điện thoại: cảnh là chính, việc cần làm nổi lên trên cảnh.
+            Màn rộng: thừa chỗ nên bày được cả vòng tu vi lẫn châm ngôn. */}
+        {laDienThoai ? (
+          <HubMobile
             onTribulation={() => setTribulationOpen(true)}
             onFocusTask={startFocus}
             onNew={() => { setDate(todayKey()); openNew(); }}
             onExplore={(v, at) => { if (v === "today") setDate(todayKey()); open(v, at); }}
             onAwaken={() => awaken()}
           />
-        </div>
+        ) : (
+          <div className="mx-auto my-auto w-full max-w-5xl shrink-0">
+            <HubCenter
+              onTribulation={() => setTribulationOpen(true)}
+              onFocusTask={startFocus}
+              onNew={() => { setDate(todayKey()); openNew(); }}
+              onExplore={(v, at) => { if (v === "today") setDate(todayKey()); open(v, at); }}
+              onAwaken={() => awaken()}
+            />
+          </div>
+        )}
       </div>
 
       {/* Dãy nút tròn bám mép phải.
