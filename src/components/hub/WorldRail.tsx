@@ -32,6 +32,12 @@ import { cn } from "@/lib/utils";
  *
  * Mỗi nút tự báo đang có gì chờ mình. Đó là thứ biến một cái menu thành chỗ
  * đáng ghé: nhìn lướt thấy chỗ nào sáng đèn thì vào, giống hệt mở game ra.
+ *
+ * SÁU nút, không phải tám. Bản đầu có thêm "Hòm Kỳ Ngộ" và "Linh Điền", nhưng
+ * hai thứ đó không phải NƠI CHỐN - chúng nằm bên trong Hành Sự Đường và Động
+ * Phủ. Đặt ngang hàng thì dãy nút phình ra và lại bắt người ta nhớ nhiều hơn,
+ * đúng cái vừa sửa xong. Trạng thái của chúng dồn vào huy hiệu của nơi chứa:
+ * hòm đang chờ thì Hành Sự Đường sáng, linh thảo chín thì Động Phủ sáng.
  */
 
 interface Noi {
@@ -84,8 +90,9 @@ export default function WorldRail({
         ten: "Hành Sự Đường",
         phuDe: "Nơi cày nhiệm vụ mỗi ngày",
         icon: "nhat-khoa",
-        so: conLai + tre,
-        goi: conLai > 0 || tre > 0,
+        // Gộp cả hòm đang chờ: hòm nằm trong khu này chứ không phải nơi riêng.
+        so: conLai + tre + hom_,
+        goi: conLai > 0 || tre > 0 || hom_ > 0,
       },
       {
         view: "focus",
@@ -94,29 +101,12 @@ export default function WorldRail({
         icon: "be-quan",
       },
       {
-        view: "today",
-        anchor: "today-chest",
-        ten: "Hòm Kỳ Ngộ",
-        phuDe: "Phần thưởng cho việc đã làm",
-        icon: "linh-thach",
-        so: hom_,
-        goi: hom_ > 0,
-      },
-      {
-        view: "cave",
-        anchor: "cave-field",
-        ten: "Linh Điền",
-        phuDe: "Trồng linh thảo bằng phút bế quan",
-        icon: "chieu-thu",
-        so: chin,
-        goi: chin > 0,
-      },
-      {
         view: "cave",
         ten: "Động Phủ",
         phuDe: "Linh căn, công pháp, lò đan, linh thú",
         icon: "dong-phu",
-        goi: !data.root || duTien,
+        so: chin,
+        goi: !data.root || duTien || chin > 0,
       },
       {
         view: "awards",

@@ -14,6 +14,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "art": "node scripts/prepare-art.mjs",
+    "art:clean-ui": "node scripts/clean-ui-art.mjs",
     "art:check": "node scripts/check-art.mjs",
     "art:audit": "node scripts/audit-art.mjs"
   },
