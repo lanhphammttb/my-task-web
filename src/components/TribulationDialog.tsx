@@ -73,7 +73,19 @@ export default function TribulationDialog({
 
   return (
     <Dialog open={open} onOpenChange={(v) => !striking && onOpenChange(v)}>
-      <DialogContent className="relative overflow-hidden bg-black p-0 sm:max-w-[560px]">
+      {/*
+        KHÔNG thêm `relative` vào đây.
+
+        `DialogContent` tự đặt `fixed` để nổi giữa màn, và `cn()` gộp lớp bằng
+        tailwind-merge - nên `relative` truyền vào sẽ ĐÈ MẤT `fixed`. Hộp thoại
+        khi ấy rơi về luồng thường ở cuối trang: trên màn 844px mép trên của nó
+        nằm ở 963px, tức là hẳn dưới đáy. Người dùng chỉ thấy lớp nền mờ rồi
+        "đứng hình", vì nút bấm và đoạn phim đều nằm ngoài màn.
+
+        `fixed` vốn đã là khối chứa cho con `absolute` (đoạn phim nền), nên bỏ
+        `relative` không mất gì.
+      */}
+      <DialogContent className="overflow-hidden bg-black p-0 sm:max-w-[560px]">
         {/*
           Nền video chạy suốt hộp thoại. Hộp thoại cao hơn rộng nên giữ được
           phần lớn khung hình, thay vì nhét vào một dải ngang chỉ thấy 22%.
