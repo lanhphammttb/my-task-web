@@ -19,8 +19,8 @@
  *  - `api/`: KHÔNG bao giờ lưu. Dữ liệu cũ mà tưởng mới thì còn hại hơn lỗi mạng.
  */
 
-const VO = 'dao-trinh-vo-v2';
-const ANH = 'dao-trinh-anh-v2';
+const VO = 'dao-trinh-vo-v3';
+const ANH = 'dao-trinh-anh-v3';
 const DUNG = [VO, ANH];
 
 /** Trang dự phòng khi mất mạng. */
@@ -55,12 +55,28 @@ self.addEventListener('activate', (e) => {
  */
 const doiChieu = (cache, req) => cache.match(req, { ignoreVary: true });
 
+/*
+ * Cất được không.
+ *
+ * `res.ok` nhận cả dải 200-299, trong đó có **206 Partial Content** - thứ máy
+ * chủ trả về khi trình duyệt xin MỘT KHÚC tệp. Video luôn được xin theo khúc.
+ * Mà `cache.put` từ chối thẳng 206:
+ *
+ *   TypeError: Failed to execute 'put' on 'Cache':
+ *   Partial response (status code 206) is unsupported
+ *
+ * Lỗi ấy làm vỡ lời hứa đã đưa cho `respondWith`, nghĩa là request coi như
+ * HỎNG - nên video độ kiếp không tải nổi, chỉ mờ đi rồi đứng nguyên. Một dòng
+ * `res.ok` sai kéo theo cả một đoạn phim không chạy.
+ */
+const catDuoc = (res) => res.status === 200;
+
 /** Lấy từ mạng, lưu lại, hỏng thì lấy bản đã lưu. */
 async function mangTruoc(req, kho) {
   const cache = await caches.open(kho);
   try {
     const res = await fetch(req);
-    if (res.ok) cache.put(req, res.clone());
+    if (catDuoc(res)) cache.put(req, res.clone());
     return res;
   } catch (err) {
     const cu = await doiChieu(cache, req);
@@ -75,7 +91,7 @@ async function khoTruoc(req, kho) {
   const cu = await doiChieu(cache, req);
   if (cu) return cu;
   const res = await fetch(req);
-  if (res.ok) cache.put(req, res.clone());
+  if (catDuoc(res)) cache.put(req, res.clone());
   return res;
 }
 
@@ -107,6 +123,16 @@ self.addEventListener('message', (e) => {
 self.addEventListener('fetch', (e) => {
   const { request } = e;
   if (request.method !== 'GET') return;
+
+  /*
+   * Xin một khúc tệp thì để thẳng cho mạng, không xen vào.
+   *
+   * Trình duyệt phát video bằng cách xin từng khúc (`Range`), và bản trả về là
+   * 206 - thứ không cất vào kho được. Đáp lại bằng một bản ĐẦY ĐỦ lấy từ kho
+   * cũng sai: trình duyệt xin byte 1000-2000 mà nhận cả tệp thì nó tính sai
+   * mốc thời gian, tua hỏng. Lùi ra là cách đúng duy nhất.
+   */
+  if (request.headers.has('range')) return;
 
   const url = new URL(request.url);
   // Chỉ lo phần của chính mình; CDN hay miền khác thì để nguyên.

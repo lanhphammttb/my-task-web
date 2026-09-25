@@ -300,9 +300,6 @@ export function useServerSync(
           queue.current.shift();
           setPending(queue.current.length);
           setLoi(null);
-          // Báo kết quả TRƯỚC khi vá: chỗ gọi chỉ dùng nó để bung hiệu ứng,
-          // mà hiệu ứng nên bám ngay sau thao tác chứ không đợi vá xong.
-          if (res.result !== undefined) ketQua.current?.(item.name, res.result);
           if (!va(res.thayDoi, res.kiemTra, res.version)) {
             // Bản ở máy đã lệch khỏi bản trên server. Bỏ hàng đợi rồi tải lại
             // đầy đủ - gửi tiếp mấy lệnh tính trên nền lệch chỉ lệch thêm.
@@ -311,6 +308,14 @@ export function useServerSync(
             await taiLai();
             return;
           }
+          /*
+           * Báo kết quả SAU khi vá.
+           *
+           * Chỗ gọi dựng hiệu ứng từ trạng thái đang giữ - tên cảnh giới vừa
+           * bước sang chẳng hạn. Báo trước khi vá thì nó đọc phải bản cũ, và
+           * reo lên sai tên. Chậm vài mili giây không ai thấy; sai tên thì có.
+           */
+          if (res.result !== undefined) ketQua.current?.(item.name, res.result);
         } catch (err) {
           if (!(err instanceof ApiError)) throw err;
 

@@ -1014,7 +1014,21 @@ body[data-scroll-locked] .world-rail {
    * chuỗi bên dưới.
    */
   width: 100%;
-  max-width: 100%;
+  /*
+   * Chốt theo bề ngang MỘT CHIẾC ĐIỆN THOẠI, rồi canh giữa.
+   *
+   * Sảnh này dựng cho cột hẹp: nhân vật cao 260px, bảng nhiệm vụ nằm ngay dưới
+   * chân. Ở 390px thì cân (nhân vật 196, bảng 296). Nhưng mốc chuyển sang bản
+   * điện thoại kéo tới 767px, mà ở đó bảng nở ra 664px trong khi nhân vật vẫn
+   * đứng yên ở 260 - thành ra một khoảng trống mênh mông hai bên và mọi thứ
+   * trông như bị phóng to.
+   *
+   * Không hạ mốc chuyển xuống, vì máy tính bảng và điện thoại xoay ngang vẫn
+   * nên dùng bản này - ngón tay không bé lại khi xoay máy. Chốt bề ngang thì
+   * chữa đúng chỗ sai: màn rộng hơn thì thừa ra hai bên chứ bố cục không giãn.
+   */
+  max-width: 430px;
+  margin-inline: auto;
   box-sizing: border-box;
 }
 .hub-mb > * {

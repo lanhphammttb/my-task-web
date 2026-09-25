@@ -9,6 +9,14 @@ import { defineConfig } from 'vitest/config';
 /** Backend mà dev server chuyển tiếp tới. Đổi bằng `VITE_API_PROXY` trong .env. */
 const API_MAC_DINH = 'https://my-task-api-theta.vercel.app';
 
+const chuyenTiep = (mode: string) => ({
+  '/api': {
+    target: loadEnv(mode, import.meta.dirname, '').VITE_API_PROXY || API_MAC_DINH,
+    changeOrigin: true,
+    rewrite: (duong: string) => duong.replace(/^\/api/, ''),
+  },
+});
+
 export default defineConfig(({ mode }) => ({
   plugins: [react(), tailwindcss()],
 
@@ -26,15 +34,17 @@ export default defineConfig(({ mode }) => ({
    * nó - đúng y cách bản deploy đang chạy, nơi `vercel.json` trỏ `/api/*` sang
    * backend. Dev giống thật là chỗ đáng giá nhất của cách này.
    */
-  server: {
-    proxy: {
-      '/api': {
-        target: loadEnv(mode, import.meta.dirname, '').VITE_API_PROXY || API_MAC_DINH,
-        changeOrigin: true,
-        rewrite: (duong) => duong.replace(/^\/api/, ''),
-      },
-    },
-  },
+  server: { proxy: chuyenTiep(mode) },
+
+  /*
+   * `vite preview` cũng phải chuyển tiếp y như dev.
+   *
+   * Nó phục vụ đúng thư mục `dist` mà Vercel sẽ phục vụ, nên nếu thiếu proxy
+   * thì bản xem thử không gọi nổi API - trong khi bản thật thì gọi được nhờ
+   * `rewrites` trong vercel.json. Xem thử mà khác hàng thật ở đúng chỗ dễ sai
+   * nhất thì xem để làm gì.
+   */
+  preview: { proxy: chuyenTiep(mode) },
   resolve: {
     alias: { '@': path.resolve(import.meta.dirname, './src') },
   },
