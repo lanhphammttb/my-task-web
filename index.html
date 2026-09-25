@@ -115,7 +115,33 @@
        */
       if ('serviceWorker' in navigator) {
         addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js').catch(() => {});
+          /*
+           * Tự chữa khi máy còn giữ worker cũ.
+           *
+           * `register` một mình là chưa đủ: trình duyệt chỉ đi hỏi lại `sw.js`
+           * theo nhịp của nó, nên một máy đã cài bản cũ có thể chạy bản ấy
+           * thêm nhiều lần mở nữa - kèm theo mọi lỗi đã sửa xong từ lâu. Đó
+           * đúng là chuyện vừa xảy ra với lỗi video độ kiếp: bản vá đã lên
+           * máy chủ mà máy người dùng vẫn chạy bản hỏng.
+           *
+           * `update()` ép hỏi ngay. Khi worker mới nắm quyền thì tải lại MỘT
+           * lần để trang đang mở dùng đúng bộ tệp của nó - có cờ chặn để không
+           * bao giờ thành vòng lặp tải lại.
+           */
+          navigator.serviceWorker
+            .register('/sw.js')
+            .then((reg) => reg.update())
+            .catch(() => {});
+
+          // Lần cài đầu tiên thì chưa có ai nắm quyền - đổi quyền lúc ấy là
+          // chuyện bình thường, không phải thay bản, nên không tải lại.
+          const daCoWorker = !!navigator.serviceWorker.controller;
+          let daTaiLai = false;
+          navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (!daCoWorker || daTaiLai) return;
+            daTaiLai = true;
+            location.reload();
+          });
 
           /*
            * Nói cho worker biết trang này đang dùng những tệp nào.
