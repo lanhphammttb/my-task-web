@@ -42,6 +42,8 @@ export interface Task {
   recurrence: Recurrence;
   createdAt: string;
   completedAt?: string;
+  /** Calendar day at completion, independent of the current device timezone. */
+  completedOn?: string;
 }
 
 export interface Goal {

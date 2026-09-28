@@ -108,7 +108,7 @@ interface Ctx {
   /** Trả về false nếu bị chặn; true nếu đã đổi trạng thái. */
   toggleDone: (id: string) => boolean;
   moveTask: (id: string, date: string) => void;
-  duplicateTask: (id: string) => void;
+  duplicateTask: (id: string) => Task | null;
   toggleSubtask: (taskId: string, subId: string) => void;
   pushOverdueToToday: () => number;
   clearDone: (before?: string) => number;
@@ -461,6 +461,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           ...target,
           status,
           completedAt: status === 'done' ? new Date().toISOString() : undefined,
+          completedOn: status === 'done' ? todayKey() : undefined,
         };
         let tasks = d.tasks.map((t) => (t.id === id ? updated : t));
 
@@ -477,6 +478,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
                 date: next,
                 status: 'todo',
                 completedAt: undefined,
+                completedOn: undefined,
                 focusMin: 0,
                 deadline: target.deadline ? `${next}T${target.deadline.slice(11)}` : undefined,
                 subtasks: target.subtasks.map((s) => ({ ...s, id: uid(), done: false })),
@@ -515,28 +517,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const moveTask = useCallback<Ctx['moveTask']>((id, date) => updateTask(id, { date }), [updateTask]);
 
   const duplicateTask = useCallback<Ctx['duplicateTask']>(
-    (id) =>
-      patch((d) => {
-        const t = d.tasks.find((x) => x.id === id);
-        if (!t) return d;
-        return {
-          ...d,
-          tasks: [
-            ...d.tasks,
-            {
-              ...t,
-              id: uid(),
-              title: `${t.title} (bản sao)`,
-              status: 'todo',
-              completedAt: undefined,
-              focusMin: 0,
-              subtasks: t.subtasks.map((s) => ({ ...s, id: uid(), done: false })),
-              createdAt: new Date().toISOString(),
-            },
-          ],
-        };
-      }),
-    [patch],
+    (id) => {
+      const t = data.tasks.find(x => x.id === id);
+      if (!t) return null;
+      const copy: Task = { ...t, id: uid(), title: `${t.title} (bản sao)`,
+        status: 'todo', completedAt: undefined, completedOn: undefined, focusMin: 0,
+        subtasks: t.subtasks.map(s => ({ ...s, id: uid(), done: false })),
+        createdAt: new Date().toISOString() };
+      patch(d => ({ ...d, tasks: [...d.tasks, copy] }));
+      return copy;
+    }, [data.tasks, patch],
   );
 
   const toggleSubtask = useCallback<Ctx['toggleSubtask']>(

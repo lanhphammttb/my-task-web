@@ -20,7 +20,7 @@ npm run dev        # http://localhost:5173
 | `npm run test:watch` | Test ở chế độ theo dõi |
 | `npm run lint` | Chạy oxlint |
 
-Không cần backend, không cần biến môi trường. Dữ liệu nằm trong `localStorage` của trình duyệt.
+Không khai báo `VITE_API_URL` thì ứng dụng chạy local. Khi bật API, dữ liệu tài khoản được xác nhận bởi backend; `localStorage` giữ bản hiển thị và hàng đợi thao tác chưa gửi.
 
 ## Công nghệ giao diện
 
@@ -148,3 +148,17 @@ src/
 Web mới bắt đầu trống; thêm công việc cá nhân từ sảnh chính rồi vào Bế Quan ngay. Thẻ hành trình hiển thị công việc và phút tập trung cần để tiến triển. Hoàn thành phần việc hôm nay sẽ hiện lời ghi nhận và cho phép nghỉ.
 
 Xem [báo cáo và các vấn đề còn lại](docs/review/project-review-2026-09-23.md), [prompt tạo ba ảnh mới](docs/review/asset-prompts.md). Chạy `npm run art:audit` để kiểm tra ảnh và tham chiếu tài nguyên.
+
+## Đồng bộ và backend — 28/09/2026
+
+- Cấu hình hiện tại dùng `VITE_API_URL=same-origin`, `VITE_API_PREFIX=/api`.
+  Vite mặc định proxy tới API deploy. Muốn dùng backend local, đặt
+  `VITE_API_PROXY=http://localhost:5300` trong `.env` rồi khởi động lại Vite.
+- Hàng đợi lưu từng lệnh theo tài khoản, kèm ngày thao tác và `requestId`.
+  Reload, lỗi mạng và lỗi 5xx không xóa lệnh đang chờ. Đăng nhập lại đúng tài khoản để gửi tiếp.
+- Backend từ chối một lệnh thì chỉ loại lệnh đó và thông báo lý do; xung đột version
+  được tải lại và thử lại. Các lệnh quá cũ vẫn chịu kiểm tra ngày của backend.
+- Khi mở app hoặc đổi tài khoản, luôn tải bản đầy đủ từ server. Chỉ dùng phản hồi
+  “không đổi” khi đã có bản server trong bộ nhớ; không suy ra tính toàn vẹn từ số lượng bản ghi local.
+- Nhân bản nhiệm vụ và ID việc con được đồng bộ. Ngày hoàn thành mới lưu trong `completedOn`.
+- **Triển khai backend và migration `002_dong-bo.sql` trước khi triển khai web này.**

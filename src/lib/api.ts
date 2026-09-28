@@ -1,3 +1,4 @@
+import { todayKey } from './date';
 import type { AppData, FocusSession, Goal, Task } from '../types';
 import type { LedgerEntry } from './integrity';
 
@@ -135,6 +136,7 @@ export interface KiemTra {
 }
 
 export interface CommandReply {
+  replayed?: boolean;
   ok: true;
   version: number;
   thayDoi: ThayDoi;
@@ -173,6 +175,7 @@ async function goi<T>(path: string, init?: RequestInit): Promise<T> {
     res = await fetch(BASE + TIEN_TO + path, {
       ...init,
       // Thẻ phiên nằm trong cookie httpOnly nên bắt buộc phải gửi kèm.
+      signal: AbortSignal.timeout(20_000),
       credentials: 'include',
       headers: { 'content-type': 'application/json', ...init?.headers },
     });
@@ -219,9 +222,9 @@ export const api = {
    * thì trả về `khongDoi` kèm mấy con số thay vì cả hồ sơ. Không truyền gì thì
    * luôn nhận bản đầy đủ.
    */
-  trangThai: (version?: number) =>
+  trangThai: (version?: number, accountId?: string) =>
     goi<TrangThaiReply>(
-      version === undefined ? '/trang-thai' : `/trang-thai?version=${version}`,
+      `/trang-thai?today=${todayKey()}${version === undefined ? '' : `&version=${version}`}${accountId ? `&accountId=${encodeURIComponent(accountId)}` : ''}`,
     ),
 
   /**
@@ -230,10 +233,10 @@ export const api = {
    * `today` là ngày theo lịch của MÁY NGƯỜI DÙNG. Server không biết múi giờ nên
    * phải nhận từ đây, và nó có chặn ngày lệch quá xa.
    */
-  lenh: (name: string, args: Record<string, unknown>, today: string, version?: number) =>
+  lenh: (name: string, args: Record<string, unknown>, today: string, version?: number, requestId?: string, accountId?: string) =>
     goi<CommandReply>('/lenh', {
       method: 'POST',
-      body: JSON.stringify({ name, args, today, version }),
+      body: JSON.stringify({ name, args, today, version, requestId, accountId }),
     }),
 };
 

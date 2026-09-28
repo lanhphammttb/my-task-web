@@ -31,10 +31,10 @@ export function dayStats(tasks: Task[], sessions: FocusSession[], key: string): 
 }
 
 /** Chuỗi ngày liên tiếp gần nhất có ít nhất 1 nhiệm vụ hoàn thành. */
-export function currentStreak(tasks: Task[]): number {
+export function currentStreak(tasks: Task[], today = todayKey()): number {
   const doneDays = new Set(tasks.filter((t) => t.status === 'done').map((t) => completedDay(t)));
   let streak = 0;
-  let cursor = new Date();
+  let cursor = parseKey(today);
   // Hôm nay chưa xong việc thì vẫn tính chuỗi từ hôm qua (chưa hết ngày).
   if (!doneDays.has(dateKey(cursor))) cursor = addDays(cursor, -1);
   while (doneDays.has(dateKey(cursor))) {

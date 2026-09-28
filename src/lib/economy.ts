@@ -73,7 +73,7 @@ export function verifiedFocusMinutes(data: AppData): number {
   );
 }
 
-export function xpBreakdown(data: AppData): XpBreakdown {
+export function xpBreakdown(data: AppData, today?: string): XpBreakdown {
   const done = data.tasks.filter((t) => t.status === 'done');
 
   // Chống gian lận: tu vi không bao giờ vượt quá phần đã được sổ ghi xác thực.
@@ -103,7 +103,7 @@ export function xpBreakdown(data: AppData): XpBreakdown {
   if (elements.includes('kim')) elementBonus += urgentBase * 0.2;
   if (elements.includes('hoa')) elementBonus += deadlineBase * 0.25;
   if (elements.includes('thuy')) elementBonus += focusBase * 0.25;
-  if (elements.includes('moc')) elementBonus += currentStreak(data.tasks) * 3;
+  if (elements.includes('moc')) elementBonus += currentStreak(data.tasks, today) * 3;
   if (elements.includes('tho')) elementBonus += perfectDays(data.tasks).length * 30;
 
   // ------------------------------------------------------ thiên phú linh thú
@@ -157,8 +157,8 @@ export interface Progress {
  * Nhờ vậy tu vi gốc luôn phản ánh đúng công việc đã làm, còn thăng tiến thì
  * vẫn phải trả giá như trong truyện.
  */
-export function progressOf(data: AppData): Progress {
-  const raw = xpBreakdown(data).total;
+export function progressOf(data: AppData, today?: string): Progress {
+  const raw = xpBreakdown(data, today).total;
   const penalty = Math.max(0, data.tuViPenalty);
   const net = Math.max(0, raw - penalty);
   const gateRealm = Math.max(0, Math.min(ASCENSION_INDEX, data.gateRealm));
@@ -178,15 +178,15 @@ export function progressOf(data: AppData): Progress {
 }
 
 /** Tu vi thực nhận sau mọi thiên phú - đây là con số dùng để xét cảnh giới. */
-export const effectiveXp = (data: AppData) => progressOf(data).xp;
+export const effectiveXp = (data: AppData, today?: string) => progressOf(data, today).xp;
 
 /**
  * Tu vi sẽ mất nếu độ kiếp thất bại: một nửa phần đã tích trong cảnh giới này,
  * nhân thêm hệ số của công pháp. Hậu Thổ đỡ đòn giỏi, Phá Chấp thì mất rất đau
  * - đó chính là cái giá của tu vi tăng thêm mà nó cho.
  */
-export function tribulationLoss(data: AppData): number {
-  const p = progressOf(data);
+export function tribulationLoss(data: AppData, today?: string): number {
+  const p = progressOf(data, today);
   const floor = realmStart(p.gateRealm);
   const lossMul = techniqueMuls(data.technique).lossMul;
   return Math.floor(Math.max(0, p.net - floor) * FAIL_LOSS_RATIO * lossMul);

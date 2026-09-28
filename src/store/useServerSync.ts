@@ -3,27 +3,7 @@ import type { AppData } from '../types';
 import { ApiError, api, apiEnabled, apThayDoi, laKhongDoi } from '../lib/api';
 import type { ApiUser, KiemTra } from '../lib/api';
 import { todayKey } from '../lib/date';
-
-/**
- * Nối web vào server trọng tài.
- *
- * Cách làm: **dự đoán ở máy, server phán quyết**.
- *
- *  1. Bấm một nút → web tính ngay tại chỗ và vẽ lại màn hình. Không chờ mạng.
- *  2. Lệnh tương ứng được xếp hàng gửi lên server.
- *  3. Server chạy luật của nó rồi trả về trạng thái THẬT. Web lấy đó thay cho
- *     bản dự đoán.
- *
- * Gần như lúc nào hai bên cũng ra cùng một kết quả, nên bước 3 không ai thấy.
- * Lúc lệch nhau - vì máy khác vừa ghi, vì đồng hồ lệch, vì ai đó sửa
- * localStorage - thì con số của server thắng.
- *
- * Hàng đợi gửi **tuần tự**, không song song: lệnh sau tính trên kết quả lệnh
- * trước, bắn cùng lúc thì server xử theo thứ tự ngẫu nhiên và `version` đá nhau.
- *
- * Mất mạng thì lệnh nằm lại trong hàng đợi, web vẫn chạy bằng bản tính ở máy,
- * và nối lại được là gửi tiếp.
- */
+import { uid } from '../lib/storage';
 
 export type SyncStatus =
   /** Chưa cấu hình VITE_API_URL - chạy hoàn toàn ở máy, như trước khi có server */
@@ -42,6 +22,9 @@ export type SyncStatus =
 interface QueueItem {
   name: string;
   args: Record<string, unknown>;
+  requestId: string;
+  today: string;
+  queuedAt: number;
 }
 
 export interface ServerSync {
@@ -88,381 +71,308 @@ function lechChoNao(data: AppData, kt: KiemTra): string | null {
   return xau.length === 0 ? null : xau.map(([t, a, b]) => `${t}: web ${a} ≠ server ${b}`).join(', ');
 }
 
-/**
- * Chỗ nhớ số hiệu trạng thái giữa hai lần mở app.
- *
- * Chỉ một con số, nhưng nó là thứ cho phép hỏi "có gì mới không" thay vì tải
- * lại cả hồ sơ mỗi lần mở. Để riêng khỏi hồ sơ chính vì nó thuộc về đường
- * truyền chứ không thuộc về dữ liệu người dùng: xuất/nhập hồ sơ không nên mang
- * theo số hiệu của một máy chủ nào đó.
- */
-const KHOA_VERSION = 'my-task/dong-bo-version';
-
-function nhoVersion(v: number | undefined) {
-  try {
-    if (v === undefined) localStorage.removeItem(KHOA_VERSION);
-    else localStorage.setItem(KHOA_VERSION, String(v));
-  } catch {
-    // Hết chỗ hoặc bị chặn: mất số hiệu chỉ khiến lần sau tải đầy đủ, không sai.
+// Each command has its own key: one tab cannot overwrite another tab's outbox.
+const OUTBOX = 'my-task/outbox/';
+const LAST_USER = 'my-task/sync-user';
+const itemKey = (userId: string, item: QueueItem) => OUTBOX + userId + '/' + item.requestId;
+function readQueue(userId: string): QueueItem[] {
+  const prefix = OUTBOX + userId + '/';
+  const result: QueueItem[] = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (!key?.startsWith(prefix)) continue;
+    const item = JSON.parse(localStorage.getItem(key)!);
+    if (typeof item.name !== 'string' || typeof item.requestId !== 'string' ||
+        typeof item.today !== 'string' || !Number.isFinite(item.queuedAt) ||
+        !item.args || typeof item.args !== 'object') throw new Error('Hàng đợi lưu trên máy không đọc được');
+    result.push(item);
   }
+  return result.sort((a, b) => a.queuedAt - b.queuedAt);
 }
-
-function versionDaNho(): number | undefined {
+function lastUser(): ApiUser | null {
   try {
-    const raw = localStorage.getItem(KHOA_VERSION);
-    if (raw === null) return undefined;
-    const n = Number(raw);
-    return Number.isInteger(n) && n >= 0 ? n : undefined;
-  } catch {
-    return undefined;
-  }
+    const u = JSON.parse(localStorage.getItem(LAST_USER) ?? 'null');
+    return u && typeof u.id === 'string' && typeof u.email === 'string' ? u : null;
+  } catch { return null; }
 }
 
 export function useServerSync(
-  /** Nhận hàm biến đổi chứ không nhận trạng thái: vá thì phải dựa trên bản đang giữ. */
   apDungTrangThai: (doi: (truoc: AppData) => AppData) => void,
   baoTin?: (message: string, tone?: 'ok' | 'warn') => void,
-  /**
-   * Bản đang giữ ở máy, đọc ngay lúc gọi.
-   *
-   * Cần để đối chiếu với con số server gửi về khi nó báo "không có gì đổi".
-   * Không có thì mọi lần mở app đều tải lại đầy đủ - vẫn đúng, chỉ tốn.
-   */
-  layHienTai?: () => AppData,
-  /**
-   * Nhận kết quả server trả về cho từng lệnh.
-   *
-   * Cần cho những lệnh có KẾT QUẢ NGẪU NHIÊN. Máy và server tung xúc xắc riêng
-   * nên hai bên bất đồng chừng một nửa số lần; trạng thái thì tự chữa được vì
-   * bản vá của server ghi đè, nhưng hiệu ứng ăn mừng thì không - nó đã bung ra
-   * theo con xúc xắc của máy rồi. Có đường này thì chỗ gọi đợi server phán.
-   */
+  _layHienTai?: () => AppData,
   nhanKetQua?: (ten: string, ketQua: unknown) => void,
 ): ServerSync {
   const [status, setStatus] = useState<SyncStatus>(apiEnabled ? 'dang-noi' : 'tat');
   const [user, setUser] = useState<ApiUser | null>(null);
   const [pending, setPending] = useState(0);
   const [loi, setLoi] = useState<string | null>(null);
-
-  /** Hàng đợi và số hiệu trạng thái nằm trong ref: chúng đổi ngoài nhịp vẽ lại. */
+  const owner = useRef<ApiUser | null>(null);
+  const authenticated = useRef(false);
+  const epoch = useRef(0);
+  const flushing = useRef<number | null>(null);
+  const connecting = useRef<symbol | null>(null);
   const queue = useRef<QueueItem[]>([]);
   const version = useRef<number | undefined>(undefined);
-  /**
-   * Bản của SERVER, giữ riêng khỏi bản đang hiện trên màn hình.
-   *
-   * Đây là chỗ sửa một lỗi thật: web sửa lạc quan tại chỗ để bấm cái là thấy
-   * ngay, nhưng có những sửa đổi server làm KHÁC - rõ nhất là nhiệm vụ lặp
-   * lại, web sinh lượt kế tiếp với một id, server sinh với id của nó. Bản vá
-   * thì tính trên trạng thái của server, nên vá vào bản đã lệch ở máy chỉ ra
-   * hai nhiệm vụ thay vì một, và sổ ghi cũng dôi ra.
-   *
-   * Vá vào bản này rồi mới đem hiển thị thì phần dự đoán chỉ sống tới lúc
-   * server trả lời, sau đó con số của server thay hẳn vào - đúng nghĩa "server
-   * phán quyết" mà vẫn không phải gửi lại cả hồ sơ.
-   */
+  // Only a response from this account's server may populate this snapshot.
+  // Never reconstruct it from the optimistic localStorage document or a saved version.
   const banServer = useRef<AppData | null>(null);
-  const flushing = useRef(false);
-  /**
-   * Giữ hàm mới nhất, khỏi phải nhét vào deps của mọi callback.
-   *
-   * Gán trong effect chứ không gán thẳng lúc dựng hình: ghi vào ref giữa lúc
-   * render là một tác dụng phụ, và React ở chế độ đồng thời có thể dựng hình
-   * rồi vứt đi - lúc ấy ref đã bị ghi bằng giá trị của bản vừa vứt.
-   *
-   * Effect này phải đứng TRƯỚC mọi effect khác trong tệp: effect chạy theo thứ
-   * tự khai báo, nên đặt sau thì lần nối đầu tiên đọc phải ref rỗng.
-   */
   const apply = useRef(apDungTrangThai);
   const notify = useRef(baoTin);
-  /*
-   * `layHienTai` cũng phải vào ref, không được vào deps của `taiLai`.
-   *
-   * Để nó trong deps thì mỗi lần chỗ gọi truyền một hàm mới - viết thẳng
-   * `() => data` là thành mới mỗi lần dựng hình - `taiLai` sẽ mới theo, effect
-   * nối lại chạy lại, `setUser` làm dựng hình lần nữa, và cứ thế. Lần đầu viết
-   * tôi để trong deps, test bắt được hai trăm nghìn lượt gọi mạng trong tám
-   * giây. Bắt chỗ gọi phải tự ghi nhớ hàm là đặt một cái bẫy im lặng.
-   */
-  const layNay = useRef(layHienTai);
-  const ketQua = useRef(nhanKetQua);
+  const result = useRef(nhanKetQua);
   useEffect(() => {
     apply.current = apDungTrangThai;
     notify.current = baoTin;
-    layNay.current = layHienTai;
-    ketQua.current = nhanKetQua;
+    result.current = nhanKetQua;
   });
 
-  /** Nuốt trọn một trạng thái đầy đủ từ server. */
-  const nuot = useCallback((data: AppData, v: number) => {
-    version.current = v;
-    banServer.current = data;
-    nhoVersion(v);
-    apply.current(() => data);
+  const storageError = useCallback((err: unknown) => {
+    const message = 'Không lưu được hàng đợi. Giữ trang đang mở và thử đồng bộ lại. ' +
+      (err instanceof Error ? err.message : '');
+    setLoi(message);
+    notify.current?.(message, 'warn');
   }, []);
 
-  /**
-   * Vá phần thay đổi vào bản đang giữ, rồi tự kiểm.
-   *
-   * Trả về `false` nếu vá xong mà lệch - lúc ấy chỗ gọi phải tải lại đầy đủ.
-   * Lệch nghĩa là bản ở máy đã sai từ trước khi vá, nên vá tiếp chỉ sai thêm.
-   */
-  const va = useCallback((doi: Parameters<typeof apThayDoi>[1], kt: KiemTra, v: number) => {
-    // Chưa có bản của server thì không vá được - phải tải đầy đủ trước.
-    if (!banServer.current) {
-      console.warn('[đồng bộ] chưa có bản của server để vá, phải tải lại');
-      return false;
-    }
-    const sau = apThayDoi(banServer.current, doi);
-    const lech = lechChoNao(sau, kt);
-    if (lech) {
-      console.warn('[đồng bộ] vá xong nhưng lệch, phải tải lại —', lech);
-      return false;
-    }
-    version.current = v;
-    banServer.current = sau;
-    nhoVersion(v);
-    apply.current(() => sau);
-    return true;
-  }, []);
-
-  /**
-   * Lấy trạng thái chuẩn từ server.
-   *
-   * Hỏi trước, tải sau. Hồ sơ lớn lên mãi - vài MB sau ba năm - mà phần lớn lần
-   * mở app là mở lại trên chính máy vừa dùng, lúc ấy không có gì đổi cả. Gửi kèm
-   * số hiệu đang giữ thì server trả về mấy con số thay vì cả hồ sơ.
-   *
-   * Vẫn phải ĐỐI CHIẾU chứ không tin suông: số hiệu khớp chỉ nói trạng thái
-   * trên server y nguyên, không nói bản ở máy này còn nguyên. Bản ở máy có thể
-   * đã lệch vì một lệnh chưa kịp gửi đi, vì ghi vào localStorage hỏng giữa
-   * chừng, hay vì người dùng tự sửa. Lệch thì gọi lại lần nữa không kèm số
-   * hiệu - mất thêm một vòng, đổi lấy việc không bao giờ chạy trên bản sai.
-   */
-  const taiLai = useCallback(async () => {
-    const daBiet = version.current ?? versionDaNho();
-    const hienTai = layNay.current?.();
-
-    if (daBiet !== undefined && hienTai) {
-      const res = await api.trangThai(daBiet);
-      if (laKhongDoi(res)) {
-        /*
-         * Gắn lại `verified` trước khi đối chiếu.
-         *
-         * Trường này không được lưu xuống đĩa, nên sau khi nạp lại trang bản ở
-         * máy không có nó - mà máy cũng không tự tính lại được, vì sổ ghi ký
-         * bằng khoá nằm trên server. Không gắn vào thì tu vi hiện 0.
-         *
-         * Nghĩa là phép đối chiếu bên dưới thực chất soi BỐN con số đếm
-         * (nhiệm vụ, mục tiêu, phiên, bản ghi sổ), còn `taskXp` thành hiển
-         * nhiên khớp vì vừa lấy từ cùng một nguồn. Bốn con số ấy vẫn đủ: tu vi
-         * sinh ra từ sổ ghi, nên sổ lệch một dòng là lộ ngay.
-         */
-        const sau = { ...hienTai, verified: res.verified };
-        const lech = lechChoNao(sau, res.kiemTra);
-        if (!lech) {
-          version.current = res.version;
-          banServer.current = sau;
-          // Vá lên bản ĐANG hiện chứ không đắp đè bản chụp lúc nãy: giữa lúc
-          // hỏi server, người dùng có thể đã tick xong một việc.
-          apply.current((truoc) => ({ ...truoc, verified: res.verified }));
-          return;
-        }
-        console.warn('[đồng bộ] server bảo không đổi nhưng bản ở máy lệch, tải lại —', lech);
-      } else {
-        nuot(res.data, res.version);
-        if (!res.audit.ok) {
-          notify.current?.('Máy chủ báo sổ ghi có vấn đề, xem mục Toàn vẹn dữ liệu', 'warn');
-        }
-        return;
-      }
-    }
-
-    const res = await api.trangThai();
-    // Không kèm số hiệu thì server luôn trả bản đầy đủ; nhánh kia không xảy ra.
-    if (laKhongDoi(res)) return;
-    nuot(res.data, res.version);
-    if (!res.audit.ok) {
-      notify.current?.('Máy chủ báo sổ ghi có vấn đề, xem mục Toàn vẹn dữ liệu', 'warn');
-    }
-  }, [nuot]);
-
-  /** Gửi hết hàng đợi, từng lệnh một. */
-  const day = useCallback(async () => {
-    if (flushing.current || queue.current.length === 0) return;
-    flushing.current = true;
-    setStatus('dang-gui');
-
+  const mergeQueue = useCallback(() => {
+    if (!owner.current) return;
     try {
-      while (queue.current.length > 0) {
+      const saved = readQueue(owner.current.id);
+      const byId = new Map([...saved, ...queue.current].map(item => [item.requestId, item]));
+      queue.current = [...byId.values()].sort((a, b) => a.queuedAt - b.queuedAt);
+      for (const item of queue.current) localStorage.setItem(itemKey(owner.current.id, item), JSON.stringify(item));
+      setPending(queue.current.length);
+    } catch (err) { storageError(err); }
+  }, [storageError]);
+
+  const load = useCallback(async (generation: number, force = false) => {
+    const known = !force && banServer.current ? version.current : undefined;
+    const res = await api.trangThai(known, owner.current?.id);
+    if (generation !== epoch.current) return;
+    if (laKhongDoi(res)) {
+      if (!banServer.current || lechChoNao({ ...banServer.current, verified: res.verified }, res.kiemTra)) {
+        const full = await api.trangThai(undefined, owner.current?.id);
+        if (generation !== epoch.current) return;
+        if (laKhongDoi(full)) throw new Error('Máy chủ không trả hồ sơ đầy đủ');
+        banServer.current = full.data;
+        version.current = full.version;
+      } else {
+        banServer.current = { ...banServer.current, verified: res.verified };
+        version.current = res.version;
+      }
+    } else {
+      banServer.current = res.data;
+      version.current = res.version;
+      if (!res.audit.ok) notify.current?.('Máy chủ báo sổ ghi có vấn đề', 'warn');
+    }
+    if (!queue.current.length && banServer.current) {
+      const snapshot = banServer.current;
+      apply.current(() => snapshot);
+    }
+  }, []);
+
+  const day = useCallback(async () => {
+    if (!owner.current || !authenticated.current || flushing.current !== null) return;
+    mergeQueue();
+    if (!queue.current.length) return;
+    const generation = epoch.current;
+    const userId = owner.current.id;
+    flushing.current = generation;
+    setStatus('dang-gui');
+    let conflicts = 0;
+    const remove = (item: QueueItem) => {
+      // Remove durable storage first. If it fails, retrying the same requestId is safe.
+      localStorage.removeItem(itemKey(userId, item));
+      queue.current = queue.current.filter(x => x.requestId !== item.requestId);
+      setPending(queue.current.length);
+    };
+    try {
+      while (generation === epoch.current && queue.current.length) {
         const item = queue.current[0]!;
         try {
-          const res = await api.lenh(item.name, item.args, todayKey(), version.current);
-          queue.current.shift();
-          setPending(queue.current.length);
+          const res = await api.lenh(item.name, item.args, item.today, version.current, item.requestId, userId);
+          if (generation !== epoch.current) return;
+          if (res.replayed || !banServer.current) {
+            await load(generation, true);
+          } else {
+            const next = apThayDoi(banServer.current, res.thayDoi);
+            if (lechChoNao(next, res.kiemTra)) await load(generation, true);
+            else { banServer.current = next; version.current = res.version; }
+          }
+          if (generation !== epoch.current) return;
+          remove(item);
+          conflicts = 0;
           setLoi(null);
-          if (!va(res.thayDoi, res.kiemTra, res.version)) {
-            // Bản ở máy đã lệch khỏi bản trên server. Bỏ hàng đợi rồi tải lại
-            // đầy đủ - gửi tiếp mấy lệnh tính trên nền lệch chỉ lệch thêm.
-            queue.current = [];
-            setPending(0);
-            await taiLai();
-            return;
+          if (!queue.current.length && banServer.current) {
+            const snapshot = banServer.current;
+            apply.current(() => snapshot);
           }
-          /*
-           * Báo kết quả SAU khi vá.
-           *
-           * Chỗ gọi dựng hiệu ứng từ trạng thái đang giữ - tên cảnh giới vừa
-           * bước sang chẳng hạn. Báo trước khi vá thì nó đọc phải bản cũ, và
-           * reo lên sai tên. Chậm vài mili giây không ai thấy; sai tên thì có.
-           */
-          if (res.result !== undefined) ketQua.current?.(item.name, res.result);
+          if (res.result !== undefined && !res.replayed) result.current?.(item.name, res.result);
         } catch (err) {
+          if (generation !== epoch.current) return;
           if (!(err instanceof ApiError)) throw err;
-
-          if (err.offline) {
-            // Giữ nguyên hàng đợi, chờ lần sau. Web vẫn chạy bằng bản ở máy.
-            setStatus('mat-mang');
-            return;
-          }
-
           if (err.status === 401) {
-            queue.current = [];
-            setPending(0);
-            setUser(null);
+            authenticated.current = false;
             setStatus('chua-dang-nhap');
-            notify.current?.('Phiên đã hết hạn, đăng nhập lại để đồng bộ', 'warn');
+            setUser(null);
+            setLoi('Phiên đã hết hạn. Đăng nhập lại để gửi các thao tác đang chờ.');
             return;
           }
-
-          /*
-           * Server không chấp nhận lệnh (422), hoặc có máy khác vừa ghi (409).
-           *
-           * Cả hai đều nghĩa là bản dự đoán ở máy đã sai. Bỏ hàng đợi rồi tải
-           * lại từ server - cố gửi tiếp mấy lệnh tính trên nền sai chỉ làm sai
-           * thêm.
-           */
-          queue.current = [];
-          setPending(0);
+          if (err.offline || err.status >= 500 || err.status === 429) throw err;
+          if (err.status === 409) {
+            await load(generation, true);
+            if (++conflicts >= 3) throw err;
+            continue;
+          }
+          // Only this rejected command is removed. Independent commands still run.
+          remove(item);
           setLoi(err.message);
           notify.current?.(err.message, 'warn');
-          await taiLai();
-          return;
+          await load(generation, true);
         }
       }
-      setStatus('da-noi');
+      if (generation === epoch.current) setStatus('da-noi');
+    } catch (err) {
+      if (generation === epoch.current) {
+        setStatus('mat-mang');
+        setLoi(err instanceof Error ? err.message : 'Chưa đồng bộ được, thao tác vẫn đang chờ');
+      }
     } finally {
-      flushing.current = false;
-      if (queue.current.length === 0) setStatus((s) => (s === 'dang-gui' ? 'da-noi' : s));
+      if (flushing.current === generation) flushing.current = null;
     }
-  }, [nuot, taiLai]);
+  }, [load, mergeQueue]);
 
-  const gui = useCallback(
-    (name: string, args: Record<string, unknown> = {}) => {
-      if (!apiEnabled || !user) return;
-      queue.current.push({ name, args });
-      setPending(queue.current.length);
-      void day();
-    },
-    [day, user],
-  );
+  const attach = useCallback((u: ApiUser) => {
+    if (owner.current?.id !== u.id) {
+      epoch.current++;
+      flushing.current = null;
+      queue.current = [];
+      version.current = undefined;
+      banServer.current = null;
+    }
+    owner.current = u;
+    setUser(u);
+    try { localStorage.setItem(LAST_USER, JSON.stringify(u)); } catch (err) { storageError(err); }
+    mergeQueue();
+  }, [mergeQueue, storageError]);
 
-  /* ------------------------------------------------------- vào/ra tài khoản */
+  const sauKhiVao = useCallback(async (u: ApiUser) => {
+    attach(u);
+    const generation = epoch.current;
+    authenticated.current = false;
+    await load(generation, true);
+    if (generation !== epoch.current) return;
+    if (banServer.current) {
+      const snapshot = banServer.current;
+      apply.current(() => snapshot);
+    }
+    authenticated.current = true;
+    setStatus('da-noi');
+    await day();
+  }, [attach, day, load]);
 
-  const sauKhiVao = useCallback(
-    async (u: ApiUser) => {
-      setUser(u);
-      setLoi(null);
-      await taiLai();
-      setStatus('da-noi');
-    },
-    [taiLai],
-  );
-
-  const dangNhap = useCallback(
-    async (email: string, matKhau: string) => {
-      const { user: u } = await api.dangNhap(email, matKhau);
+  const connect = useCallback(async () => {
+    if (connecting.current) return;
+    const connection = Symbol('connection');
+    connecting.current = connection;
+    const generation = epoch.current;
+    try {
+      const { user: u } = await api.toiLaAi();
+      if (generation !== epoch.current || connecting.current !== connection) return;
       await sauKhiVao(u);
-    },
-    [sauKhiVao],
-  );
+    } catch (err) {
+      if (connecting.current !== connection) return;
+      if (err instanceof ApiError && err.status === 401) {
+        authenticated.current = false;
+        setUser(null);
+        setStatus('chua-dang-nhap');
+      } else {
+        if (!owner.current) { const cached = lastUser(); if (cached) attach(cached); }
+        setStatus('mat-mang');
+      }
+    } finally { if (connecting.current === connection) connecting.current = null; }
+  }, [attach, sauKhiVao]);
 
-  const dangKy = useCallback(
-    async (email: string, matKhau: string, ten?: string) => {
-      const { user: u } = await api.dangKy(email, matKhau, ten);
+  const gui = useCallback((name: string, args: Record<string, unknown> = {}) => {
+    if (!apiEnabled || !owner.current || !user) return;
+    const item: QueueItem = { name, args, today: todayKey(), requestId: uid(),
+      queuedAt: Math.max(Date.now(), (queue.current.at(-1)?.queuedAt ?? 0) + 1) };
+    queue.current.push(item);
+    setPending(queue.current.length);
+    try { localStorage.setItem(itemKey(owner.current.id, item), JSON.stringify(item)); }
+    catch (err) { storageError(err); }
+    void day();
+  }, [day, storageError, user]);
+
+  const stopSessionWork = useCallback(() => {
+    epoch.current++;
+    authenticated.current = false;
+    connecting.current = null;
+    flushing.current = null;
+  }, []);
+  const dangNhap = useCallback(async (email: string, password: string) => {
+    stopSessionWork();
+    try {
+      const { user: u } = await api.dangNhap(email, password);
       await sauKhiVao(u);
-    },
-    [sauKhiVao],
-  );
-
+    } catch (err) { await connect(); throw err; }
+  }, [connect, sauKhiVao, stopSessionWork]);
+  const dangKy = useCallback(async (email: string, password: string, name?: string) => {
+    stopSessionWork();
+    try {
+      const { user: u } = await api.dangKy(email, password, name);
+      await sauKhiVao(u);
+    } catch (err) { await connect(); throw err; }
+  }, [connect, sauKhiVao, stopSessionWork]);
   const dangXuat = useCallback(async () => {
-    await api.dangXuat().catch(() => {});
+    stopSessionWork();
+    // Do not report success if the server session could not be revoked.
+    try { await api.dangXuat(); }
+    catch (err) { await connect(); throw err; }
+    owner.current = null;
     queue.current = [];
-    setPending(0);
-    version.current = undefined;
-    nhoVersion(undefined);
     banServer.current = null;
+    version.current = undefined;
+    try { localStorage.removeItem(LAST_USER); } catch (err) { storageError(err); }
+    setPending(0);
     setUser(null);
     setStatus('chua-dang-nhap');
-  }, []);
-
-  const nhapLenServer = useCallback(
-    async (data: AppData) => {
-      await api.lenh('importLocalData', { data }, todayKey(), version.current);
-      // Nhập là thay trắng cả hồ sơ, nên tải lại đầy đủ thay vì vá.
-      await taiLai();
-      notify.current?.('Đã đưa hồ sơ lên máy chủ');
-    },
-    [taiLai],
-  );
-
-  /* ------------------------------------------------- nối lại lúc mở app */
-
-  useEffect(() => {
-    if (!apiEnabled) return;
-    let huy = false;
-    void (async () => {
-      try {
-        const { user: u } = await api.toiLaAi();
-        if (huy) return;
-        setUser(u);
-        await taiLai();
-        if (!huy) setStatus('da-noi');
-      } catch (err) {
-        if (huy) return;
-        // 401 là bình thường: chỉ là chưa đăng nhập.
-        setStatus(err instanceof ApiError && err.offline ? 'mat-mang' : 'chua-dang-nhap');
-      }
-    })();
-    return () => {
-      huy = true;
-    };
-  }, [taiLai]);
-
-  /* ---------------------------------------------- có mạng lại thì gửi tiếp */
+  }, [connect, stopSessionWork, storageError]);
+  const taiLai = useCallback(async () => {
+    if (!authenticated.current) { await connect(); return; }
+    if (flushing.current !== null) return;
+    await day();
+    if (!queue.current.length) {
+      const generation = epoch.current;
+      flushing.current = generation;
+      try { await load(generation); }
+      finally { if (flushing.current === generation) flushing.current = null; }
+      await day();
+    }
+  }, [connect, day, load]);
+  const nhapLenServer = useCallback(async (data: AppData) => {
+    gui('importLocalData', { data });
+    await day();
+  }, [gui, day]);
 
   useEffect(() => {
     if (!apiEnabled) return;
-    const thu = () => void day();
-    window.addEventListener('online', thu);
-    // Quay lại tab cũng thử: máy ngủ dậy thì sự kiện `online` không bắn.
-    document.addEventListener('visibilitychange', thu);
-    return () => {
-      window.removeEventListener('online', thu);
-      document.removeEventListener('visibilitychange', thu);
+    let cancelled = false;
+    queueMicrotask(() => { if (!cancelled) void connect(); });
+    const retry = () => {
+      if (document.visibilityState === 'hidden') return;
+      if (authenticated.current) void day(); else void connect();
     };
-  }, [day]);
+    window.addEventListener('online', retry);
+    document.addEventListener('visibilitychange', retry);
+    const timer = window.setInterval(retry, 10_000);
+    return () => {
+      cancelled = true;
+      stopSessionWork();
+      window.clearInterval(timer);
+      window.removeEventListener('online', retry);
+      document.removeEventListener('visibilitychange', retry);
+    };
+  }, [connect, day, stopSessionWork]);
 
-  return {
-    status,
-    user,
-    pending,
-    loi,
-    dangNhap,
-    dangKy,
-    dangXuat,
-    nhapLenServer,
-    taiLai,
-    laTrongTai: status === 'da-noi' || status === 'dang-gui',
-    gui,
-  };
+  return { status, user, pending, loi, dangNhap, dangKy, dangXuat, nhapLenServer, taiLai, gui,
+    laTrongTai: !!user };
 }

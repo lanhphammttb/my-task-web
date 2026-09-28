@@ -16,8 +16,8 @@ export const ISO = 'yyyy-MM-dd';
 export const todayKey = () => format(new Date(), ISO);
 export const dateKey = (d: Date) => format(d, ISO);
 /** Calendar day in the user's timezone, not the UTC prefix of an ISO timestamp. */
-export const completedDay = (task: { completedAt?: string; date: string }) =>
-  task.completedAt ? dateKey(new Date(task.completedAt)) : task.date;
+export const completedDay = (task: { completedAt?: string; completedOn?: string; date: string }) =>
+  task.completedOn ?? (task.completedAt ? dateKey(new Date(task.completedAt)) : task.date);
 
 export const parseKey = (key: string) => parseISO(`${key}T00:00:00`);
 

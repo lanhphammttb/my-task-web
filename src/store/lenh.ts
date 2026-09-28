@@ -45,17 +45,18 @@ export const LENH: Record<string, Doi> = {
     goalId: t.goalId,
     estimateMin: t.estimateMin,
     recurrence: t.recurrence,
-    subtasks: t.subtasks.map((s) => ({ title: s.title, done: s.done })),
+    subtasks: t.subtasks.map((s) => ({ id: s.id, title: s.title, done: s.done })),
   })),
 
   updateTask: (_k, id: never, patch: never) => {
     const p = patch as Partial<Task>;
     // `status` không đi đường này: đổi trạng thái là chuyện của sổ ghi, phải
     // qua `setStatus` để server ký cho đúng.
-    const { status: _bo, id: _bo2, focusMin: _bo3, completedAt: _bo4, ...con } = p;
+    const { status: _bo, id: _bo2, focusMin: _bo3, completedAt: _bo4, completedOn: _bo5, ...con } = p;
     return Object.keys(con).length === 0 ? null : { id: id as string, ...con };
   },
 
+  duplicateTask: neuCo((t: Task, id: never) => ({ id: id as string, newId: t.id, subtaskIds: t.subtasks.map(s => s.id) })),
   removeTask: (_k, id: never) => ({ id: id as string }),
   setStatus: neuThanh((id: never, status: never) => ({ id: id as string, status: status as string })),
   toggleDone: neuThanh((id: never) => ({ id: id as string })),
@@ -120,8 +121,6 @@ export const LENH: Record<string, Doi> = {
 /**
  * Những hành động CỐ TÌNH không gửi lên server, và lý do:
  *
- *  - `duplicateTask`: web sinh id mới cho cả việc lẫn các việc con, mà lệnh
- *    tương ứng bên server lại tự sinh id của nó. Chưa đáng để làm cho khớp.
  *  - `resolveEncounter`: kỳ ngộ do server bốc và trả về trong kết quả của
  *    `logSession`; cách web đang tự bốc là đường cũ, sẽ bỏ khi chuyển hẳn.
  *  - `replaceAll`, `loadSample`, `resetAll`: mấy cái này thay trắng toàn bộ hồ
@@ -131,7 +130,6 @@ export const LENH: Record<string, Doi> = {
  *    khoá khác. Khi đã đăng nhập thì nút này vô nghĩa.
  */
 export const KHONG_GUI = [
-  'duplicateTask',
   'resolveEncounter',
   'replaceAll',
   'loadSample',
