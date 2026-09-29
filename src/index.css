@@ -1128,7 +1128,7 @@
 .mobile-panel .journal-chapter-copy > span { display: none; }
 .mobile-panel .sanctuary-journal { padding: 14px 12px; }
 .mobile-panel input, .mobile-search input { font-size: 16px; }
-.mobile-navigation { position: absolute; inset: auto 0 0; z-index: 45; display: flex; flex-direction: column; justify-content: flex-end; box-sizing: border-box; height: calc(70px + env(safe-area-inset-bottom, 0px)); padding-bottom: env(safe-area-inset-bottom, 0px); background: var(--background); border-top: 1px solid var(--border); box-shadow: 0 -4px 24px #0002; }
+.mobile-navigation { position: absolute; inset: auto 0 0; z-index: 45; display: flex; flex-direction: column; justify-content: flex-end; box-sizing: border-box; height: calc(76px + env(safe-area-inset-bottom, 0px)); padding-bottom: env(safe-area-inset-bottom, 0px); background: var(--background); border-top: 1px solid var(--border); box-shadow: 0 -4px 24px #0002; }
 .mobile-search { display: flex; flex: none; align-items: center; gap: 10px; padding: 8px 12px; }
 .mobile-search input { min-width: 0; flex: 1; height: 44px; }
 .mobile-search button { display: grid; place-items: center; width: 44px; height: 44px; }
@@ -1146,7 +1146,7 @@
 .mobile-shell .hub-mb-them, .mobile-shell .hub-mb-xem, .mobile-shell .hub-mb-quay { font-size: 14px; min-height: 48px; }
 .mobile-shell .hub-mb-chinh { background-color: var(--background); min-height: 48px; }
 @media (max-width: 767px), (pointer: coarse) and (max-width: 900px) {
-  [data-slot="dialog-content"].task-editor-mobile { top: auto; bottom: 0; left: 0; translate: none; transform: none; max-width: none; max-height: 90dvh; border-radius: 20px 20px 0 0; padding-bottom: calc(16px + env(safe-area-inset-bottom)); }
+  [data-slot="dialog-content"].task-editor-mobile { top: auto; bottom: var(--dialog-bottom-inset, 0px); left: 0; translate: none; transform: none; max-width: none; max-height: min(90dvh, var(--dialog-visible-height, 90dvh)); border-radius: 20px 20px 0 0; padding-bottom: calc(16px + env(safe-area-inset-bottom)); scroll-padding-block: 20px; }
   .task-editor-mobile input, .task-editor-mobile textarea { font-size: 16px; }
 }
 
@@ -1156,12 +1156,11 @@
   border-top: 1px solid color-mix(in srgb, var(--gold) 45%, transparent);
   box-shadow: 0 -8px 30px #0005, inset 0 1px color-mix(in srgb, var(--gold) 12%, transparent);
 }
-.mobile-navigation.is-compact { height: calc(66px + env(safe-area-inset-bottom, 0px)); }
-.mobile-navigation.is-compact:has(.mobile-search) { height: calc(128px + env(safe-area-inset-bottom, 0px)); }
-.mobile-world { position: relative; top: auto; display: grid; flex: none; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 2px; padding: 4px 5px 5px; }
-.mobile-world > button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-width: 0; min-height: 56px; padding: 2px 1px; color: var(--foreground); font-family: var(--font-title); font-size: 9px; font-weight: 650; line-height: 1.05; text-align: center; border-radius: 10px; touch-action: manipulation; }
-.mobile-world > button > span:last-child { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.mobile-world-medallion { position: relative; display: grid; flex: none; place-items: center; width: 33px; height: 33px; border-radius: 50%; color: var(--gold-bright); border: 1px solid color-mix(in srgb, var(--gold) 48%, transparent); background: radial-gradient(circle, color-mix(in srgb, var(--gold) 18%, var(--background)), var(--background)); box-shadow: inset 0 0 0 2px #0003, 0 2px 5px #0004; }
+.mobile-navigation.is-compact { height: calc(53px + env(safe-area-inset-bottom, 0px)); }
+.mobile-navigation.is-compact:has(.mobile-search) { height: calc(113px + env(safe-area-inset-bottom, 0px)); }
+.mobile-world { position: relative; top: auto; display: grid; flex: none; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 1px; padding: 4px 3px 5px; }
+.mobile-world > button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-width: 0; min-height: 56px; color: var(--foreground); font-family: var(--font-title); font-size: 8px; line-height: 1.05; text-align: center; border-radius: 10px; }
+.mobile-world-medallion { position: relative; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; color: var(--gold-bright); border: 1px solid color-mix(in srgb, var(--gold) 48%, transparent); background: radial-gradient(circle, color-mix(in srgb, var(--gold) 18%, var(--background)), var(--background)); box-shadow: inset 0 0 0 2px #0003, 0 2px 5px #0004; }
 .mobile-world-medallion img { width: 100%; height: 100%; object-fit: contain; }
 .mobile-world > button[aria-current="page"] { color: var(--gold-bright); background: radial-gradient(ellipse, color-mix(in srgb, var(--gold) 18%, transparent), transparent 75%); }
 .mobile-world > button[aria-current="page"] .mobile-world-medallion { border-color: var(--gold-bright); box-shadow: 0 0 12px var(--gold-glow), inset 0 0 0 2px #0003; }
@@ -1171,27 +1170,9 @@
 .mobile-home-scene > div:nth-child(2) { background: linear-gradient(180deg, #07100c14 20%, #07100c26 52%, #07100ccc 100%) !important; }
 .mobile-home-scene > div:nth-child(4) { background: radial-gradient(ellipse at 50% 38%, transparent 10%, #07100c26 72%, #07100c65 100%) !important; }
 .mobile-home-scene > div:nth-child(5), .mobile-home-scene > div:nth-child(6) { opacity: .55; }
-.mobile-navigation.is-compact .mobile-world { box-sizing: border-box; min-height: 60px; grid-template-columns: repeat(6, minmax(0, 1fr)); padding: 3px 5px 4px; }
-.mobile-navigation.is-compact .mobile-world > button { min-height: 52px; gap: 2px; font-size: 9px; }
-.mobile-navigation.is-compact .mobile-world-medallion { width: 32px; height: 32px; }
-.mobile-more-menu { width: min(286px, calc(100vw - 24px)); border: 1px solid color-mix(in srgb, var(--gold) 58%, transparent); border-radius: 16px; padding: 10px; color: var(--foreground); background: radial-gradient(ellipse at 8% 0%, color-mix(in srgb, var(--gold) 13%, transparent), transparent 52%), linear-gradient(155deg, color-mix(in srgb, var(--surface) 94%, var(--gold) 6%), var(--background)); box-shadow: inset 0 0 0 2px rgb(0 0 0 / 24%), 0 14px 36px rgb(0 0 0 / 62%); }
-.mobile-more-heading { display: flex; align-items: center; gap: 10px; padding: 4px 5px 10px; border-bottom: 1px solid color-mix(in srgb, var(--gold) 28%, transparent); }
-.mobile-more-sigil { display: grid; width: 34px; height: 34px; flex: none; place-items: center; border: 1px solid color-mix(in srgb, var(--gold) 66%, transparent); border-radius: 50%; color: var(--gold-bright); background: radial-gradient(circle, color-mix(in srgb, var(--gold) 20%, var(--background)), var(--background)); box-shadow: 0 0 12px color-mix(in srgb, var(--gold-glow) 45%, transparent); }
-.mobile-more-heading strong,.mobile-more-heading small { display: block; }
-.mobile-more-heading strong { color: var(--gold-bright); font: 700 13px/1.25 var(--font-title); }
-.mobile-more-heading small { margin-top: 2px; color: var(--muted-foreground); font-size: 10px; }
-.mobile-more-links { display: grid; gap: 5px; padding-top: 8px; }
-.mobile-more-links > button { display: flex; min-height: 48px; align-items: center; gap: 10px; border: 1px solid color-mix(in srgb, var(--gold) 24%, transparent); border-radius: 11px; padding: 5px 9px; color: var(--foreground); background: linear-gradient(100deg, color-mix(in srgb, var(--gold) 8%, var(--surface)), color-mix(in srgb, var(--background) 88%, transparent)); text-align: left; font-family: var(--font-title); font-size: 12px; font-weight: 650; }
-.mobile-more-links > button[aria-current="page"] { border-color: color-mix(in srgb, var(--gold-bright) 78%, transparent); color: var(--gold-bright); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--gold) 15%, transparent), 0 0 12px color-mix(in srgb, var(--gold-glow) 22%, transparent); }
-.mobile-more-links > button:active { transform: translateY(1px); }
-.mobile-more-art { display: grid; width: 34px; height: 34px; flex: none; place-items: center; border: 1px solid color-mix(in srgb, var(--gold) 44%, transparent); border-radius: 50%; color: var(--gold-bright); background: radial-gradient(circle at 34% 24%, color-mix(in srgb, white 11%, transparent), transparent 46%), color-mix(in srgb, var(--background) 90%, var(--gold) 10%); }
-.mobile-more-art img { width: 100%; height: 100%; object-fit: contain; }
-.mobile-more-links > button > svg:last-child { margin-left: auto; color: var(--gold); }
-@media (max-width: 360px) {
-  .mobile-world { padding-inline: 3px; gap: 0; }
-  .mobile-world > button { font-size: 9px; }
-  .mobile-world-medallion { width: 29px; height: 29px; }
-}
+.mobile-navigation.is-compact .mobile-world { box-sizing: border-box; height: 52px; grid-template-columns: repeat(8, minmax(0, 1fr)); padding: 4px 5px; }
+.mobile-navigation.is-compact .mobile-world > button { min-height: 44px; gap: 1px; font-size: 0; }
+.mobile-navigation.is-compact .mobile-world-medallion { width: 39px; height: 39px; }
 .sync-indicator-count { display: grid; min-width: 17px; height: 17px; place-items: center; border-radius: 999px; background: var(--gold); color: var(--background); font-size: 9px; }
 .focus-result { display: flex; align-items: center; justify-content: space-between; gap: 16px; border: 1px solid color-mix(in srgb, var(--gold) 55%, transparent); border-radius: 16px; padding: 16px; background: linear-gradient(135deg, color-mix(in srgb, var(--gold) 16%, var(--card)), var(--card)); box-shadow: 0 0 24px var(--gold-glow); }
 .focus-result p { margin-top: 4px; color: var(--muted-foreground); font-size: 12px; }

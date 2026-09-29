@@ -49,6 +49,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { useLaDienThoai } from "../lib/thietBi";
+import { useDialogVisualViewport } from "../hooks/useDialogVisualViewport";
 
 interface Props {
   onEdit: (t: Task) => void;
@@ -58,6 +60,7 @@ interface Props {
 
 export default function GoalsView({ onEdit, onFocus, onAddTask }: Props) {
   const { data, addGoal, updateGoal, removeGoal } = useApp();
+  const mobile = useLaDienThoai();
   const [editing, setEditing] = useState<Goal | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -68,6 +71,7 @@ export default function GoalsView({ onEdit, onFocus, onAddTask }: Props) {
     targetDate: "",
     color: GOAL_COLORS[0],
   });
+  const viewportStyle = useDialogVisualViewport(formOpen, mobile);
 
   const tasksByGoal = useMemo(() => {
     const map = new Map<string, Task[]>();
@@ -361,7 +365,11 @@ export default function GoalsView({ onEdit, onFocus, onAddTask }: Props) {
 
       {/* ------------------------------------------------- form mục tiêu */}
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
-        <DialogContent className="vow-editor-dialog task-editor-mobile max-h-[92vh] overflow-y-auto sm:max-w-[520px]">
+        <DialogContent className="vow-editor-dialog task-editor-mobile max-h-[92vh] overflow-y-auto sm:max-w-[520px]" style={viewportStyle} tabIndex={-1} onOpenAutoFocus={(event) => {
+          if (!mobile) return;
+          event.preventDefault();
+          (event.currentTarget as HTMLElement | null)?.focus({ preventScroll: true });
+        }}>
           <DialogHeader className="vow-editor-heading">
             <p className="vow-editor-eyebrow"><Target className="size-3.5" /> LẬP ĐẠI NGUYỆN</p>
             <DialogTitle>{editing ? "Hiệu chỉnh đại nguyện" : "Khởi lập đại nguyện"}</DialogTitle>
@@ -372,7 +380,7 @@ export default function GoalsView({ onEdit, onFocus, onAddTask }: Props) {
               <Label htmlFor="goal-title">Tên mục tiêu *</Label>
               <Input
                 id="goal-title"
-                autoFocus
+                autoFocus={!mobile}
                 value={draft.title}
                 onChange={(e) => setDraft({ ...draft, title: e.target.value })}
                 placeholder="Ví dụ: Ra mắt sản phẩm phiên bản 2.0"

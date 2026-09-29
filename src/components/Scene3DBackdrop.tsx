@@ -373,6 +373,7 @@ export default function Scene3DBackdrop({
     let skyAspect = 1;
     let formationX = 0;
     let formationY = 5.05;
+    let sanctuaryX = 3.15;
     let sanctuaryY = 7.8;
     const resize = () => {
       const width = Math.max(1, el.clientWidth);
@@ -392,7 +393,8 @@ export default function Scene3DBackdrop({
       sealSprite.scale.set(small ? 6.1 : 5.35, small ? 6.1 : 5.35, 1);
 
       // Keep one distant sanctuary in the scene, scaled for each viewport.
-      sanctuary.position.x = small ? 3.15 : Math.min(13, skyAspect * 5.25);
+      sanctuaryX = small ? 3.15 : Math.min(13, skyAspect * 5.25);
+      sanctuary.position.x = sanctuaryX;
       sanctuaryY = small ? 7.8 : 8.35;
       sanctuary.scale.set(small ? 4.7 : 6.35, small ? 4.95 : 6.65, 1);
 
@@ -408,13 +410,24 @@ export default function Scene3DBackdrop({
     const observer = new ResizeObserver(resize);
     observer.observe(el);
     window.addEventListener("resize", resize, { passive: true });
+    window.visualViewport?.addEventListener("resize", resize, { passive: true });
 
     const aim = { x: 0, y: 0 };
     const onMove = (event: PointerEvent) => {
       aim.x = (event.clientX / Math.max(1, window.innerWidth) - 0.5) * 2;
       aim.y = (event.clientY / Math.max(1, window.innerHeight) - 0.5) * 2;
     };
-    if (!small && !reducedMotion) window.addEventListener("pointermove", onMove, { passive: true });
+    const onPointerEnd = () => {
+      aim.x = 0;
+      aim.y = 0;
+    };
+    if (!reducedMotion) {
+      // Touch movement gives the phone scene real parallax; the cutout art,
+      // rings and distant sanctuary now shift at separate depths with a soft return.
+      window.addEventListener("pointermove", onMove, { passive: true });
+      window.addEventListener("pointerup", onPointerEnd, { passive: true });
+      window.addEventListener("pointercancel", onPointerEnd, { passive: true });
+    }
 
     let lastLight = want.current.light;
     const applyMode = (isLight: boolean) => {
@@ -485,16 +498,22 @@ export default function Scene3DBackdrop({
       applyTint(dt);
 
       const damp = 1 - Math.exp(-dt * 2.1);
-      camera.position.x += (aim.x * (small ? 0.12 : 0.8) + Math.sin(t * 0.055) * 0.25 - camera.position.x) * damp;
-      camera.position.y += (-aim.y * (small ? 0.08 : 0.45) + Math.cos(t * 0.04) * 0.16 - camera.position.y) * damp;
+      camera.position.x += (aim.x * (small ? 0.62 : 0.9) + Math.sin(t * 0.055) * 0.25 - camera.position.x) * damp;
+      camera.position.y += (-aim.y * (small ? 0.38 : 0.55) + Math.cos(t * 0.04) * 0.16 - camera.position.y) * damp;
       camera.lookAt(0, 0, -26);
 
       stars.rotation.z = t * 0.0018;
-      formation.rotation.y = Math.sin(t * 0.22) * 0.18;
-      formation.rotation.z = Math.sin(t * 0.16) * 0.08;
+      // Move the foreground seal, qi and distant sanctuary at different rates:
+      // touch/hover now reveals depth instead of translating the whole backdrop.
+      formation.position.x = formationX + aim.x * (small ? 0.1 : 0.18);
+      formation.position.y = formationY - aim.y * (small ? 0.08 : 0.14);
+      formation.rotation.x = -aim.y * 0.045;
+      formation.rotation.y = Math.sin(t * 0.22) * 0.18 + aim.x * 0.07;
+      formation.rotation.z = Math.sin(t * 0.16) * 0.08 + aim.x * 0.015;
       sealSprite.material.rotation = -t * 0.018;
-      sanctuary.position.y = sanctuaryY + Math.sin(t * 0.32) * 0.16;
-      sanctuary.rotation.y = Math.sin(t * 0.09) * 0.035;
+      sanctuary.position.x = sanctuaryX + aim.x * (small ? 0.24 : 0.4);
+      sanctuary.position.y = sanctuaryY + Math.sin(t * 0.32) * 0.16 - aim.y * 0.16;
+      sanctuary.rotation.y = Math.sin(t * 0.09) * 0.035 + aim.x * 0.012;
       rings.forEach((ring, i) => {
         ring.rotation.z += dt * (i % 2 ? -0.045 : 0.035);
       });
@@ -502,7 +521,8 @@ export default function Scene3DBackdrop({
         glyph.rotation.x += dt * (0.28 + (i % 3) * 0.08);
         glyph.rotation.y += dt * 0.42;
       });
-      orb.position.y = formationY + (small ? 1.2 : 1.75) + Math.sin(t * 0.8) * 0.19;
+      orb.position.x = formationX + (small ? 2.55 : 2.15) + aim.x * 0.19;
+      orb.position.y = formationY + (small ? 1.2 : 1.75) + Math.sin(t * 0.8) * 0.19 - aim.y * 0.12;
       orb.rotation.x += dt * 0.22;
       orb.rotation.y += dt * 0.31;
       orbOrbit.position.copy(orb.position);
@@ -543,7 +563,10 @@ export default function Scene3DBackdrop({
       redraw.current = null;
       observer.disconnect();
       window.removeEventListener("resize", resize);
+      window.visualViewport?.removeEventListener("resize", resize);
       window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onPointerEnd);
+      window.removeEventListener("pointercancel", onPointerEnd);
       document.removeEventListener("visibilitychange", onVisibility);
       disposed = true;
       scene.traverse((object) => {

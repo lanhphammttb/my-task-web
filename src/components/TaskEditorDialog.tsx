@@ -26,6 +26,8 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { useLaDienThoai } from "../lib/thietBi";
+import { useDialogVisualViewport } from "../hooks/useDialogVisualViewport";
 
 interface Props {
   open: boolean;
@@ -71,6 +73,8 @@ export default function TaskEditorDialog({
   onOpenChange,
 }: Props) {
   const { addTask, updateTask, removeTask, data } = useApp();
+  const mobile = useLaDienThoai();
+  const viewportStyle = useDialogVisualViewport(open, mobile);
   const [draft, setDraft] = useState<Draft>(blank(defaultDate ?? todayKey()));
   const [subInput, setSubInput] = useState("");
   const [advancedOpen, setAdvancedOpen] = useState(true);
@@ -159,7 +163,11 @@ export default function TaskEditorDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent data-task-editor-state={task ? "editing" : "inscribing"} className="task-editor-mobile task-editor-inscribing max-h-[92vh] gap-0 overflow-hidden sm:max-w-[640px]">
+      <DialogContent data-task-editor-state={task ? "editing" : "inscribing"} className="task-editor-mobile task-editor-inscribing max-h-[92vh] gap-0 overflow-hidden sm:max-w-[640px]" style={viewportStyle} tabIndex={-1} onOpenAutoFocus={(event) => {
+        if (!mobile) return;
+        event.preventDefault();
+        (event.currentTarget as HTMLElement | null)?.focus({ preventScroll: true });
+      }}>
         <DialogHeader className="task-editor-heading">
           <p className="task-editor-eyebrow"><ScrollText className="size-3.5" /> {task ? "HIỆU CHỈNH NHIỆM VỤ" : "KHẮC LỆNH HÀNH SỰ"}</p>
           <DialogTitle>{task ? "Sửa nhiệm vụ" : "Nhiệm vụ mới"}</DialogTitle>
@@ -175,7 +183,7 @@ export default function TaskEditorDialog({
             <Label htmlFor="task-title">Tên nhiệm vụ *</Label>
             <Input
               id="task-title"
-              autoFocus
+              autoFocus={!mobile}
               value={draft.title}
               onChange={(e) => set("title", e.target.value)}
               onKeyDown={(e) =>
