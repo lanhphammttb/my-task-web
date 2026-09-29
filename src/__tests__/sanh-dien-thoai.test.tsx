@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import App from "../App";
 import { seedData } from "../lib/seed";
 import { aphorismOfDay } from "../lib/elders";
@@ -101,7 +101,7 @@ describe("sảnh trên điện thoại", () => {
     render(<App />);
     expect(screen.queryByRole("navigation", { name: "Các nơi trong tiên giới" })).toBeNull();
     const nav = screen.getByRole("navigation", { name: "Thanh điều hướng chính" });
-    expect(within(nav).getAllByRole("button")).toHaveLength(8);
+    expect(within(nav).getAllByRole("button")).toHaveLength(6);
     fireEvent.click(within(nav).getByRole("button", { name: "Hành Sự" }));
     expect(await screen.findByRole("dialog", { name: "Hành Sự Đường" })).toBeDefined();
     expect(within(nav).getByRole("button", { name: "Hành Sự" }).getAttribute("aria-current")).toBe("page");
@@ -129,16 +129,34 @@ describe("sảnh trên điện thoại", () => {
     expect(await screen.findByRole("heading", { name: "Bế quan tu luyện" })).toBeDefined();
   });
 
-  it("hiện mọi khu trực tiếp và chỉ có một nút Cài đặt", async () => {
+  it("gom khu phụ vào một lối tắt, không thu nhỏ thanh điều hướng", async () => {
     render(<App />);
     expect(screen.getAllByRole("button", { name: "Cài đặt" })).toHaveLength(1);
     const nav = screen.getByRole("navigation", { name: "Thanh điều hướng chính" });
     expect(within(nav).queryByRole("button", { name: "Thêm" })).toBeNull();
-    for (const name of ["Tiên Lộ", "Đại Nguyện", "Tu Hành Lục"]) {
+    for (const name of ["Tiên Lộ", "Hành Sự", "Bế Quan", "Động Phủ"]) {
       expect(within(nav).getByRole("button", { name })).toBeDefined();
     }
-    fireEvent.click(within(nav).getByRole("button", { name: "Đại Nguyện" }));
+    fireEvent.click(within(nav).getByRole("button", { name: "Mở thêm lối tắt" }));
+    const more = screen.getByRole("navigation", { name: "Lối tắt khác" });
+    for (const name of ["Đại Nguyện", "Tu Hành Lục", "Tra cứu nhiệm vụ"]) {
+      expect(within(more).getByRole("button", { name })).toBeDefined();
+    }
+    fireEvent.click(within(more).getByRole("button", { name: "Đại Nguyện" }));
     expect(await screen.findByRole("dialog", { name: "Đại Nguyện" })).toBeDefined();
+  });
+
+  it("mở tra cứu từ Đạo tàng và đóng thì xoá bộ lọc", async () => {
+    render(<App />);
+    const nav = screen.getByRole("navigation", { name: "Thanh điều hướng chính" });
+    fireEvent.click(within(nav).getByRole("button", { name: "Mở thêm lối tắt" }));
+    fireEvent.click(within(screen.getByRole("navigation", { name: "Lối tắt khác" })).getByRole("button", { name: "Tra cứu nhiệm vụ" }));
+    const input = screen.getByRole("textbox", { name: "Tra cứu nhiệm vụ" });
+    fireEvent.change(input, { target: { value: "chạy bộ" } });
+    expect(await screen.findByRole("heading", { name: /Tra cứu/ })).toBeDefined();
+    fireEvent.click(screen.getByRole("button", { name: "Đóng tra cứu" }));
+    expect(screen.queryByRole("textbox", { name: "Tra cứu nhiệm vụ" })).toBeNull();
+    await waitFor(() => expect(screen.queryByRole("heading", { name: /Tra cứu/ })).toBeNull());
   });
 
   it("báo phần thưởng đang chờ và dẫn thẳng tới nơi xử lý", async () => {
