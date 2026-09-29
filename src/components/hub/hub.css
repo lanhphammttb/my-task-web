@@ -188,6 +188,8 @@
   width: min(100%, 540px);
   padding: 16px 20px;
   border-color: color-mix(in srgb, var(--gold) 45%, transparent);
+  background: color-mix(in srgb, var(--background) 86%, var(--gold) 2%);
+  box-shadow: inset 0 1px 0 rgb(255 242 202 / 10%), 0 12px 28px rgb(0 0 0 / 42%);
 }
 .cultivation-hub .elder-teaching p {
   font-family: "Noto Serif", Georgia, serif;
@@ -888,14 +890,24 @@ body[data-scroll-locked] .world-rail {
   display: flex;
   gap: 6px;
   overflow-x: auto;
-  scrollbar-width: none;
-  padding: 2px;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--gold) 68%, transparent) transparent;
+  padding: 2px 2px 4px;
   /* Vuốt tới đâu dừng gọn tới đó, không trôi lưng chừng giữa hai tab. */
   scroll-snap-type: x proximity;
   -webkit-overflow-scrolling: touch;
 }
 .khu-tabs::-webkit-scrollbar {
-  display: none;
+  display: block;
+  height: 3px;
+}
+.khu-tabs::-webkit-scrollbar-track {
+  background: color-mix(in srgb, var(--gold) 8%, transparent);
+  border-radius: 999px;
+}
+.khu-tabs::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--gold-bright) 72%, transparent);
 }
 .khu-tab {
   flex: none;
@@ -979,6 +991,7 @@ body[data-scroll-locked] .world-rail {
   }
 }
 
+
 /* ===================================================== SẢNH TRÊN ĐIỆN THOẠI
  *
  * Dựng riêng, không phải bản co lại của màn rộng. Xem `HubMobile.tsx` để biết
@@ -1042,6 +1055,11 @@ body[data-scroll-locked] .world-rail {
   min-height: 92px;
   pointer-events: none;
 }
+.hub-mb-character-anchor {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
 .hub-mb-nguoi {
   position: absolute;
   bottom: -6px;
@@ -1049,6 +1067,58 @@ body[data-scroll-locked] .world-rail {
   width: min(66%, 260px);
   transform: translateX(-50%);
   filter: drop-shadow(0 10px 26px rgba(0, 0, 0, 0.7));
+}
+.hub-mb-elder {
+  position: relative;
+  align-self: flex-start;
+  margin-top: -4px;
+  display: flex;
+  width: min(78%, 310px);
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid color-mix(in srgb, var(--gold) 38%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--background) 80%, transparent);
+  padding: 4px 10px 4px 4px;
+  box-shadow: 0 7px 22px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(8px);
+}
+.hub-mb-elder-portrait {
+  width: 38px;
+  height: 38px;
+  flex: none;
+  border: 1px solid color-mix(in srgb, var(--gold) 55%, transparent);
+  border-radius: 50%;
+  object-fit: cover;
+}
+.hub-mb-elder-copy {
+  min-width: 0;
+  text-align: left;
+}
+.hub-mb-elder-copy q {
+  display: block;
+  overflow: hidden;
+  color: var(--foreground);
+  font-family: var(--font-heading);
+  font-size: 10.5px;
+  font-style: italic;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.hub-mb-elder-copy small {
+  display: block;
+  overflow: hidden;
+  margin-top: 2px;
+  color: var(--gold);
+  font-family: var(--font-title);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
 /* --------------------------------------------------------- bảng nhiệm vụ */
@@ -1235,4 +1305,1066 @@ body[data-scroll-locked] .world-rail {
   .app-navigation {
     justify-content: space-between;
   }
+}
+
+/* ========================================================================
+   Tiên môn game chrome
+
+   Các màn đã có tranh nền, HUD và icon vật phẩm; lớp này đưa cùng chất liệu
+   kim loại khắc vàng / gỗ sơn mài vào những điều khiển còn giống form web.
+   ======================================================================== */
+:root {
+  --game-field-top: #f8f0dc;
+  --game-field-bottom: #eadbbd;
+  --game-field-edge: color-mix(in srgb, var(--gold) 48%, transparent);
+  --game-etched-line: color-mix(in srgb, var(--gold) 30%, transparent);
+}
+
+.dark {
+  --game-field-top: #21180f;
+  --game-field-bottom: #120d08;
+  --game-field-edge: color-mix(in srgb, var(--gold) 52%, transparent);
+  --game-etched-line: color-mix(in srgb, var(--gold) 24%, transparent);
+}
+
+/* Nút thường, nút chọn và nút icon cùng có mặt kim loại dập nổi. */
+[data-slot="button"] {
+  position: relative;
+  isolation: isolate;
+  border-color: color-mix(in srgb, var(--gold) 42%, var(--border)) !important;
+  border-radius: 0.68rem;
+  font-family: var(--font-title);
+  font-weight: 700;
+  letter-spacing: 0.015em;
+  text-shadow: 0 1px 1px rgb(0 0 0 / 24%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 244 210 / 14%),
+    inset 0 -2px 0 rgb(0 0 0 / 20%),
+    0 3px 9px rgb(0 0 0 / 22%);
+  transition: transform 150ms ease, border-color 150ms ease, filter 150ms ease, box-shadow 150ms ease;
+}
+
+[data-slot="button"]::before {
+  position: absolute;
+  z-index: -1;
+  inset: 1px;
+  border-radius: inherit;
+  background: linear-gradient(180deg, rgb(255 246 218 / 13%), transparent 48%, rgb(0 0 0 / 10%));
+  content: "";
+  pointer-events: none;
+}
+
+[data-slot="button"][data-variant="default"] {
+  border-color: color-mix(in srgb, var(--gold-bright) 82%, white 18%) !important;
+  color: var(--btn-fg);
+  background-image: var(--btn-bg);
+}
+
+[data-slot="button"][data-variant="outline"],
+[data-slot="button"][data-variant="secondary"] {
+  color: var(--foreground);
+  background-image: linear-gradient(180deg, var(--game-field-top), var(--game-field-bottom));
+}
+
+[data-slot="button"][data-variant="outline"] {
+  border-color: var(--game-field-edge) !important;
+}
+
+[data-slot="button"][data-variant="secondary"] {
+  border-color: color-mix(in srgb, var(--jade) 58%, var(--gold)) !important;
+  background-image: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--jade) 24%, var(--surface)),
+    color-mix(in srgb, var(--jade) 13%, var(--background))
+  );
+}
+
+[data-slot="button"][data-variant="destructive"] {
+  border-color: color-mix(in srgb, var(--cinnabar) 66%, var(--gold)) !important;
+  background-image: linear-gradient(180deg, color-mix(in srgb, var(--cinnabar) 18%, var(--card)), var(--card));
+}
+
+[data-slot="button"][data-variant="ghost"] {
+  color: var(--gold-bright);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--gold) 18%, transparent);
+}
+
+[data-slot="button"]:hover:not(:disabled) {
+  z-index: 1;
+  transform: translateY(-1px);
+  border-color: var(--gold-bright) !important;
+  filter: brightness(1.08);
+  box-shadow: inset 0 1px 0 rgb(255 246 218 / 22%), 0 0 14px var(--gold-glow), 0 5px 12px rgb(0 0 0 / 28%);
+}
+
+[data-slot="button"]:active:not(:disabled) {
+  transform: translateY(1px) scale(0.985);
+  filter: brightness(0.96);
+  box-shadow: inset 0 2px 5px rgb(0 0 0 / 30%);
+}
+
+[data-slot="button"][aria-pressed="true"],
+[data-slot="button"][aria-selected="true"] {
+  border-color: var(--gold-bright) !important;
+  color: var(--gold-bright);
+  background-image: linear-gradient(180deg, color-mix(in srgb, var(--gold) 22%, var(--surface)), color-mix(in srgb, var(--gold) 12%, var(--background)));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--gold) 32%, transparent), 0 0 15px var(--gold-glow);
+}
+
+.task-editor-mobile button[aria-pressed="false"] {
+  border-color: var(--game-field-edge);
+  background-image: linear-gradient(180deg, var(--game-field-top), var(--game-field-bottom));
+  box-shadow: inset 0 1px 0 rgb(255 244 210 / 12%), inset 0 -2px 0 rgb(0 0 0 / 16%), 0 2px 6px rgb(0 0 0 / 20%);
+}
+
+.task-editor-mobile button[aria-pressed="true"] {
+  border-color: var(--gold-bright);
+  box-shadow: inset 0 1px 0 rgb(255 244 210 / 18%), inset 0 0 0 1px color-mix(in srgb, var(--gold) 28%, transparent), 0 0 15px var(--gold-glow);
+}
+
+/* Ô nhập là nghiên mực khắc viền, còn focus có ánh linh khí rõ. */
+[data-slot="input"],
+[data-slot="textarea"],
+[data-slot="select-trigger"],
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+textarea,
+select {
+  border-color: var(--game-field-edge);
+  color: var(--foreground);
+  background-color: var(--game-field-bottom);
+  background-image: linear-gradient(180deg, var(--game-field-top), var(--game-field-bottom));
+  box-shadow: inset 0 2px 5px rgb(0 0 0 / 18%), 0 1px 0 rgb(255 245 215 / 9%);
+  accent-color: var(--gold-bright);
+}
+
+[data-slot="input"]::placeholder,
+[data-slot="textarea"]::placeholder,
+input::placeholder,
+textarea::placeholder {
+  color: color-mix(in srgb, var(--muted-foreground) 78%, transparent);
+}
+
+[data-slot="input"]:focus-visible,
+[data-slot="textarea"]:focus-visible,
+[data-slot="select-trigger"]:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  border-color: var(--gold-bright) !important;
+  outline: none;
+  box-shadow: inset 0 1px 4px rgb(0 0 0 / 18%), 0 0 0 2px color-mix(in srgb, var(--gold) 26%, transparent), 0 0 18px var(--gold-glow);
+}
+
+[data-slot="label"] {
+  color: color-mix(in srgb, var(--foreground) 88%, var(--gold));
+  font-family: var(--font-heading);
+  font-weight: 600;
+}
+
+/* Thẻ và bảng có đường viền kép như khung nhiệm vụ / vật phẩm. */
+[data-slot="card"] {
+  border: 1px solid var(--game-etched-line);
+  background-image: linear-gradient(145deg, color-mix(in srgb, var(--gold) 6%, transparent), transparent 42%);
+  box-shadow: inset 0 1px 0 rgb(255 245 214 / 7%), inset 0 0 0 2px color-mix(in srgb, var(--gold) 5%, transparent), 0 8px 20px rgb(0 0 0 / 16%);
+}
+
+[data-slot="card-title"] {
+  color: var(--gold-bright);
+  font-family: var(--font-heading);
+  font-weight: 700;
+}
+
+[data-slot="badge"] {
+  border-color: color-mix(in srgb, var(--gold) 38%, var(--border));
+  background-image: linear-gradient(180deg, color-mix(in srgb, var(--gold) 14%, var(--surface)), color-mix(in srgb, var(--gold) 7%, var(--background)));
+  box-shadow: inset 0 1px 0 rgb(255 245 214 / 14%), 0 2px 5px rgb(0 0 0 / 16%);
+  font-weight: 700;
+}
+
+[data-slot="progress"] {
+  height: 0.65rem;
+  border: 1px solid color-mix(in srgb, var(--gold) 42%, transparent);
+  background: linear-gradient(180deg, color-mix(in srgb, #000 74%, var(--background)), color-mix(in srgb, #000 50%, var(--background)));
+  box-shadow: inset 0 2px 4px rgb(0 0 0 / 58%), 0 1px 0 rgb(255 241 199 / 10%);
+}
+
+[data-slot="progress-indicator"] {
+  border-radius: inherit;
+  background-image: linear-gradient(90deg, var(--gold-deep), var(--gold), var(--gold-bright), #fff0a8);
+  box-shadow: inset 0 1px 0 rgb(255 250 220 / 42%), 0 0 12px var(--gold-glow);
+}
+
+[data-slot="checkbox"] {
+  border-color: color-mix(in srgb, var(--gold) 58%, var(--border));
+  background-image: linear-gradient(180deg, var(--game-field-top), var(--game-field-bottom));
+  box-shadow: inset 0 1px 3px rgb(0 0 0 / 24%), 0 1px 0 rgb(255 246 220 / 12%);
+}
+
+[data-slot="checkbox"][data-checked],
+[data-slot="checkbox"][aria-checked="true"] {
+  border-color: var(--gold-bright);
+  color: var(--background);
+  background-image: linear-gradient(180deg, var(--gold-bright), var(--gold-deep));
+  box-shadow: 0 0 12px var(--gold-glow), inset 0 1px 0 rgb(255 246 220 / 38%);
+}
+
+[data-slot="tabs-list"] {
+  border: 1px solid var(--game-etched-line);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--background) 80%, var(--gold)), var(--background));
+  box-shadow: inset 0 2px 6px rgb(0 0 0 / 28%);
+}
+
+[data-slot="tabs-trigger"][data-state="active"] {
+  color: var(--gold-bright);
+  background-image: linear-gradient(180deg, color-mix(in srgb, var(--gold) 18%, var(--surface)), color-mix(in srgb, var(--gold) 7%, var(--background)));
+  box-shadow: inset 0 0 0 1px var(--game-etched-line), 0 0 10px var(--gold-glow);
+}
+
+/* Hộp thoại, bảng chọn và tooltip dùng chung một viền tiên môn. */
+[data-slot="dialog-overlay"],
+[data-slot="alert-dialog-overlay"],
+[data-slot="sheet-overlay"] {
+  background: rgb(5 4 3 / 68%);
+  backdrop-filter: blur(7px) saturate(0.82);
+}
+
+[data-slot="dialog-content"],
+[data-slot="alert-dialog-content"],
+[data-slot="sheet-content"],
+[data-slot="popover-content"],
+[data-slot="dropdown-menu-content"],
+[data-slot="select-content"],
+.world-menu {
+  border: 1px solid color-mix(in srgb, var(--gold) 60%, var(--border));
+  background-color: var(--popover);
+  background-image: radial-gradient(ellipse at 0 0, color-mix(in srgb, var(--gold) 12%, transparent), transparent 35%), linear-gradient(150deg, color-mix(in srgb, var(--gold) 5%, var(--popover)), var(--popover) 52%);
+  box-shadow: inset 0 0 0 3px color-mix(in srgb, var(--gold) 7%, transparent), inset 0 1px 0 rgb(255 246 220 / 12%), 0 24px 75px rgb(0 0 0 / 62%);
+}
+
+[data-slot="dialog-title"],
+[data-slot="alert-dialog-title"],
+[data-slot="sheet-title"],
+[data-slot="popover-title"] {
+  color: var(--gold-bright);
+  text-shadow: 0 0 16px var(--gold-glow);
+}
+
+[data-slot="dialog-footer"],
+[data-slot="alert-dialog-footer"],
+[data-slot="sheet-footer"] {
+  border-color: var(--game-etched-line);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--gold) 8%, var(--surface)), color-mix(in srgb, var(--background) 92%, var(--gold)));
+}
+
+[data-slot="tooltip-content"] {
+  border: 1px solid color-mix(in srgb, var(--gold) 55%, transparent);
+  border-radius: 0.65rem;
+  color: var(--foreground);
+  background: linear-gradient(145deg, color-mix(in srgb, var(--gold) 12%, var(--popover)), var(--popover));
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--gold) 6%, transparent), 0 10px 30px rgb(0 0 0 / 48%);
+}
+
+[data-slot="dropdown-menu-item"]:focus,
+[data-slot="select-item"][data-highlighted] {
+  color: var(--gold-bright);
+  background: color-mix(in srgb, var(--gold) 16%, var(--surface));
+}
+
+[data-slot="separator"][data-orientation="horizontal"],
+hr {
+  height: 1px;
+  border: 0;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--gold) 50%, transparent) 22%, var(--gold) 50%, color-mix(in srgb, var(--gold) 50%, transparent) 78%, transparent);
+  opacity: 0.78;
+}
+
+/* Portrait frame, rarity medallions and compact HUD details. */
+.hud-avatar-frame {
+  filter: drop-shadow(0 2px 5px rgb(0 0 0 / 55%));
+}
+
+.hud-avatar-frame::before {
+  position: absolute;
+  z-index: 2;
+  inset: -3px;
+  border: 1px solid color-mix(in srgb, var(--gold-bright) 74%, white 26%);
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 2px rgb(0 0 0 / 36%), 0 0 10px var(--gold-glow);
+  content: "";
+  pointer-events: none;
+}
+
+.hud-avatar-frame > img {
+  border-width: 2px;
+  box-shadow: inset 0 0 0 1px rgb(255 239 187 / 30%);
+}
+
+.hud-avatar-frame > span {
+  z-index: 3;
+  border: 1px solid color-mix(in srgb, var(--gold-bright) 75%, white 25%);
+  box-shadow: 0 1px 5px rgb(0 0 0 / 62%);
+}
+
+.hud-bar {
+  border: 1px solid color-mix(in srgb, var(--gold) 45%, transparent);
+  box-shadow: inset 0 1px 4px rgb(0 0 0 / 70%), 0 1px 0 rgb(255 243 203 / 14%), 0 0 8px color-mix(in srgb, var(--gold-glow) 55%, transparent);
+}
+
+/* Nhật khoá trông như bảng nhiệm vụ bằng gỗ sơn mài, mỗi việc là một mệnh lệnh. */
+.hub-mb-bang,
+.today-list {
+  position: relative;
+  overflow: hidden;
+  border-color: color-mix(in srgb, var(--gold-bright) 56%, var(--gold));
+  background-color: color-mix(in srgb, var(--background) 92%, transparent);
+  background-image: radial-gradient(ellipse at 50% 0, color-mix(in srgb, var(--gold) 12%, transparent), transparent 58%), repeating-linear-gradient(0deg, transparent 0 7px, color-mix(in srgb, var(--gold) 2%, transparent) 7px 8px);
+  box-shadow: inset 0 1px 0 rgb(255 245 215 / 16%), inset 0 0 0 3px color-mix(in srgb, var(--gold) 7%, transparent), 0 14px 34px rgb(0 0 0 / 48%);
+}
+
+.hub-mb-bang::before,
+.today-list::before {
+  position: absolute;
+  inset: 4px;
+  border: 1px solid color-mix(in srgb, var(--gold) 16%, transparent);
+  border-radius: 10px;
+  content: "";
+  pointer-events: none;
+}
+
+.hub-mb-bang > *,
+.today-list > * {
+  position: relative;
+}
+
+.hub-mb-dau,
+.today-list-dau {
+  position: relative;
+  border-bottom-color: transparent;
+}
+
+.hub-mb-dau::after,
+.today-list-dau::after {
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold) 15%, color-mix(in srgb, var(--gold-bright) 75%, white) 50%, var(--gold) 85%, transparent);
+  content: "";
+  opacity: 0.64;
+}
+
+.hub-mb-ten::before {
+  margin-right: 0.45em;
+  color: var(--gold);
+  content: "✧";
+  text-shadow: 0 0 9px var(--gold-glow);
+}
+
+.hub-mb-dem {
+  border: 1px solid color-mix(in srgb, var(--gold) 40%, transparent);
+  border-radius: 999px;
+  padding: 2px 8px;
+  color: var(--gold-bright);
+  background: color-mix(in srgb, var(--gold) 9%, var(--background));
+  font-family: var(--font-title);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.hub-mb-dong {
+  border-bottom: 1px solid color-mix(in srgb, var(--gold) 11%, transparent);
+}
+
+.hub-mb-dong:last-child {
+  border-bottom: 0;
+}
+
+.hub-mb-tick {
+  border-radius: 50%;
+}
+
+.hub-mb-o {
+  background: radial-gradient(circle, color-mix(in srgb, var(--gold) 15%, transparent), transparent 72%);
+  box-shadow: inset 0 0 0 2px rgb(0 0 0 / 22%), 0 0 8px color-mix(in srgb, var(--gold-glow) 42%, transparent);
+}
+
+.hub-mb-tick:active .hub-mb-o {
+  border-color: var(--gold-bright) !important;
+  color: var(--gold-bright);
+  box-shadow: 0 0 16px var(--gold-glow);
+}
+
+.hub-mb-than {
+  border-radius: 8px;
+  padding-inline: 6px;
+}
+
+.hub-mb-than:active {
+  background: color-mix(in srgb, var(--gold) 12%, transparent);
+}
+
+.hub-mb-xp::before,
+.today-dong-xp::before {
+  margin-right: 0.35em;
+  color: var(--gold-bright);
+  content: "✦";
+  font-size: 0.9em;
+  text-shadow: 0 0 8px var(--gold-glow);
+}
+
+.today-dong-than[data-task-state="active"] {
+  color: var(--gold-bright);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--gold) 11%, transparent), transparent 78%);
+}
+
+.today-dong-than[data-task-state="overdue"] .today-dong-state {
+  color: var(--warning);
+  border-color: color-mix(in srgb, var(--warning) 46%, transparent);
+}
+
+.today-dong-state {
+  flex: none;
+  border: 1px solid color-mix(in srgb, var(--gold) 35%, transparent);
+  border-radius: 999px;
+  padding: 2px 6px;
+  color: var(--gold-bright);
+  background: color-mix(in srgb, var(--background) 72%, transparent);
+  font-family: var(--font-title);
+  font-size: 9px;
+  line-height: 1.2;
+}
+
+article[data-task-state="ready"],
+article[data-task-state="active"],
+article[data-task-state="overdue"],
+article[data-task-state="complete"] {
+  border-radius: 0.8rem;
+  background-color: color-mix(in srgb, var(--card) 90%, #15120b);
+  box-shadow: inset 0 1px 0 rgb(255 242 212 / 5%);
+}
+
+article[data-task-state="active"] {
+  border-color: color-mix(in srgb, var(--gold-bright) 60%, var(--border)) !important;
+  background-image: linear-gradient(105deg, color-mix(in srgb, var(--gold) 12%, transparent), transparent 62%);
+  box-shadow: inset 3px 0 color-mix(in srgb, var(--gold-bright) 82%, transparent), 0 0 15px var(--gold-glow);
+}
+
+article[data-task-state="overdue"] {
+  border-color: color-mix(in srgb, var(--warning) 50%, var(--border)) !important;
+  background-image: linear-gradient(100deg, color-mix(in srgb, var(--warning) 9%, transparent), transparent 55%);
+}
+
+article[data-task-state="complete"] {
+  border-color: color-mix(in srgb, var(--success) 36%, var(--border)) !important;
+  background-image: linear-gradient(100deg, color-mix(in srgb, var(--success) 7%, transparent), transparent 58%);
+}
+
+article[data-task-state="complete"] .o-tick {
+  box-shadow: 0 0 12px color-mix(in srgb, var(--success) 32%, transparent);
+}
+
+.hub-mb-trong {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 62px;
+  border: 1px dashed color-mix(in srgb, var(--gold) 24%, transparent);
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--gold) 5%, transparent);
+}
+
+.hub-mb-empty-sigil {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  flex: none;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--gold) 52%, transparent);
+  border-radius: 50%;
+  color: var(--gold-bright);
+  background: radial-gradient(circle, color-mix(in srgb, var(--gold) 20%, var(--background)), var(--background));
+  box-shadow: inset 0 0 0 2px rgb(0 0 0 / 28%), 0 0 12px var(--gold-glow);
+}
+
+.hub-mb-elder {
+  border-color: color-mix(in srgb, var(--gold-bright) 42%, transparent);
+  background: linear-gradient(105deg, color-mix(in srgb, var(--background) 94%, var(--gold)), color-mix(in srgb, var(--background) 78%, transparent));
+  box-shadow: inset 0 1px 0 rgb(255 246 218 / 14%), 0 9px 24px rgb(0 0 0 / 52%), 0 0 14px color-mix(in srgb, var(--gold-glow) 40%, transparent);
+}
+
+.hub-mb-elder-portrait {
+  outline: 1px solid color-mix(in srgb, var(--gold-bright) 38%, transparent);
+  outline-offset: 2px;
+  box-shadow: 0 0 12px var(--gold-glow);
+}
+
+.hub-mb-them,
+.today-list-them {
+  border-color: color-mix(in srgb, var(--gold-bright) 72%, white 28%);
+  color: var(--btn-fg);
+  background-image: var(--btn-bg);
+  box-shadow: inset 0 1px 0 rgb(255 246 218 / 28%), inset 0 -2px 0 rgb(0 0 0 / 20%), 0 4px 11px rgb(0 0 0 / 30%);
+  font-family: var(--font-title);
+  letter-spacing: 0.03em;
+}
+
+.hub-mb-them:active,
+.today-list-them:active {
+  transform: translateY(1px) scale(0.985);
+  box-shadow: inset 0 2px 5px rgb(0 0 0 / 30%);
+}
+
+.hub-mb-them:hover,
+.today-list-them:hover,
+.hub-mb-chinh:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.12);
+  box-shadow: inset 0 1px 0 rgb(255 246 218 / 30%), 0 0 16px var(--gold-glow), 0 7px 16px rgb(0 0 0 / 34%);
+}
+
+.hub-mb-xem,
+.today-list-xem {
+  border-color: color-mix(in srgb, var(--jade) 40%, var(--game-etched-line));
+  color: color-mix(in srgb, var(--foreground) 82%, var(--jade));
+  background: linear-gradient(180deg, color-mix(in srgb, var(--jade) 13%, var(--surface)), color-mix(in srgb, var(--jade) 7%, var(--background)));
+}
+
+.hub-mb-quay {
+  border-color: color-mix(in srgb, var(--jade) 38%, var(--gold));
+  background: linear-gradient(100deg, color-mix(in srgb, var(--jade) 18%, var(--background)), color-mix(in srgb, var(--gold) 10%, var(--background)));
+  box-shadow: inset 0 1px 0 rgb(255 246 218 / 10%), 0 3px 10px rgb(0 0 0 / 24%);
+}
+
+.hub-mb-chinh {
+  position: relative;
+  overflow: hidden;
+  min-height: 52px;
+  border: 1px solid color-mix(in srgb, var(--gold-bright) 82%, white 18%);
+  border-radius: 0.72rem;
+  background-image: var(--btn-bg);
+  color: var(--btn-fg);
+  text-shadow: 0 1px 2px #0008;
+  box-shadow: inset 0 1px 0 rgb(255 246 218 / 26%), inset 0 -3px 0 rgb(0 0 0 / 25%), 0 6px 18px rgb(0 0 0 / 38%), 0 0 16px var(--gold-glow);
+}
+
+.hub-mb-chinh::after {
+  position: absolute;
+  inset: 4px;
+  border: 1px solid rgb(255 238 182 / 22%);
+  border-radius: 0.48rem;
+  content: "";
+  pointer-events: none;
+}
+
+.hub-mb-chinh:active {
+  transform: translateY(1px) scale(0.99);
+  filter: brightness(0.95);
+}
+
+/* Thanh điều hướng là bệ khắc, các huy hiệu giữ minh hoạ vật phẩm hiện có. */
+.mobile-navigation {
+  background-image: linear-gradient(180deg, color-mix(in srgb, var(--background) 88%, var(--gold)), var(--background) 36%), repeating-linear-gradient(90deg, transparent 0 9px, color-mix(in srgb, var(--gold) 2%, transparent) 9px 10px);
+  backdrop-filter: blur(14px);
+}
+
+.mobile-world-medallion {
+  overflow: hidden;
+  background-image: radial-gradient(circle at 35% 18%, color-mix(in srgb, white 14%, transparent), transparent 42%), radial-gradient(circle, color-mix(in srgb, var(--gold) 16%, var(--background)), var(--background));
+  box-shadow: inset 0 0 0 2px rgb(0 0 0 / 35%), inset 0 1px 0 rgb(255 244 207 / 22%), 0 3px 8px rgb(0 0 0 / 36%);
+}
+
+.mobile-world > button[aria-current="page"] .mobile-world-medallion {
+  outline: 1px solid color-mix(in srgb, var(--gold-bright) 50%, white 50%);
+  outline-offset: 2px;
+  box-shadow: 0 0 18px var(--gold-glow), inset 0 0 0 2px rgb(0 0 0 / 35%);
+}
+
+/* Toast nhận thưởng và tooltip đều có khung vật phẩm. */
+.cn-toast,
+li[data-sonner-toast] {
+  border: 1px solid color-mix(in srgb, var(--gold) 58%, transparent) !important;
+  border-radius: 0.8rem !important;
+  background: radial-gradient(ellipse at 0 0, color-mix(in srgb, var(--gold) 14%, transparent), transparent 60%), var(--popover) !important;
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--gold) 7%, transparent), 0 12px 34px rgb(0 0 0 / 55%) !important;
+}
+
+/* Cuộn nội dung như rãnh khắc trên khung gỗ. */
+.panel-noi-dung,
+.hub-scroll,
+.world-menu,
+[data-slot="dialog-content"],
+[data-slot="scroll-area-viewport"] {
+  scrollbar-color: color-mix(in srgb, var(--gold) 72%, transparent) color-mix(in srgb, var(--background) 78%, transparent);
+  scrollbar-width: thin;
+}
+
+.panel-noi-dung::-webkit-scrollbar,
+.hub-scroll::-webkit-scrollbar,
+.world-menu::-webkit-scrollbar,
+[data-slot="dialog-content"]::-webkit-scrollbar,
+[data-slot="scroll-area-viewport"]::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+.panel-noi-dung::-webkit-scrollbar-track,
+.hub-scroll::-webkit-scrollbar-track,
+.world-menu::-webkit-scrollbar-track,
+[data-slot="dialog-content"]::-webkit-scrollbar-track {
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--background) 72%, transparent);
+}
+
+.panel-noi-dung::-webkit-scrollbar-thumb,
+.hub-scroll::-webkit-scrollbar-thumb,
+.world-menu::-webkit-scrollbar-thumb,
+[data-slot="dialog-content"]::-webkit-scrollbar-thumb {
+  border: 1px solid color-mix(in srgb, var(--gold) 40%, var(--background));
+  border-radius: 999px;
+  background: linear-gradient(180deg, var(--gold-bright), var(--gold-deep));
+}
+
+.game-loading {
+  display: grid;
+  min-height: 180px;
+  place-content: center;
+  justify-items: center;
+  gap: 8px;
+  color: var(--gold-bright);
+  font-family: var(--font-heading);
+  text-align: center;
+}
+
+.game-loading-seal {
+  display: grid;
+  width: 54px;
+  height: 54px;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--gold-bright) 58%, transparent);
+  border-radius: 50%;
+  color: var(--gold-bright);
+  background: radial-gradient(circle, color-mix(in srgb, var(--gold) 22%, var(--background)), var(--background));
+  box-shadow: inset 0 0 0 3px rgb(0 0 0 / 25%), 0 0 24px var(--gold-glow);
+  animation: qi-spin 12s linear infinite;
+  font-size: 25px;
+}
+
+.game-loading small {
+  color: var(--muted-foreground);
+  font-family: var(--font-sans);
+  font-size: 11px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .game-loading-seal { animation: none; }
+}
+
+@media (max-width: 640px) {
+  [data-slot="dialog-content"],
+  [data-slot="alert-dialog-content"],
+  [data-slot="sheet-content"] {
+    border-top-width: 2px;
+    box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--gold) 8%, transparent), 0 -10px 35px rgb(0 0 0 / 30%);
+  }
+
+  [data-slot="input"],
+  [data-slot="textarea"],
+  [data-slot="select-trigger"],
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  textarea,
+  select {
+    border-radius: 0.62rem;
+  }
+}
+
+/* Live game states: cultivation, focus, quests, and rewards react to real data. */
+.app-hud[data-cultivation-state="breakthrough-ready"] .hud-profile {
+  border-color: color-mix(in srgb, var(--gold-bright) 62%, var(--game-etched-line));
+  box-shadow: inset 0 1px 0 rgb(255 246 220 / 17%), 0 0 18px color-mix(in srgb, var(--gold-glow) 68%, transparent), 0 6px 22px rgb(0 0 0 / 32%);
+}
+
+.app-hud[data-cultivation-state="breakthrough-ready"] .hud-avatar-frame::before {
+  animation: breakthrough-ready-sigil 2.8s ease-in-out infinite;
+}
+
+.breakthrough-state-chip[data-game-state="ready"] {
+  border-color: color-mix(in srgb, var(--gold-bright) 72%, white 28%);
+  color: var(--gold-bright);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--gold) 24%, var(--surface)), color-mix(in srgb, var(--gold) 9%, var(--background)));
+  box-shadow: inset 0 1px 0 rgb(255 246 220 / 18%), 0 0 12px var(--gold-glow);
+}
+
+.hub-mb-bang[data-board-state="session-active"] {
+  border-color: color-mix(in srgb, var(--jade) 66%, var(--gold));
+  box-shadow: inset 0 1px 0 rgb(255 245 215 / 16%), inset 0 0 0 3px color-mix(in srgb, var(--jade) 9%, transparent), 0 14px 34px rgb(0 0 0 / 48%), 0 0 18px color-mix(in srgb, var(--jade) 22%, transparent);
+}
+
+.hub-mb-bang[data-board-state="day-complete"] .hub-mb-dem {
+  border-color: color-mix(in srgb, var(--jade) 60%, transparent);
+  color: color-mix(in srgb, var(--jade) 80%, white);
+  background: color-mix(in srgb, var(--jade) 15%, var(--background));
+}
+
+.hub-mb-bang[data-board-state="empty"] .hub-mb-dem {
+  color: var(--muted-foreground);
+  border-color: var(--game-etched-line);
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+}
+
+.hub-mb-dong[data-task-priority="urgent"] .hub-mb-xp,
+.hub-mb-dong[data-task-priority="high"] .hub-mb-xp {
+  text-shadow: 0 0 10px currentColor;
+}
+
+.hub-mb[data-cultivation-state="breakthrough-ready"] .hub-mb-chinh[data-game-action="breakthrough"] {
+  animation: breakthrough-ready-sigil 2.4s ease-in-out infinite;
+}
+
+.focus-sanctum {
+  isolation: isolate;
+  border-color: color-mix(in srgb, var(--gold) 44%, var(--border));
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--gold) 5%, transparent), 0 14px 38px rgb(0 0 0 / 32%);
+}
+
+.focus-sanctum[data-session-mode="rest"] {
+  border-color: color-mix(in srgb, var(--jade) 54%, var(--border));
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--jade) 6%, transparent), 0 14px 38px rgb(0 0 0 / 32%);
+}
+
+.focus-sanctum[data-session-state="running"] .focus-scene-frame {
+  border-color: color-mix(in srgb, var(--gold-bright) 68%, white 8%);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--gold) 36%, transparent), 0 0 22px color-mix(in srgb, var(--gold-glow) 75%, transparent);
+}
+
+.focus-sanctum[data-session-mode="rest"][data-session-state="running"] .focus-scene-frame {
+  border-color: color-mix(in srgb, var(--jade) 72%, white 12%);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--jade) 35%, transparent), 0 0 22px color-mix(in srgb, var(--jade) 58%, transparent);
+}
+
+.focus-scene-frame::after {
+  position: absolute;
+  z-index: 2;
+  inset: 6px;
+  border: 1px solid color-mix(in srgb, var(--gold-bright) 25%, transparent);
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 2px rgb(0 0 0 / 18%);
+  content: "";
+  pointer-events: none;
+}
+
+.focus-scene-frame > span[data-session-state] {
+  border: 1px solid color-mix(in srgb, var(--gold-bright) 52%, transparent);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--background) 78%, var(--gold)), color-mix(in srgb, var(--background) 92%, transparent));
+  box-shadow: inset 0 1px 0 rgb(255 246 220 / 14%), 0 3px 12px rgb(0 0 0 / 38%);
+}
+
+.focus-session-toggle[data-game-state="active"] {
+  border-color: color-mix(in srgb, var(--gold-bright) 70%, white 30%);
+  color: var(--gold-bright);
+  background-image: linear-gradient(180deg, color-mix(in srgb, var(--gold) 22%, var(--surface)), color-mix(in srgb, var(--gold) 8%, var(--background)));
+  box-shadow: inset 0 1px 0 rgb(255 246 220 / 18%), 0 0 16px var(--gold-glow);
+}
+
+.focus-session-toggle[data-game-state="paused"] {
+  border-color: color-mix(in srgb, var(--jade) 58%, var(--border));
+  color: color-mix(in srgb, var(--jade) 76%, white);
+}
+
+.chest-reward-frame {
+  position: relative;
+  overflow: hidden;
+  background-image: linear-gradient(110deg, color-mix(in srgb, var(--gold) 4%, transparent), transparent 55%);
+  box-shadow: inset 0 1px 0 rgb(255 246 220 / 8%);
+}
+
+.chest-reward-frame[data-chest-grade="ngoc"] {
+  background-image: linear-gradient(110deg, color-mix(in srgb, #5aa9c9 11%, transparent), transparent 60%);
+}
+
+.chest-reward-frame[data-chest-grade="kim"] {
+  background-image: radial-gradient(ellipse at 0 0, color-mix(in srgb, var(--gold-bright) 15%, transparent), transparent 65%);
+}
+
+.chest-reward-frame[data-chest-state="ready"] {
+  box-shadow: inset 0 1px 0 rgb(255 246 220 / 14%), 0 0 18px color-mix(in srgb, var(--gold-glow) 54%, transparent);
+}
+
+.chest-reward-frame[data-chest-state="ready"][data-chest-grade="ngoc"] {
+  box-shadow: inset 0 1px 0 rgb(226 248 255 / 16%), 0 0 18px rgb(90 169 201 / 25%);
+}
+
+.chest-reward-frame[data-chest-state="ready"][data-chest-grade="kim"] {
+  animation: breakthrough-ready-sigil 3.2s ease-in-out infinite;
+}
+
+.chest-reward-frame[data-chest-state="opened"] {
+  filter: saturate(0.55);
+  box-shadow: inset 0 1px 0 rgb(255 246 220 / 5%);
+}
+
+.chest-reward-frame[data-chest-state="history-locked"] {
+  filter: saturate(0.62);
+}
+
+.celebration-reward-frame {
+  position: relative;
+  isolation: isolate;
+}
+
+.celebration-reward-frame::before {
+  position: absolute;
+  z-index: 2;
+  inset: 5px;
+  border: 1px solid color-mix(in srgb, var(--gold-bright) 28%, transparent);
+  border-radius: 13px;
+  content: "";
+  pointer-events: none;
+}
+
+[data-celebration="realm-up"] .celebration-reward-frame,
+[data-celebration="ascension"] .celebration-reward-frame {
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--gold-bright) 12%, transparent), 0 24px 60px rgb(0 0 0 / 70%), 0 0 68px color-mix(in srgb, var(--gold-glow) 62%, transparent) !important;
+}
+
+[data-celebration="tribulation-failed"] .celebration-reward-frame::before {
+  border-color: color-mix(in srgb, var(--warning) 46%, transparent);
+}
+
+@keyframes breakthrough-ready-sigil {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.14); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-hud[data-cultivation-state="breakthrough-ready"] .hud-avatar-frame::before,
+  .hub-mb[data-cultivation-state="breakthrough-ready"] .hub-mb-chinh[data-game-action="breakthrough"],
+  .chest-reward-frame[data-chest-state="ready"][data-chest-grade="kim"] {
+    animation: none;
+  }
+}
+
+/* Inventory and workshop states show ownership, readiness, and exact shortages. */
+[data-slot="button"][data-game-state="insufficient-resource"]:disabled {
+  border-color: color-mix(in srgb, var(--warning) 52%, var(--border)) !important;
+  color: color-mix(in srgb, var(--warning) 72%, var(--muted-foreground));
+  filter: saturate(0.8);
+}
+
+[data-slot="button"][data-game-state="locked"]:disabled {
+  border-color: var(--game-etched-line) !important;
+  color: var(--muted-foreground);
+  filter: grayscale(0.55);
+}
+
+.game-choice-card[data-game-state="available"]:hover:not(:disabled) {
+  border-color: var(--gold-bright);
+  background-image: linear-gradient(100deg, color-mix(in srgb, var(--gold) 14%, var(--surface)), var(--surface));
+  box-shadow: 0 0 13px var(--gold-glow), inset 0 1px 0 rgb(255 246 220 / 14%);
+}
+
+.game-choice-card[data-game-state="insufficient-resource"] {
+  border-color: color-mix(in srgb, var(--warning) 35%, var(--border));
+  background-image: linear-gradient(100deg, color-mix(in srgb, var(--warning) 6%, var(--surface)), var(--surface));
+}
+
+.field-plot-card {
+  position: relative;
+  overflow: hidden;
+  background-image: linear-gradient(145deg, color-mix(in srgb, var(--jade) 7%, var(--surface)), color-mix(in srgb, var(--background) 88%, transparent));
+  box-shadow: inset 0 1px 0 rgb(255 246 220 / 7%);
+}
+
+.field-plot-empty {
+  background-image: radial-gradient(ellipse at 50% 0, color-mix(in srgb, var(--gold) 8%, transparent), transparent 72%);
+}
+
+.field-plot-empty:hover {
+  border-color: color-mix(in srgb, var(--gold-bright) 64%, white 20%);
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--gold) 9%, transparent), 0 0 14px var(--gold-glow);
+}
+
+.field-plot-card[data-field-state="ready"] {
+  border-color: color-mix(in srgb, var(--jade) 65%, var(--gold-bright)) !important;
+  background-image: radial-gradient(ellipse at 18% 0, color-mix(in srgb, var(--jade) 19%, transparent), transparent 70%), linear-gradient(145deg, color-mix(in srgb, var(--gold) 6%, var(--surface)), var(--background));
+  box-shadow: inset 0 1px 0 rgb(255 246 220 / 13%), 0 0 18px color-mix(in srgb, var(--jade) 24%, transparent);
+}
+
+.field-plot-card[data-field-state="ready"] .field-plot-status {
+  color: color-mix(in srgb, var(--jade) 75%, white);
+  font-weight: 700;
+}
+
+.field-plot-card[data-field-state="growing"] .field-plot-status {
+  color: var(--muted-foreground);
+}
+
+.alchemy-recipe-card {
+  background-image: linear-gradient(110deg, color-mix(in srgb, var(--gold) 5%, var(--surface)), color-mix(in srgb, var(--background) 90%, transparent));
+  box-shadow: inset 0 1px 0 rgb(255 246 220 / 7%);
+}
+
+.alchemy-recipe-card[data-recipe-state="available"] {
+  border-color: color-mix(in srgb, var(--gold) 52%, var(--border));
+}
+
+.alchemy-recipe-card[data-recipe-state="needs-ingredients"] {
+  border-color: color-mix(in srgb, var(--warning) 34%, var(--border));
+}
+
+.alchemy-shortage {
+  color: color-mix(in srgb, var(--warning) 78%, white);
+}
+
+.technique-game-card[data-technique-state="selected"] {
+  border-color: color-mix(in srgb, var(--gold-bright) 66%, white 14%) !important;
+  background-image: radial-gradient(ellipse at 0 0, color-mix(in srgb, var(--gold) 13%, transparent), transparent 62%);
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--gold) 9%, transparent), 0 0 16px var(--gold-glow);
+}
+
+.technique-game-card[data-technique-state="unaffordable"] {
+  border-color: color-mix(in srgb, var(--warning) 33%, var(--border)) !important;
+  background-image: linear-gradient(145deg, color-mix(in srgb, var(--warning) 5%, var(--surface)), var(--background));
+}
+
+.beast-codex-card {
+  --beast-rarity-tone: var(--game-etched-line);
+  border-color: color-mix(in srgb, var(--beast-rarity-tone) 45%, var(--border));
+  background-image: linear-gradient(135deg, color-mix(in srgb, var(--beast-rarity-tone) 8%, var(--surface)), color-mix(in srgb, var(--background) 88%, transparent));
+}
+
+.beast-codex-card[data-beast-rarity="pham"] { --beast-rarity-tone: #9aa3ad; }
+.beast-codex-card[data-beast-rarity="linh"] { --beast-rarity-tone: #5aa9c9; }
+.beast-codex-card[data-beast-rarity="bao"] { --beast-rarity-tone: #9b7fd4; }
+.beast-codex-card[data-beast-rarity="thanh"] { --beast-rarity-tone: #f4d03f; }
+.beast-codex-card[data-beast-rarity="thoai"] { --beast-rarity-tone: #f97362; }
+
+.beast-codex-card[data-beast-state="active"] {
+  border-color: var(--beast-rarity-tone) !important;
+  background-image: radial-gradient(ellipse at 0 0, color-mix(in srgb, var(--beast-rarity-tone) 23%, transparent), transparent 74%);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--beast-rarity-tone) 38%, transparent), 0 0 16px color-mix(in srgb, var(--beast-rarity-tone) 24%, transparent);
+}
+
+.beast-codex-card[data-beast-state="owned"]:hover {
+  border-color: var(--beast-rarity-tone) !important;
+  box-shadow: 0 0 12px color-mix(in srgb, var(--beast-rarity-tone) 25%, transparent);
+}
+
+.beast-codex-card[data-beast-state="locked"] {
+  filter: saturate(0.62);
+}
+
+.game-expedition-choice {
+  background-image: linear-gradient(155deg, color-mix(in srgb, var(--jade) 7%, var(--surface)), color-mix(in srgb, var(--background) 92%, transparent));
+}
+
+.game-expedition-choice[data-expedition-choice-state="available"] {
+  box-shadow: inset 0 1px 0 rgb(255 246 220 / 9%);
+}
+
+.game-expedition-choice[data-expedition-choice-state="insufficient-resource"] {
+  border-color: color-mix(in srgb, var(--warning) 38%, var(--border)) !important;
+}
+
+.expedition-shortage {
+  color: color-mix(in srgb, var(--warning) 78%, white);
+}
+
+.game-expedition-card[data-expedition-state="ready"] {
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--gold) 12%, transparent), 0 0 22px var(--gold-glow);
+}
+
+[data-cave-upgrade-state="current"] {
+  border-radius: 0.45rem;
+  background: color-mix(in srgb, var(--gold) 11%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--gold) 24%, transparent);
+}
+
+[data-cave-upgrade-state="available"] {
+  color: var(--gold-bright);
+}
+
+.cave-room-hotspot {
+  min-width: 44px;
+  min-height: 44px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.cave-room-hotspot::after {
+  position: absolute;
+  inset: 5%;
+  border: 1px solid color-mix(in srgb, var(--gold-bright) 32%, transparent);
+  border-radius: 50%;
+  box-shadow: 0 0 7px color-mix(in srgb, var(--gold-glow) 28%, transparent), inset 0 0 5px rgb(0 0 0 / 22%);
+  content: "";
+  opacity: .58;
+  pointer-events: none;
+  transition: border-color 150ms ease, box-shadow 150ms ease, opacity 150ms ease;
+}
+
+.cave-room-hotspot:hover::after,
+.cave-room-hotspot:focus-visible::after {
+  border-color: var(--gold-bright);
+  box-shadow: 0 0 13px var(--gold-glow), inset 0 0 6px rgb(0 0 0 / 25%);
+  opacity: 1;
+}
+
+/* Dọc mà ngắn: thu khoảng trời để bảng việc không lọt xuống dưới thanh đáy. */
+@media (max-width: 767px) and (max-height: 600px) {
+  .mobile-shell .hub-mb { gap: 8px; padding: 0 10px 8px; }
+  .mobile-shell .hub-mb-canh { height: clamp(76px, 16dvh, 96px); min-height: 76px; }
+  .mobile-shell .hub-mb-elder { margin-top: -2px; padding-block: 3px; }
+  .mobile-shell .hub-mb-elder-portrait { width: 32px; height: 32px; }
+  .mobile-shell .hub-mb-bang { padding: 6px 8px 8px; }
+  .mobile-shell .hub-mb-dau { margin-bottom: 2px; padding-bottom: 4px; }
+}
+
+/* Telefon xoay ngang: cảnh và nhật khoá đứng cạnh nhau, không đẩy việc xuống
+   dưới màn. Tín hiệu phụ vẫn nằm trong vùng cuộn nếu chiều cao quá thấp. */
+@media (orientation: landscape) and (max-height: 560px) and (max-width: 900px) {
+  .mobile-shell .hub-mb {
+    display: grid;
+    width: min(680px, 100%);
+    height: 100%;
+    max-width: 680px;
+    grid-template-columns: minmax(0, .72fr) minmax(0, 1.28fr);
+    grid-template-rows: minmax(0, 1fr);
+    align-content: stretch;
+    align-items: stretch;
+    justify-content: stretch;
+    gap: 8px;
+    padding: 4px 12px;
+  }
+
+  .mobile-shell .hub-mb-canh { grid-column: 1; grid-row: 1; height: auto; min-height: 0; }
+  .mobile-shell .hub-mb-elder { display: none; }
+  .mobile-shell .hub-mb-bang { grid-column: 2; grid-row: 1; align-self: center; padding: 7px 8px; }
+  .mobile-shell .hub-signal { grid-column: 2; grid-row: 2; }
+  .mobile-shell .hub-mb-chinh { grid-column: 2; grid-row: 3; }
+  .mobile-panel .cave-room > div:first-child { height: clamp(112px, 32dvh, 132px); aspect-ratio: auto; }
+  .mobile-panel .cave-room-caption {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 4px 8px;
+  }
+  .mobile-panel .cave-room-caption > div { flex: none; }
+  .mobile-panel .cave-room-caption > div p,
+  .mobile-panel .cave-room-caption > p { font-size: 8px; line-height: 1.2; }
+  .mobile-panel .cave-room-caption > p { max-width: 54%; text-align: right; }
+  .mobile-panel .cave-room-prop { width: min(var(--room-prop-landscape-size), 16dvh) !important; }
+  .mobile-panel .cave-room > div:first-child > img.animate-float.pointer-events-none { width: clamp(36px, 10dvh, 48px) !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cave-room-hotspot::after { transition: none; }
 }

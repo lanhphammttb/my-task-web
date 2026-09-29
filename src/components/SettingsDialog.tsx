@@ -267,11 +267,10 @@ export default function SettingsDialog({
               <Film className="text-muted-foreground size-4 shrink-0" />
               <span className="min-w-0 flex-1">
                 <span className="block text-sm font-medium">
-                  Video & nhạc nền khi bế quan
+                  Video + âm thanh nền khi bế quan
                 </span>
                 <span className="text-muted-foreground text-xs">
-                  Phát video tu luyện kèm nhạc nền trong lúc nhập định; tắt để
-                  tiết kiệm pin
+                  Phát video tu luyện kèm tiếng gió và không gian hang lúc nhập định; tắt để tiết kiệm pin
                 </span>
               </span>
               <input

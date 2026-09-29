@@ -13,6 +13,7 @@ import ArtImage from "../ArtImage";
 import ProgressRing from "../ProgressRing";
 import RealmSeal from "../RealmSeal";
 import { cn } from "@/lib/utils";
+import HubSignal from "./HubSignal";
 
 interface Props {
   onTribulation: () => void;
@@ -60,6 +61,8 @@ export default function HubCenter({
     <main
       aria-label="Sảnh tu luyện"
       className="cultivation-hub pointer-events-none flex min-h-0 flex-col items-center justify-center text-center"
+      data-cultivation-state={ready ? "breakthrough-ready" : !data.root ? "awakening-required" : c.ascended ? "ascended" : "cultivating"}
+      data-activity-state={timer.running ? "meditating" : dangBeQuan ? "session-paused" : "idle"}
     >
       <h1 className="sr-only">Sơn Môn</h1>
 
@@ -100,6 +103,7 @@ export default function HubCenter({
         onNew={onNew}
         onFocus={onFocusTask}
       />
+      <HubSignal onExplore={onExplore} />
       {/* ---------------------------------------------------- châm ngôn tiền bối */}
       {/* Châm ngôn tiền bối. Có chân dung thì xếp ngang, chưa có thì canh giữa
           như cũ - ArtImage tự ẩn nên layout không bị hụt chỗ. */}
@@ -152,8 +156,9 @@ export default function HubCenter({
             value={c.ascended ? 1 : c.ratio}
             size={198}
             fluid
-            stroke={9}
+            stroke={7}
             color={c.realm.color}
+            track="color-mix(in srgb, var(--gold) 28%, transparent)"
             qi
             glowOnFull
             centerClassName="gap-1"
@@ -218,6 +223,8 @@ export default function HubCenter({
             type="button"
             onClick={onTribulation}
             className="btn-game animate-glow min-h-11 px-6 py-2.5 text-[13px]"
+            data-game-state="available"
+            data-game-action="breakthrough"
           >
             <Zap className="size-4" />
             Độ kiếp lên {nextRealm.name}
@@ -227,6 +234,8 @@ export default function HubCenter({
             type="button"
             onClick={onAwaken}
             className="btn-game shimmer min-h-11 px-6 py-2.5 text-[13px]"
+            data-game-state="available"
+            data-game-action="awaken"
           >
             <Sparkles className="size-4" />
             Khai quang linh căn

@@ -1,4 +1,4 @@
-import { Check, Plus, Sparkles, Timer, Zap } from "lucide-react";
+import { Check, Plus, ScrollText, Sparkles, Timer, Zap } from "lucide-react";
 import type { Task, ViewKey } from "../../types";
 import { useApp } from "../../store/AppStore";
 import { useFocusTimer } from "../../store/FocusTimer";
@@ -9,6 +9,8 @@ import { ASCENSION_INDEX, REALMS, cultivationOf } from "../../lib/cultivation";
 import { theDaoNhan } from "../../lib/room";
 import { PRIORITY_META } from "../../types";
 import ArtImage from "../ArtImage";
+import HubSignal from "./HubSignal";
+import { aphorismOfDay, elderPortrait } from "../../lib/elders";
 
 /**
  * Sảnh trên điện thoại - dựng riêng, không phải bản co lại của màn rộng.
@@ -64,25 +66,52 @@ export default function HubMobile({
 
   const dangBeQuan = timer.inSession || timer.mode === "break";
   const the = theDaoNhan(data);
+  const aphorism = aphorismOfDay();
+  const portrait = elderPortrait(aphorism.elder);
 
   return (
-    <main aria-label="Sảnh tu luyện" className="hub-mb">
+    <main
+      aria-label="Sảnh tu luyện"
+      className="hub-mb"
+      data-cultivation-state={ready ? "breakthrough-ready" : !data.root ? "awakening-required" : c.ascended ? "ascended" : "cultivating"}
+      data-activity-state={timer.running ? "meditating" : dangBeQuan ? "session-paused" : chuaXong.length ? "quests-pending" : tatCa.length ? "day-complete" : "quiet"}
+    >
       <h1 className="sr-only">Sơn Môn</h1>
 
       {/* ------------------------------------------------------------ cảnh */}
       {/* Nhân vật đứng trong chính bức tranh nền, không đứng trong một cái thẻ.
           Đây là chỗ khác biệt lớn nhất so với bản cũ: cảnh được nhìn thấy. */}
       <div className="hub-mb-canh">
-        <ArtImage
-          src={`/art/chibi/${ready ? "breakthrough" : the.file}.png`}
-          alt=""
-          title={the.mo}
-          className="hub-mb-nguoi animate-float"
-        />
+        <div className="hub-mb-character-anchor animate-float" aria-hidden="true">
+          <ArtImage
+            src={`/art/chibi/${ready ? "breakthrough" : the.file}.png`}
+            alt=""
+            title={the.mo}
+            className="hub-mb-nguoi"
+          />
+        </div>
       </div>
 
+      <aside className="hub-mb-elder" aria-label="Lời tiền bối">
+        {portrait && (
+          <ArtImage
+            src={portrait}
+            alt={`Chân dung ${aphorism.elder}`}
+            className="hub-mb-elder-portrait"
+          />
+        )}
+        <span className="hub-mb-elder-copy">
+          <q>{aphorism.text}</q>
+          <small>{aphorism.elder}</small>
+        </span>
+      </aside>
+
       {/* --------------------------------------------------------- bảng việc */}
-      <section className="hub-mb-bang" aria-label="Việc hôm nay">
+      <section
+        className="hub-mb-bang"
+        aria-label="Việc hôm nay"
+        data-board-state={dangBeQuan ? "session-active" : chuaXong.length ? "quests-pending" : tatCa.length ? "day-complete" : "empty"}
+      >
         <header className="hub-mb-dau">
           <span className="hub-mb-ten">Nhật Khoá</span>
           <span className="hub-mb-dem">
@@ -102,12 +131,18 @@ export default function HubMobile({
           </button>
         )}
 
+        {!dangBeQuan && hien[0] && (
+          <button type="button" className="hub-mb-quay" onClick={() => onFocusTask(hien[0])}>
+            <Timer className="size-4 shrink-0" /> Bế quan với việc tiếp theo
+          </button>
+        )}
+
         {hien.length > 0 ? (
           <ul className="hub-mb-ds">
             {hien.map((t) => {
               const meta = PRIORITY_META[t.priority];
               return (
-                <li key={t.id} className="hub-mb-dong">
+                <li key={t.id} className="hub-mb-dong" data-task-priority={t.priority}>
                   <button
                     type="button"
                     className="hub-mb-tick"
@@ -139,11 +174,14 @@ export default function HubMobile({
             })}
           </ul>
         ) : (
-          <p className="hub-mb-trong">
+          <div className="hub-mb-trong">
+            <span className="hub-mb-empty-sigil" aria-hidden="true">
+              <ScrollText className="size-5" />
+            </span>
             {tatCa.length > 0
               ? "Xong sạch. Nghỉ cũng là tu."
               : "Ghi một việc vào sổ tu hành."}
-          </p>
+          </div>
         )}
 
         <div className="hub-mb-nut">
@@ -162,16 +200,18 @@ export default function HubMobile({
         </div>
       </section>
 
+      <HubSignal onExplore={onExplore} />
+
       {/* ------------------------------------------------------ việc gấp nhất */}
       {/* Chỉ hiện khi thật sự có: độ kiếp, hoặc chưa khai quang linh căn. Không
           có thì chỗ này trả lại cho cảnh chứ không để một nút xám nằm đó. */}
       {ready ? (
-        <button type="button" className="hub-mb-chinh" onClick={onTribulation}>
+        <button type="button" className="hub-mb-chinh" data-game-state="available" data-game-action="breakthrough" onClick={onTribulation}>
           <Zap className="size-4" />
           Độ kiếp lên {nextRealm.name}
         </button>
       ) : !data.root ? (
-        <button type="button" className="hub-mb-chinh" onClick={onAwaken}>
+        <button type="button" className="hub-mb-chinh" data-game-state="available" data-game-action="awaken" onClick={onAwaken}>
           <Sparkles className="size-4" />
           Khai quang linh căn
         </button>

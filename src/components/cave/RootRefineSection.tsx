@@ -76,7 +76,8 @@ export default function RootRefineSection() {
           return (
             <div
               key={el}
-              className="flex flex-wrap items-center gap-3 rounded-xl border p-3"
+              className="root-refine-card flex flex-wrap items-center gap-3 rounded-xl border p-3"
+              data-root-state="owned"
             >
               <ElementSeal element={el} className="size-10 shrink-0" />
 
@@ -99,8 +100,19 @@ export default function RootRefineSection() {
                   className="gap-1.5"
                   disabled={available.length === 0 || balance < REFINE_COST}
                   onClick={() => setSwapFrom(el)}
+                  data-game-state={available.length === 0 ? "locked" : balance < REFINE_COST ? "insufficient-resource" : "available"}
+                  title={available.length === 0
+                    ? "Đã có đủ năm hệ, không còn hệ nào để đổi vào"
+                    : balance < REFINE_COST
+                      ? `Còn thiếu ${REFINE_COST - balance} linh thạch`
+                      : `Tẩy hệ với ${REFINE_COST} linh thạch`}
                 >
-                  <Repeat className="size-3.5" /> Tẩy ({REFINE_COST})
+                  <Repeat className="size-3.5" />
+                  {available.length === 0
+                    ? "Đủ hệ"
+                    : balance < REFINE_COST
+                      ? `Thiếu ${REFINE_COST - balance}`
+                      : `Tẩy (${REFINE_COST})`}
                 </Button>
 
                 {canCondense && (
@@ -110,8 +122,13 @@ export default function RootRefineSection() {
                     className="gap-1.5"
                     disabled={balance < condense}
                     onClick={() => setDropEl(el)}
+                    data-game-state={balance >= condense ? "available" : "insufficient-resource"}
+                    title={balance >= condense
+                      ? `Ngưng luyện với ${condense} linh thạch`
+                      : `Còn thiếu ${condense - balance} linh thạch`}
                   >
-                    <Minus className="size-3.5" /> Bỏ ({condense})
+                    <Minus className="size-3.5" />
+                    {balance < condense ? `Thiếu ${condense - balance}` : `Bỏ (${condense})`}
                   </Button>
                 )}
               </div>

@@ -4,6 +4,7 @@ import {
   Archive,
   ArchiveRestore,
   CalendarClock,
+  ChevronDown,
   Check,
   ListChecks,
   MoreHorizontal,
@@ -33,6 +34,7 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -129,26 +131,44 @@ export default function GoalsView({ onEdit, onFocus, onAddTask }: Props) {
       : null;
     const isOpen = expanded === g.id;
     const complete = list.length > 0 && done === list.length;
+    const overdue = daysLeft !== null && daysLeft < 0 && !complete;
+    const vowState = g.archived
+      ? "archived"
+      : complete
+        ? "fulfilled"
+        : overdue
+          ? "overdue"
+          : list.length > 0
+            ? "cultivating"
+            : "unstarted";
 
     return (
       <article
         key={g.id}
+        data-vow-state={vowState}
         className={cn(
           "vow-card border-border bg-card overflow-hidden rounded-xl border",
-          complete && "ring-success/30 ring-1",
+          complete && !g.archived && "ring-success/30 ring-1",
         )}
+        style={{ borderColor: `${g.color}66` }}
       >
         <div className="h-[3px] w-full" style={{ background: g.color }} />
         <div className="space-y-3 p-4">
           <div className="flex items-start gap-3">
             <span
-              className="mt-1.5 size-2.5 shrink-0 rounded-full"
-              style={{ background: g.color }}
-            />
+              className="vow-seal mt-0.5 grid size-10 shrink-0 place-items-center rounded-full border"
+              style={{ borderColor: `${g.color}a6`, color: g.color, background: `radial-gradient(circle, ${g.color}35, var(--background))` }}
+              aria-hidden="true"
+            ><Target className="size-4.5" /></span>
             <div className="min-w-0 flex-1">
-              <strong className="block text-sm font-semibold">{g.title}</strong>
+              <div className="vow-title-row">
+                <strong className="block text-sm font-semibold">{g.title}</strong>
+                <span className="vow-state-stamp" data-vow-stamp={vowState}>
+                  {vowState === "archived" ? "Đã cất giữ" : complete ? "Viên mãn" : overdue ? "Quá hạn" : list.length ? "Đang thực hiện" : "Chưa lập bước"}
+                </span>
+              </div>
               {g.description && (
-                <p className="text-muted-foreground mt-0.5 text-xs">
+                <p className="vow-description text-muted-foreground mt-0.5 text-xs">
                   {g.description}
                 </p>
               )}
@@ -159,7 +179,7 @@ export default function GoalsView({ onEdit, onFocus, onAddTask }: Props) {
                   variant="ghost"
                   size="icon"
                   className="size-7 shrink-0"
-                  aria-label="Tuỳ chọn mục tiêu"
+                  aria-label={`Tuỳ chọn mục tiêu: ${g.title}`}
                 >
                   <MoreHorizontal className="size-4" />
                 </Button>
@@ -188,18 +208,26 @@ export default function GoalsView({ onEdit, onFocus, onAddTask }: Props) {
             </DropdownMenu>
           </div>
 
-          <button className="btn-game px-3 py-2 text-xs" onClick={() => onAddTask(g.id)}><Plus className="size-3.5" /> Thêm bước nhỏ cho đại nguyện</button>
+          {!g.archived && <button className="btn-game vow-add-step px-3 py-2 text-xs" onClick={() => onAddTask(g.id)}><Plus className="size-3.5" /> Thêm bước nhỏ cho đại nguyện</button>}
 
-          {/* Thanh tiến độ tô đúng màu nhận diện của mục tiêu */}
-          <div className="flex items-center gap-3">
-            <div className="bg-muted h-2 flex-1 overflow-hidden rounded-full">
+          {/* Đạo lộ chỉ bắt đầu khi có ít nhất một bước; không giả 0% khi chưa lập gì. */}
+          <div className="vow-progress-row flex items-center gap-3">
+            <div
+              className="vow-progress-track bg-muted h-2 flex-1 overflow-hidden rounded-full"
+              role={list.length ? "progressbar" : undefined}
+              aria-label={list.length ? `Tiến độ ${g.title}` : undefined}
+              aria-valuemin={list.length ? 0 : undefined}
+              aria-valuemax={list.length ? list.length : undefined}
+              aria-valuenow={list.length ? done : undefined}
+              aria-valuetext={list.length ? `${done} trên ${list.length} nhiệm vụ đã xong` : undefined}
+            >
               <div
-                className="h-full rounded-full transition-[width] duration-700 ease-out"
+                className="vow-progress-fill h-full rounded-full transition-[width] duration-700 ease-out"
                 style={{ width: `${ratio * 100}%`, background: g.color }}
               />
             </div>
-            <span className="tabular w-10 text-right text-xs font-bold">
-              {Math.round(ratio * 100)}%
+            <span className="vow-progress-value tabular text-right text-xs font-bold">
+              {list.length ? `${Math.round(ratio * 100)}%` : "Chưa lập bước"}
             </span>
           </div>
 
@@ -214,19 +242,19 @@ export default function GoalsView({ onEdit, onFocus, onAddTask }: Props) {
             >
               {done}/{list.length} nhiệm vụ
             </MetaChip>
-            {daysLeft !== null && (
+            {daysLeft !== null && !complete && (
               <MetaChip
                 icon={CalendarClock}
                 className={cn(
-                  daysLeft < 0 &&
+                  overdue &&
                     "border-destructive/40 bg-destructive/12 text-destructive",
-                  daysLeft >= 0 &&
+                  !complete && daysLeft >= 0 &&
                     daysLeft <= 7 &&
                     "border-warning/40 bg-warning/12 text-warning",
                 )}
               >
-                {daysLeft < 0
-                  ? `Trễ ${Math.abs(daysLeft)} ngày`
+                {overdue
+                  ? `Trễ ${Math.abs(daysLeft ?? 0)} ngày`
                   : `Còn ${daysLeft} ngày`}
               </MetaChip>
             )}
@@ -235,14 +263,17 @@ export default function GoalsView({ onEdit, onFocus, onAddTask }: Props) {
             )}
             <button
               onClick={() => setExpanded(isOpen ? null : g.id)}
-              className="text-primary ml-auto text-xs font-semibold hover:underline"
+              aria-expanded={isOpen}
+              aria-controls={`goal-steps-${g.id}`}
+              className="vow-expand-button text-primary ml-auto text-xs font-semibold hover:underline"
             >
-              {isOpen ? "Thu gọn" : `Xem nhiệm vụ (${list.length})`}
+              <span>{isOpen ? "Thu gọn đạo lộ" : list.length ? `Xem ${list.length} bước` : "Xem chặng đầu tiên"}</span>
+              <ChevronDown className={cn("size-3.5 transition-transform", isOpen && "rotate-180")} />
             </button>
           </div>
 
           {isOpen && (
-            <div className="space-y-2 pt-1">
+            <div id={`goal-steps-${g.id}`} className="vow-steps-panel space-y-2 pt-1">
               {list.length === 0 ? (
                 <EmptyState
                   icon={Target}
@@ -300,7 +331,7 @@ export default function GoalsView({ onEdit, onFocus, onAddTask }: Props) {
           <h4 className="text-muted-foreground text-[11px] font-bold tracking-wider uppercase">
             Đã lưu trữ
           </h4>
-          <div className="grid gap-4 opacity-60 lg:grid-cols-2">
+          <div className="grid gap-4 lg:grid-cols-2">
             {archived.map(card)}
           </div>
         </>
@@ -330,13 +361,13 @@ export default function GoalsView({ onEdit, onFocus, onAddTask }: Props) {
 
       {/* ------------------------------------------------- form mục tiêu */}
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
-        <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-[520px]">
-          <DialogHeader>
-            <DialogTitle>
-              {editing ? "Sửa mục tiêu" : "Mục tiêu mới"}
-            </DialogTitle>
+        <DialogContent className="vow-editor-dialog task-editor-mobile max-h-[92vh] overflow-y-auto sm:max-w-[520px]">
+          <DialogHeader className="vow-editor-heading">
+            <p className="vow-editor-eyebrow"><Target className="size-3.5" /> LẬP ĐẠI NGUYỆN</p>
+            <DialogTitle>{editing ? "Hiệu chỉnh đại nguyện" : "Khởi lập đại nguyện"}</DialogTitle>
+            <DialogDescription>Chọn điều thật sự quan trọng, rồi gắn những bước nhỏ bạn có thể làm mỗi ngày.</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-3">
+          <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="goal-title">Tên mục tiêu *</Label>
               <Input
@@ -369,16 +400,18 @@ export default function GoalsView({ onEdit, onFocus, onAddTask }: Props) {
                 }
               />
             </div>
-            <div className="grid gap-2">
-              <Label>Màu nhận diện</Label>
+            <fieldset className="grid gap-2">
+              <legend className="text-sm leading-none font-medium">Màu nhận diện</legend>
               <div className="flex flex-wrap gap-2">
                 {GOAL_COLORS.map((c) => (
                   <button
                     key={c}
+                    type="button"
                     onClick={() => setDraft({ ...draft, color: c })}
                     aria-label={`Chọn màu ${c}`}
+                    aria-pressed={draft.color === c}
                     className={cn(
-                      "grid size-8 place-items-center rounded-lg border-2 transition-transform",
+                      "vow-color-choice grid size-11 place-items-center rounded-xl border-2 transition-transform",
                       draft.color === c
                         ? "border-foreground scale-105"
                         : "border-transparent",
@@ -391,7 +424,7 @@ export default function GoalsView({ onEdit, onFocus, onAddTask }: Props) {
                   </button>
                 ))}
               </div>
-            </div>
+            </fieldset>
           </div>
           <DialogFooter className="sticky bottom-0 z-10 -mx-4 -mb-4 mt-2 border-t border-border bg-popover px-4 pt-3 pb-4">
             <Button variant="outline" onClick={() => setFormOpen(false)}>

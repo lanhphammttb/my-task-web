@@ -1,14 +1,14 @@
 import type { ReactNode } from 'react';
-import { ArrowRight, Check, ScrollText, Sparkles } from 'lucide-react';
+import { ArrowRight, CalendarDays, CalendarRange, Check, ScrollText, Sparkles } from 'lucide-react';
 import type { ViewKey } from '../../types';
 import { useApp } from '../../store/AppStore';
 import { completedDay, todayKey } from '../../lib/date';
 import ArtImage from '../ArtImage';
 
 const chapters = [
-  { key: 'today' as const, title: 'Nhật Khoá', hint: 'Làm hôm nay' },
-  { key: 'week' as const, title: 'Tuần Khoá', hint: 'Chia sức 7 ngày' },
-  { key: 'month' as const, title: 'Nguyệt Khoá', hint: 'Nhìn xa một tháng' },
+  { key: 'today' as const, title: 'Nhật Khoá', hint: 'Làm hôm nay', Icon: ScrollText },
+  { key: 'week' as const, title: 'Tuần Khoá', hint: 'Chia sức 7 ngày', Icon: CalendarRange },
+  { key: 'month' as const, title: 'Nguyệt Khoá', hint: 'Nhìn xa một tháng', Icon: CalendarDays },
 ];
 
 /** One place, three pages of the same personal journal. No invented rewards. */
@@ -41,7 +41,8 @@ export default function WorkSanctuary({ view, onSelect, children }: {
     </section>
     {work ? <nav className="journal-chapters" aria-label="Các trang sổ hành sự">
       {chapters.map(c => <button key={c.key} aria-current={view === c.key ? 'page' : undefined} onClick={() => onSelect(c.key)}>
-        <strong>{c.title}</strong><span>{c.hint}</span>
+        <span className="journal-chapter-seal" aria-hidden="true"><c.Icon /></span>
+        <span className="journal-chapter-copy"><strong>{c.title}</strong><span>{c.hint}</span></span>
       </button>)}
     </nav> : <div className="vow-path"><span>Đại nguyện</span><ArrowRight /><span>Việc nhỏ mỗi ngày</span><ArrowRight /><button onClick={() => onSelect('today')}>Về Hành Sự Đường</button></div>}
     <div className="sanctuary-journal">{children}</div>

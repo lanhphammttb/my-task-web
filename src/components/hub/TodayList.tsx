@@ -2,7 +2,7 @@ import { Check, Plus } from "lucide-react";
 import type { Task } from "../../types";
 import { useApp } from "../../store/AppStore";
 import { todayKey } from "../../lib/date";
-import { sortTasks, tasksOn } from "../../lib/stats";
+import { isOverdue, sortTasks, tasksOn } from "../../lib/stats";
 import { PRIORITY_META } from "../../types";
 
 /**
@@ -109,7 +109,8 @@ function Dong({
         type="button"
         className="today-dong-tick"
         onClick={onTick}
-        aria-label={`Đánh dấu hoàn thành: ${task.title}`}
+          aria-label={`Đánh dấu hoàn thành: ${task.title}`}
+          aria-pressed={false}
       >
         <span className="today-dong-o" style={{ borderColor: `${meta.color}99` }}>
           <Check className="size-3.5 opacity-0 transition-opacity" />
@@ -118,10 +119,16 @@ function Dong({
       <button
         type="button"
         className="today-dong-than"
+        data-task-state={task.status === "doing" ? "active" : isOverdue(task) ? "overdue" : "ready"}
         onClick={onFocus}
         aria-label={`Tập trung việc này: ${task.title}`}
       >
         <span className="today-dong-ten">{task.title}</span>
+        {(task.status === "doing" || isOverdue(task)) && (
+          <span className="today-dong-state">
+            {task.status === "doing" ? "Đang làm" : "Trễ hạn"}
+          </span>
+        )}
         <span className="today-dong-xp" style={{ color: meta.color }}>
           +{10 * meta.weight}
         </span>

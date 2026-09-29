@@ -69,6 +69,13 @@ export default function TaskCard({ task, onEdit, onFocus, showDate }: Props) {
   const late = isOverdue(task);
   const subDone = task.subtasks.filter((s) => s.done).length;
   const done = task.status === "done";
+  const gameState = done
+    ? "complete"
+    : task.status === "doing"
+      ? "active"
+      : late
+        ? "overdue"
+        : "ready";
 
   /**
    * Tick xong: confetti tại đúng ô tick + chip "+XP" bay lên + tiếng ting.
@@ -94,11 +101,11 @@ export default function TaskCard({ task, onEdit, onFocus, showDate }: Props) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, height: 0, marginBottom: 0 }}
       transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+      data-task-state={gameState}
+      data-task-priority={task.priority}
       className={cn(
         "group relative flex gap-3 overflow-hidden rounded-xl border pr-3 pl-0 transition-colors",
         "border-border bg-card/85 hover:border-gold/40 hover:bg-surface/70",
-        done && "opacity-60",
-        late && "border-destructive/35 bg-destructive/[0.05]",
       )}
     >
       {/* Vạch màu mức ưu tiên */}
@@ -113,6 +120,8 @@ export default function TaskCard({ task, onEdit, onFocus, showDate }: Props) {
             ref={checkRef}
             onClick={handleToggle}
             aria-label={done ? "Bỏ đánh dấu hoàn thành" : "Đánh dấu hoàn thành"}
+            aria-description={task.title}
+            aria-pressed={done}
             className={cn(
               "o-tick mt-0.5 grid size-[22px] place-items-center rounded-full border-2 transition-all",
               "focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
@@ -142,6 +151,8 @@ export default function TaskCard({ task, onEdit, onFocus, showDate }: Props) {
           <div className="flex items-start gap-2">
             <button
               onClick={() => setOpen((v) => !v)}
+              aria-expanded={open}
+              aria-controls={`task-details-${task.id}`}
               className={cn(
                 "min-w-0 flex-1 text-left text-sm leading-snug font-semibold transition-colors",
                 "hover:text-primary focus-visible:ring-ring rounded focus-visible:ring-2 focus-visible:outline-none",
@@ -156,6 +167,7 @@ export default function TaskCard({ task, onEdit, onFocus, showDate }: Props) {
               </span>
             )}
             <ChevronDown
+              aria-hidden="true"
               className={cn(
                 "text-muted-foreground mt-0.5 size-4 shrink-0 transition-transform",
                 open && "rotate-180",
@@ -233,6 +245,8 @@ export default function TaskCard({ task, onEdit, onFocus, showDate }: Props) {
           <AnimatePresence initial={false}>
             {open && (
               <motion.div
+                id={`task-details-${task.id}`}
+                aria-label={`Chi tiết: ${task.title}`}
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: "auto", opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
@@ -251,7 +265,11 @@ export default function TaskCard({ task, onEdit, onFocus, showDate }: Props) {
                       {task.subtasks.map((s) => (
                         <li key={s.id}>
                           <button
+                            type="button"
                             onClick={() => toggleSubtask(task.id, s.id)}
+                            role="checkbox"
+                            aria-checked={s.done}
+                            aria-label={s.title}
                             className="hover:text-foreground flex w-full items-center gap-2 rounded text-left text-xs"
                           >
                             <span

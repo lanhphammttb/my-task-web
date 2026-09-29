@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { AnimatePresence } from 'motion/react';
-import { CalendarCheck2, ChevronLeft, ChevronRight, Check, Gem, ListChecks, Quote, ScrollText } from 'lucide-react';
+import { CalendarCheck2, ChevronLeft, ChevronRight, Check, CircleDashed, Gem, ListChecks, Quote, ScrollText, Sparkles } from 'lucide-react';
 import type { Task } from '../types';
 import { addDays, dateKey, formatDuration, longDate, parseKey, relativeDay, todayKey } from '../lib/date';
 import { dayStats, sortTasks, tasksOn } from '../lib/stats';
@@ -13,7 +13,6 @@ import ReturnDigest from '../components/ReturnDigest';
 import TaskCard from '../components/TaskCard';
 import { Meter, Section } from '../components/primitives';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
 
 interface Props { date: string; onDateChange: (d: string) => void; onEdit: (t: Task) => void; onFocus: (t: Task) => void; }
 
@@ -35,11 +34,11 @@ export default function TodayView({ date, onDateChange, onEdit, onFocus }: Props
   const showPortrait = !!portrait && portraitOk;
 
   return <div className="mx-auto flex w-full max-w-5xl flex-col gap-4">
-    <div className="flex items-center gap-2">
-      <Button variant="outline" size="icon" aria-label="Ngày trước" onClick={() => onDateChange(dateKey(addDays(parseKey(date), -1)))}><ChevronLeft className="size-4" /></Button>
-      <div className="min-w-0 flex-1"><h2 className="font-title chi-man-rong text-lg font-bold">{isToday ? 'Sổ hành sự hôm nay' : relativeDay(date)}</h2><p className="text-muted-foreground text-xs">{longDate(parseKey(date))}</p></div>
-      {!isToday && <Button variant="outline" size="sm" onClick={() => onDateChange(todayKey())}><CalendarCheck2 className="size-3.5" /> Về hôm nay</Button>}
-      <Button variant="outline" size="icon" aria-label="Ngày sau" onClick={() => onDateChange(dateKey(addDays(parseKey(date), 1)))}><ChevronRight className="size-4" /></Button>
+    <div className="journal-date-ribbon">
+      <Button className="journal-date-seal" variant="outline" size="icon" aria-label="Ngày trước" title="Ngày trước" onClick={() => onDateChange(dateKey(addDays(parseKey(date), -1)))}><ChevronLeft className="size-4" /></Button>
+      <div className="journal-date-copy"><h2 className="font-title chi-man-rong text-lg font-bold">{isToday ? 'Sổ hành sự hôm nay' : relativeDay(date)}</h2><p className="text-muted-foreground text-xs">{longDate(parseKey(date))}</p></div>
+      {!isToday && <Button className="journal-today-return" variant="outline" size="sm" onClick={() => onDateChange(todayKey())}><CalendarCheck2 className="size-3.5" /> Hôm nay</Button>}
+      <Button className="journal-date-seal" variant="outline" size="icon" aria-label="Ngày sau" title="Ngày sau" onClick={() => onDateChange(dateKey(addDays(parseKey(date), 1)))}><ChevronRight className="size-4" /></Button>
     </div>
     <div className="journal-day-summary">
       <span><strong>{stats.done}/{stats.total}</strong> việc đã hoàn thành</span>
@@ -72,7 +71,7 @@ export default function TodayView({ date, onDateChange, onEdit, onFocus }: Props
       </div>
     </blockquote>
 
-    <div className="journal-write"><label className="chi-man-rong mb-2 block text-xs font-medium">Ghi một việc đời thường vào sổ tu hành</label><QuickAdd date={date} /></div>
+    <div className="journal-write"><label htmlFor="quick-add-task" className="chi-man-rong mb-2 block text-xs font-medium">Ghi một việc đời thường vào sổ tu hành</label><QuickAdd date={date} /></div>
     <Section icon={ListChecks} title="Việc của bạn" subtitle="Chọn Bế Quan để tập trung. Chỉ đóng dấu hoàn thành khi đã làm xong ngoài đời." subtitleClassName="chi-man-rong">
       {list.length === 0 ? <div className="journal-empty"><ScrollText className="size-7 text-gold" /><div><h3 className="font-title font-semibold">Trang sổ còn để ngỏ</h3><p className="chi-man-rong">Đọc 10 trang sách, đi bộ 20 phút, hay hoàn thành một phần công việc. Viết điều bạn thực sự muốn làm vào ô phía trên.</p></div></div> : <div className="space-y-4">
         <AnimatePresence initial={false}>{pending.map(t => <TaskCard key={t.id} task={t} onEdit={onEdit} onFocus={onFocus} />)}</AnimatePresence>
@@ -81,8 +80,21 @@ export default function TodayView({ date, onDateChange, onEdit, onFocus }: Props
     </Section>
     {isToday && overdue.length > 0 && <Section icon={ScrollText} title={`Việc còn dang dở (${overdue.length})`} subtitle="Sắp xếp lại cho vừa sức, không cần làm tất cả cùng lúc." action={<Button variant="outline" size="sm" onClick={pushOverdueToToday}>Dời tất cả sang hôm nay</Button>}><div className="space-y-2">{overdue.map(t => <TaskCard key={t.id} task={t} onEdit={onEdit} onFocus={onFocus} showDate />)}</div></Section>}
     <div className="journal-rewards"><div className="mb-3"><p className="sanctuary-eyebrow"><Gem className="size-3" /> SAU MỖI BƯỚC TU HÀNH</p><h2 className="font-title mt-1 text-lg font-semibold">Công sức kết thành cơ duyên</h2><p className="text-muted-foreground chi-man-rong mt-1 text-xs">Hòm và tông khoá ghi nhận việc đã làm. Bạn không cần nhận thêm thử thách để hoàn thành việc của mình.</p></div><ChestRow date={date} /></div>
-    <Section id="quests" icon={ScrollText} title="Nhật khoá tông môn" subtitle="Thử thách thêm nếu phù hợp với ngày của bạn" action={<span className="text-muted-foreground text-xs">{quests.filter(q => q.done).length}/{quests.length} hoàn thành</span>}>
-      <ul className="grid gap-2 sm:grid-cols-3">{quests.map(q => <li key={q.id} className={cn('rounded-lg border p-3', q.done ? 'border-success/40 bg-success/10' : 'border-border bg-surface/50')}><div className="flex items-start gap-2">{q.done && <Check className="size-4 shrink-0 text-success" />}<div><p className="text-xs font-medium">{q.label}</p><p className="text-muted-foreground text-[11px]">{q.current}/{q.target} · thưởng {q.reward} linh thạch</p></div></div>{!q.done && <Meter value={q.ratio} height={4} className="mt-2" />}</li>)}</ul>
+    <Section id="quests" icon={ScrollText} title="Nhật khoá tông môn" subtitle="Thử thách thêm nếu phù hợp với ngày của bạn" action={<span className="text-muted-foreground text-xs">{quests.filter(q => q.done).length}/{quests.length} hoàn thành</span>} collapsible defaultOpen={false}>
+      <ul className="grid gap-2 sm:grid-cols-3">{quests.map(q => {
+        const state = q.done ? 'complete' : q.current > 0 ? 'advancing' : 'dormant';
+        return <li key={q.id} data-quest-state={state} className="journal-quest-card">
+          <div className="journal-quest-seal" aria-hidden="true">
+            {q.done ? <Check className="size-4" /> : q.current > 0 ? <Sparkles className="size-4" /> : <CircleDashed className="size-4" />}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="journal-quest-name">{q.label}</p>
+            <p className="journal-quest-state">{q.done ? 'Ấn tông môn đã sáng' : q.current > 0 ? 'Đang tích lũy công đức' : 'Chưa khởi hành'}</p>
+            <p className="journal-quest-reward">{q.current}/{q.target} · thưởng {q.reward} linh thạch</p>
+          </div>
+          {q.done ? <span className="journal-quest-done">Hoàn thành</span> : <div className="journal-quest-progress" role="progressbar" aria-label={q.label} aria-valuemin={0} aria-valuemax={q.target} aria-valuenow={Math.min(q.current, q.target)}><Meter value={q.ratio} height={5} /></div>}
+        </li>;
+      })}</ul>
     </Section>
     {isToday && <ReturnDigest />}
   </div>;

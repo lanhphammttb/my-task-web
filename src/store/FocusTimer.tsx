@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { useApp } from "./AppStore";
 import { clockLabel } from "../lib/date";
-import { soundComplete } from "../lib/celebrate";
+import { soundComplete, soundFocusStart } from "../lib/celebrate";
 
 type Mode = "work" | "break";
 interface TimerState {
@@ -14,25 +14,46 @@ interface TimerState {
   rounds: number;
   started: boolean;
 }
+interface SessionResult { minutes: number; taskId?: string }
+const TIMER_STORAGE = "my-task/focus-timer/v1";
+
+function storedTimer(fallback: TimerState): TimerState {
+  try {
+    const value = JSON.parse(localStorage.getItem(TIMER_STORAGE) ?? "null") as Partial<TimerState> | null;
+    if (!value || (value.mode !== "work" && value.mode !== "break") ||
+        !Number.isFinite(value.remaining) || !Number.isFinite(value.total) ||
+        !Number.isFinite(value.rounds) || typeof value.started !== "boolean" ||
+        (value.endsAt !== null && !Number.isFinite(value.endsAt))) return fallback;
+    return {
+      mode: value.mode,
+      remaining: Math.max(0, Number(value.remaining)),
+      total: Math.max(60, Number(value.total)),
+      endsAt: value.endsAt === null ? null : Number(value.endsAt),
+      taskId: typeof value.taskId === "string" ? value.taskId : undefined,
+      rounds: Math.max(0, Number(value.rounds)),
+      started: value.started,
+    };
+  } catch { return fallback; }
+}
 function useTimer() {
   const { data, logSession, notify } = useApp();
   const length = (mode: Mode) =>
     (mode === "work" ? data.settings.focusLength : data.settings.breakLength) *
     60;
-  const [state, setState] = useState<TimerState>(() => ({
-    mode: "work",
-    remaining: length("work"),
-    total: length("work"),
-    endsAt: null,
-    rounds: 0,
-    started: false,
+  const [state, setState] = useState<TimerState>(() => storedTimer({
+    mode: "work", remaining: length("work"), total: length("work"),
+    endsAt: null, rounds: 0, started: false,
   }));
+  const [lastSession, setLastSession] = useState<SessionResult | null>(null);
   const current = useRef(state);
   const [now, setNow] = useState(Date.now);
   const commit = (next: TimerState) => {
     current.current = next;
     setState(next);
   };
+  useEffect(() => {
+    try { localStorage.setItem(TIMER_STORAGE, JSON.stringify(state)); } catch { /* The app already reports storage failures elsewhere. */ }
+  }, [state]);
   const remaining = (s: TimerState) =>
     s.endsAt === null
       ? s.remaining
@@ -50,8 +71,10 @@ function useTimer() {
     const s = current.current;
     const minutes = Math.floor((s.total - remaining(s)) / 60);
     reset(mode);
-    if (s.mode === "work" && s.started && minutes >= 1)
+    if (s.mode === "work" && s.started && minutes >= 1) {
       logSession(minutes, s.taskId);
+      setLastSession({ minutes, taskId: s.taskId });
+    }
   };
 
   useEffect(() => {
@@ -76,7 +99,10 @@ function useTimer() {
         rounds: s.rounds + (s.mode === "work" ? 1 : 0),
       });
       if (data.settings.soundEnabled) soundComplete();
-      if (s.mode === "work") logSession(s.total / 60, s.taskId);
+      if (s.mode === "work") {
+        logSession(s.total / 60, s.taskId);
+        setLastSession({ minutes: s.total / 60, taskId: s.taskId });
+      }
       else notify("Hết giờ nghỉ. Vào phiên tập trung tiếp theo!");
     };
     const id = window.setInterval(tick, 1000);
@@ -117,6 +143,8 @@ function useTimer() {
     inSession: state.started,
     rounds: state.rounds,
     taskId: state.taskId,
+    lastSession,
+    dismissLastSession: () => setLastSession(null),
     reset: finish,
     pickTask: (taskId?: string) => {
       if (current.current.started) {
@@ -129,6 +157,7 @@ function useTimer() {
       const s = current.current;
       const total = !s.started ? length(s.mode) : s.total;
       const left = !s.started ? total : remaining(s);
+      if (s.endsAt === null && data.settings.soundEnabled) soundFocusStart();
       commit({
         ...s,
         total,

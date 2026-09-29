@@ -1,12 +1,8 @@
-# Âm thanh — thứ còn thiếu nhiều nhất
+# ?m thanh tu ti?n
 
-Đây là khoảng trống lớn nhất giữa app này và một cái game. Hiện tại **không có
-một tệp âm thanh hiệu ứng nào**: mọi tiếng đều do `lib/celebrate.ts` tự sinh
-bằng dao động hình sin — tức là mấy tiếng "bíp" thuần, đúng kiểu đồng hồ báo
-thức. Tick xong một việc mà nghe tiếng bíp thì cảm giác là vừa điền xong một ô
-biểu mẫu, không phải vừa hành công.
+?m thanh hi?u ?ng v? kh?ng gian b? quan hi?n ???c t?ng h?p b?ng WebAudio trong ?ng d?ng; kh?ng c?n t?i th?m th? vi?n ?m thanh v? kh?ng ph?t tr??c thao t?c c?a ng??i d?ng.
 
-Nhạc nền thiền (`ambient.mp3`) thì đã có và đang dùng ở Bế Quan.
+C?c ti?ng kh?nh c? b?i ?m nh?, d?ng cho ho?n th?nh vi?c, m? phi?n t?p trung v? ??t ph?. Ti?ng gi? n?i ho?c ?m vang hang ch? ph?t trong phi?n b? quan khi ng??i d?ng b?t tu? ch?n Video + ?m thanh n?n. ?m thanh t?t theo phi?n khi d?ng ho?c r?i c?nh.
 
 ## Quy cách
 

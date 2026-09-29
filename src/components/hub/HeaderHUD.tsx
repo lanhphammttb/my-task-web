@@ -1,4 +1,4 @@
-import { Flame, Lock, Moon, ShieldAlert, Sun } from "lucide-react";
+import { CloudOff, Cloud, CloudUpload, Flame, Lock, Moon, ShieldAlert, Sun } from "lucide-react";
 import { useApp } from "../../store/AppStore";
 import { cultivationOf } from "../../lib/cultivation";
 import { effectiveXp, progressOf, stoneBalance } from "../../lib/economy";
@@ -19,7 +19,7 @@ export default function HeaderHUD({ onSettings }: { onSettings: () => void }) {
   const ref = useRef<HTMLElement>(null);
   useChromeVar(ref, "--hud-h");
 
-  const { data, audit, updateSettings } = useApp();
+  const { data, audit, updateSettings, sync } = useApp();
   const xp = effectiveXp(data);
   const c = cultivationOf(xp);
   const progress = progressOf(data);
@@ -29,6 +29,15 @@ export default function HeaderHUD({ onSettings }: { onSettings: () => void }) {
   const stonesShown = useCountUp(stones);
   const intoShown = useCountUp(c.into);
   const isDark = data.settings.theme === "dark";
+  const syncMeta = {
+    tat: { label: "Dữ liệu lưu trên máy", icon: Cloud, tone: "text-muted-foreground" },
+    "chua-dang-nhap": { label: "Chưa đăng nhập đồng bộ", icon: Cloud, tone: "text-muted-foreground" },
+    "dang-noi": { label: "Đang kết nối máy chủ", icon: CloudUpload, tone: "text-gold" },
+    "da-noi": { label: "Đã đồng bộ", icon: Cloud, tone: "text-success" },
+    "dang-gui": { label: `Đang gửi ${sync.pending} thay đổi`, icon: CloudUpload, tone: "text-gold" },
+    "mat-mang": { label: `Mất mạng${sync.pending ? ` · ${sync.pending} thay đổi đang chờ` : ""}`, icon: CloudOff, tone: "text-warning" },
+  }[sync.status];
+  const SyncIcon = syncMeta.icon;
   // Ảnh đại diện đổi theo bốn mốc cảnh giới; chưa có file thì dùng ảnh chung.
   const avatarTier =
     c.realmIndex <= 1 ? 1 : c.realmIndex <= 4 ? 2 : c.realmIndex <= 7 ? 3 : 4;
@@ -37,10 +46,11 @@ export default function HeaderHUD({ onSettings }: { onSettings: () => void }) {
     <header
       ref={ref}
       className="app-hud pointer-events-none absolute inset-x-0 top-0 z-30 flex items-start justify-between gap-2 p-2 sm:p-3"
+      data-cultivation-state={progress.readyForTribulation ? "breakthrough-ready" : "cultivating"}
     >
       {/* ------------------------------------------------ cụm đạo nhân bên trái */}
       <div className="hud-profile glass-panel pointer-events-auto flex min-w-0 items-center gap-2.5 rounded-full py-1.5 pr-3.5 pl-1.5 sm:gap-3">
-        <span className="relative shrink-0">
+        <span className="hud-avatar-frame relative shrink-0">
           <ArtImage
             src={`/art/avatar/avatar-${avatarTier}.png`}
             alt=""
@@ -114,9 +124,20 @@ export default function HeaderHUD({ onSettings }: { onSettings: () => void }) {
         </div>
 
         <div className="flex items-center gap-1.5">
+          <span
+            role="status"
+            aria-label={`Đồng bộ: ${syncMeta.label}`}
+            title={syncMeta.label}
+            className={`glass-panel sync-indicator flex min-h-11 items-center gap-1.5 rounded-full px-2.5 text-[10px] font-semibold ${syncMeta.tone}`}
+          >
+            <SyncIcon className={sync.status === "dang-noi" || sync.status === "dang-gui" ? "size-3.5 animate-pulse" : "size-3.5"} />
+            <span className="sync-indicator-label">{syncMeta.label}</span>
+            {sync.pending > 0 && <span className="sync-indicator-count">{sync.pending}</span>}
+          </span>
           {progress.held > 0 && (
             <span
-              className="glass-panel text-p-urgent flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-bold"
+              className={`breakthrough-state-chip glass-panel flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-bold ${progress.readyForTribulation ? "text-gold-bright" : "text-p-urgent"}`}
+              data-game-state={progress.readyForTribulation ? "ready" : "held"}
               title={`${progress.held} tu vi đang bị cảnh giới chặn lại. Độ kiếp thành công là mở khoá hết.`}
             >
               <Lock className="size-3" />

@@ -40,18 +40,21 @@ interface Props {
   override?: string;
   /** Ảnh lùi cho `override` khi file riêng chưa có. */
   overrideFallback?: string;
+  /** Điểm nhìn tùy chỉnh để giữ nhân vật hoặc công trình chính trong khung dọc. */
+  overridePosition?: string;
   className?: string;
 }
 
 /**
  * Nền cinematic toàn màn của hub: ảnh cảnh giới phóng rất chậm, phủ vignette,
- * bụi sao và một dải sương trôi ngang. Đây là thứ tạo cảm giác "đang ở trong
+ * bụi sao và lớp linh khí mảnh. Đây là thứ tạo cảm giác "đang ở trong
  * game" thay vì "đang xem một trang quản lý công việc".
  */
 export default function HubScene({
   realmIndex,
   override,
   overrideFallback,
+  overridePosition,
   className,
 }: Props) {
   const i = Math.max(0, Math.min(REALMS.length - 1, realmIndex));
@@ -73,7 +76,7 @@ export default function HubScene({
         alt=""
         className="animate-slow-zoom h-full w-full object-cover"
         style={{
-          objectPosition: override ? "50% 50%" : REALM_FOCUS[i],
+          objectPosition: override ? (overridePosition ?? "50% 50%") : REALM_FOCUS[i],
           opacity: "calc(1 - var(--scene-dim))",
           // Ép tương phản theo từng chế độ: đêm thì hạ sáng, ngày thì giữ nguyên.
           filter: "var(--scene-filter)",
@@ -84,7 +87,7 @@ export default function HubScene({
       <div
         className="absolute inset-0"
         style={{
-          background: "color-mix(in oklab, var(--background) 12%, transparent)",
+          background: "color-mix(in oklab, var(--background) 18%, transparent)",
         }}
       />
 
@@ -118,9 +121,6 @@ export default function HubScene({
 
       {/* Bụi sao trôi rất chậm */}
       <div className="stardust animate-drift absolute inset-0 opacity-70" />
-
-      {/* Dải sương ngang thân màn hình */}
-      <div className="fog-band absolute inset-x-0 top-1/3 h-52 opacity-60 blur-2xl" />
 
       {/* Hạt linh khí bay lên từ đáy màn hình */}
       {MOTES.map((m, i) => (

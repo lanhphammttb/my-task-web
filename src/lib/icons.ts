@@ -1,15 +1,4 @@
-/**
- * Icon ở hai cột hub và trên HUD, đặt ở `public/art/rail/`.
- *
- * Trước đây chỗ này mượn icon của Tiên Ma Giới, nhưng bộ đó có chữ nung sẵn
- * trong ảnh — mà app lại vẽ nhãn riêng ngay dưới icon, thành ra chữ hiện hai
- * lần, và năm cái còn ghi khác hẳn nhãn ("BXH" trong khi nhãn là "Thống Kê").
- * Bộ mượn đã bỏ hẳn.
- *
- * Không còn ảnh lùi: nhãn chữ dưới mỗi icon vẫn nói rõ nút đó là gì, nên thiếu
- * file thì chỉ mất phần hình chứ nút vẫn dùng được — không đáng đóng gói thêm
- * 3,4 MB icon dự phòng vào bản build.
- */
+/** Icon artwork for destinations and their matching in-game sections. */
 export const RAIL_ICONS = [
   'be-quan',
   'nhat-khoa',
@@ -22,8 +11,14 @@ export const RAIL_ICONS = [
   'cai-dat',
   'linh-thach',
   'chieu-thu',
+  'dai-nguyen',
+  'thoi-quen',
 ] as const;
 
 export type RailIcon = (typeof RAIL_ICONS)[number];
 
-export const railSrc = (name: RailIcon) => `/art/rail/${name}.png`;
+const VECTOR_RAIL_ICONS: readonly RailIcon[] = ['dai-nguyen', 'thoi-quen'];
+
+/** Older art stays PNG; the two function-specific marks are small vector seals. */
+export const railSrc = (name: RailIcon) =>
+  `/art/rail/${name}.${VECTOR_RAIL_ICONS.includes(name) ? 'svg' : 'png'}`;

@@ -16,6 +16,7 @@ import { stoneBalance } from "../../lib/economy";
 import { useApp } from "../../store/AppStore";
 import { MetaChip, Section } from "../primitives";
 import SectionArt from "../SectionArt";
+import CultivationProp3D from "../CultivationProp3D";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -61,6 +62,7 @@ export default function AlchemySection() {
         src="/art/section/lo-dan.png"
         caption="Lò đan trong động"
         tone="#e0a83c"
+        preview={<CultivationProp3D kind="alchemy-furnace" active={fireRoot} className="size-[72px] sm:size-[84px]" />}
       >
         Đan độ kiếp phải tự luyện từ linh thảo trong linh điền. Nâng động phủ
         thì lò cháy đều hơn
@@ -80,11 +82,18 @@ export default function AlchemySection() {
           const enoughStones = balance >= recipe.stones;
           const canRefine = enoughHerbs && enoughStones;
           const salvage = consolationGrade(grade);
+          const missing = HERB_ORDER.flatMap((id) => {
+            const deficit = (recipe.herbs[id] ?? 0) - (data.herbs[id] ?? 0);
+            return deficit > 0 ? [`${HERBS[id].short} ×${deficit}`] : [];
+          });
+          if (!enoughStones) missing.push(`${recipe.stones - balance} linh thạch`);
 
           return (
             <div
               key={grade}
-              className="flex flex-wrap items-center gap-3 rounded-xl border p-3"
+              className="alchemy-recipe-card flex flex-wrap items-center gap-3 rounded-xl border p-3"
+              data-recipe-state={canRefine ? "available" : "needs-ingredients"}
+              data-pill-grade={grade}
             >
               <img
         loading="lazy"
@@ -132,12 +141,23 @@ export default function AlchemySection() {
                     {recipe.stones} linh thạch
                   </MetaChip>
                 </div>
+                {!canRefine && (
+                  <p className="alchemy-shortage mt-1.5 text-[10.5px]">
+                    Thiếu {missing.join(" · ")}
+                  </p>
+                )}
               </div>
 
               <div className="flex shrink-0 flex-col gap-1.5">
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <Button size="sm" disabled={!canRefine} className="gap-1.5">
+                    <Button
+                      size="sm"
+                      disabled={!canRefine}
+                      className="gap-1.5"
+                      data-game-state={canRefine ? "available" : "insufficient-resource"}
+                      title={canRefine ? `Luyện ${pill.name}` : `Thiếu ${missing.join(" · ")}`}
+                    >
                       <Flame className="size-3.5" /> Luyện
                     </Button>
                   </AlertDialogTrigger>
@@ -170,6 +190,8 @@ export default function AlchemySection() {
                     disabled={balance < pill.cost}
                     onClick={() => buyPill(grade)}
                     className="gap-1.5"
+                    data-game-state={balance >= pill.cost ? "available" : "insufficient-resource"}
+                    title={balance >= pill.cost ? `Mua ${pill.name}` : `Còn thiếu ${pill.cost - balance} linh thạch`}
                   >
                     <ShoppingBag className="size-3.5" /> Mua ({pill.cost})
                   </Button>

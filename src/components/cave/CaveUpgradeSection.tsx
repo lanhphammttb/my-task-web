@@ -51,8 +51,11 @@ export default function CaveUpgradeSection() {
                 variant="outline"
                 className="gap-1.5"
                 disabled={!afford}
+                data-game-state={afford ? "available" : "insufficient-resource"}
+                title={afford ? `Mở rộng thành ${next.name}` : `Còn thiếu ${next.cost - balance} linh thạch`}
               >
-                <ArrowUp className="size-3.5" /> Mở rộng ({next.cost})
+                <ArrowUp className="size-3.5" />
+                {afford ? `Mở rộng (${next.cost})` : `Thiếu ${next.cost - balance}`}
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
@@ -102,6 +105,15 @@ export default function CaveUpgradeSection() {
         {CAVE_LEVELS.map((lv) => (
           <li
             key={lv.level}
+            data-cave-upgrade-state={
+              lv.level === cur.level
+                ? "current"
+                : lv.level < cur.level
+                  ? "owned"
+                  : lv.level === cur.level + 1 && afford
+                    ? "available"
+                    : "locked"
+            }
             className={cn(
               "flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px]",
               lv.level === cur.level

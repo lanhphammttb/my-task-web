@@ -62,18 +62,21 @@ function TechniqueCard({
   active,
   cost,
   affordable,
+  shortage,
   onPick,
 }: {
   t: Technique;
   active: boolean;
   cost: number;
   affordable: boolean;
+  shortage: number;
   onPick: () => void;
 }) {
   return (
     <div
+      data-technique-state={active ? "selected" : affordable ? "available" : "unaffordable"}
       className={cn(
-        "relative flex flex-col gap-2 rounded-xl border p-3 transition-colors",
+        "technique-game-card relative flex flex-col gap-2 rounded-xl border p-3 transition-colors",
         active ? "gold-border bg-muted/40" : "border-border bg-muted/20",
       )}
       style={active ? undefined : { borderColor: `${t.tone}33` }}
@@ -114,8 +117,14 @@ function TechniqueCard({
               variant="outline"
               className="mt-auto w-full"
               disabled={!affordable}
+              data-game-state={affordable ? "available" : "insufficient-resource"}
+              title={affordable ? t.name : `Cần ${cost} linh thạch, còn thiếu ${shortage}.`}
             >
-              {cost > 0 ? `Chuyển sang (${cost})` : "Bắt đầu tu"}
+              {!affordable
+                ? `Thiếu ${shortage} linh thạch`
+                : cost > 0
+                  ? `Chuyển sang (${cost})`
+                  : "Bắt đầu tu"}
             </Button>
           </AlertDialogTrigger>
           <AlertDialogContent>
@@ -177,6 +186,7 @@ export default function TechniqueSection() {
             active={data.technique === id}
             cost={cost}
             affordable={cost === 0 || balance >= cost}
+            shortage={Math.max(0, cost - balance)}
             onPick={() => pickTechnique(id)}
           />
         ))}

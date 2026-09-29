@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { useEffect, useRef } from "react";
 import { motion } from "motion/react";
-import { X } from "lucide-react";
+import { ArrowLeft, X } from "lucide-react";
 import ArtImage from "../ArtImage";
 import { requestOpenSection } from "../../lib/section";
 import { hasKeyboardLayer } from "../../lib/keyboard";
@@ -89,7 +89,7 @@ export default function OverlayPanel({
         mb
           ? // Tấm trượt bám đáy, chừa một khoảng trên để còn thấy cảnh phía sau
             // - biết mình vẫn đang ở trong thế giới chứ không nhảy sang trang khác.
-            { top: "calc(var(--hud-h, 92px) + 40px)", bottom: 0 }
+            { top: 0, bottom: "var(--footer-h, 72px)" }
           : {
               top: "calc(var(--hud-h, 92px) + 6px)",
               bottom: "calc(var(--footer-h, 86px) + 6px)",
@@ -97,24 +97,18 @@ export default function OverlayPanel({
       }
       className={cn(
         "panel-shell absolute inset-x-0 z-20 mx-auto flex min-h-0 w-full max-w-5xl flex-col",
-        mb ? "px-0" : "px-2 sm:px-4",
+        mb ? "mobile-panel px-0" : "px-2 sm:px-4",
       )}
     >
       <div
         className={cn(
           "glass-panel panel-solid flex min-h-0 flex-1 flex-col overflow-hidden",
-          mb ? "rounded-t-2xl rounded-b-none" : "rounded-2xl",
+          mb ? "rounded-none" : "rounded-2xl",
         )}
       >
         {/* Tay nắm: dấu hiệu quen thuộc của một tấm trượt trên điện thoại. */}
-        {mb && (
-          <span
-            aria-hidden
-            className="bg-gold/45 mx-auto mt-2 mb-0.5 h-1 w-10 shrink-0 rounded-full"
-          />
-        )}
         {/* ------------------------------------------------------------ đầu bảng */}
-        <div className="relative shrink-0 overflow-hidden">
+        <div className="panel-header relative shrink-0 overflow-hidden">
           {banner && (
             <>
               <ArtImage
@@ -132,13 +126,13 @@ export default function OverlayPanel({
               />
             </>
           )}
-          <div className="relative flex items-center gap-3 px-4 py-3">
+          <div className="panel-header-content relative flex items-center gap-3 px-4 py-3">
             <div className="min-w-0 flex-1">
               <h1 className="font-title glow-text truncate text-[15px] font-black tracking-[0.14em] uppercase">
                 {title}
               </h1>
               {subtitle && (
-                <p className="text-muted-foreground chi-man-rong truncate text-[11px]">
+                <p className="panel-header-subtitle text-muted-foreground chi-man-rong truncate text-[11px]">
                   {subtitle}
                 </p>
               )}
@@ -146,10 +140,10 @@ export default function OverlayPanel({
             <button
               type="button"
               onClick={onClose}
-              aria-label="Đóng bảng"
-              className="glass-panel text-gold hover:text-gold-bright grid size-8 shrink-0 place-items-center rounded-full transition-colors"
+              aria-label={mb ? "Về Sơn Môn" : "Đóng bảng"}
+              className="panel-header-close glass-panel text-gold hover:text-gold-bright grid size-8 shrink-0 place-items-center rounded-full transition-colors"
             >
-              <X className="size-4" />
+              {mb ? <ArrowLeft className="size-5" /> : <X className="size-4" />}
             </button>
           </div>
           <div className="rule-gold" />

@@ -91,7 +91,8 @@ export default function ExpeditionSection() {
       {state ? (
         /* ------------------------------------------------- chuyến đang đi */
         <div
-          className="overflow-hidden rounded-xl border"
+          className="game-expedition-card overflow-hidden rounded-xl border"
+          data-expedition-state={state.ready ? "ready" : "in-progress"}
           style={{ borderColor: `${state.site.tone}4d` }}
         >
           <div className="relative h-28">
@@ -131,6 +132,7 @@ export default function ExpeditionSection() {
               disabled={!state.ready}
               onClick={claim}
               className="gap-1.5"
+              data-game-state={state.ready ? "available" : "in-progress"}
             >
               <PackageOpen className="size-3.5" />
               {state.ready ? "Đón đoàn về" : `${state.done}/${state.need}`}
@@ -146,8 +148,9 @@ export default function ExpeditionSection() {
             return (
               <div
                 key={id}
+                data-expedition-choice-state={afford ? "available" : "insufficient-resource"}
                 className={cn(
-                  "flex flex-col gap-2 rounded-xl border p-3",
+                  "game-expedition-choice flex flex-col gap-2 rounded-xl border p-3",
                   !afford && "opacity-55",
                 )}
                 style={{ borderColor: `${site.tone}33` }}
@@ -177,12 +180,20 @@ export default function ExpeditionSection() {
                   </MetaChip>
                 </div>
 
+                {!afford && (
+                  <p className="expedition-shortage text-[10.5px]">
+                    Còn thiếu {site.cost - balance} linh thạch
+                  </p>
+                )}
+
                 <Button
                   size="sm"
                   variant="outline"
                   className="mt-auto gap-1.5"
                   disabled={!afford}
                   onClick={() => setConfirm(site)}
+                  data-game-state={afford ? "available" : "insufficient-resource"}
+                  title={afford ? `Lên đường tới ${site.name}` : `Còn thiếu ${site.cost - balance} linh thạch`}
                 >
                   <Footprints className="size-3.5" /> Lên đường
                 </Button>

@@ -119,7 +119,7 @@ export default function WorldRail({
         view: "goals",
         ten: "Đại Nguyện",
         phuDe: "Mục tiêu dài hạn của đời tu",
-        icon: "linh-can",
+        icon: "dai-nguyen",
         so: nguyen,
       },
       {

@@ -5,6 +5,7 @@ import {
   Coffee,
   Crosshair,
   ListChecks,
+  LockKeyhole,
   PartyPopper,
   Pause,
   Play,
@@ -18,9 +19,9 @@ import { PRIORITY_UI } from "../lib/ui";
 import { useApp } from "../store/AppStore";
 import ProgressRing from "../components/ProgressRing";
 import MeditationScene from "../components/MeditationScene";
+import CultivationProp3D from "../components/CultivationProp3D";
 import { EmptyState, Meter, MetaChip, Section } from "../components/primitives";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -41,6 +42,8 @@ export default function FocusView({ onNew }: { onNew: () => void }) {
     rounds,
     totalSeconds,
     taskId,
+    lastSession,
+    dismissLastSession,
     pickTask: onPickTask,
     reset,
     toggle,
@@ -53,9 +56,29 @@ export default function FocusView({ onNew }: { onNew: () => void }) {
   const todaySessions = data.sessions.filter((s) => s.date === todayKey());
   const todayMin = todaySessions.reduce((s, x) => s + x.minutes, 0);
   const isWork = mode === "work";
+  const finishedTask = lastSession?.taskId
+    ? data.tasks.find((item) => item.id === lastSession.taskId)
+    : undefined;
 
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-4">
+      {lastSession && (
+        <section className="focus-result" aria-live="polite">
+          <div>
+            <span className="sanctuary-eyebrow"><PartyPopper className="size-3.5" /> BẾ QUAN HOÀN TẤT</span>
+            <h2 className="font-title mt-1 text-lg font-bold">Đã ghi nhận {formatDuration(lastSession.minutes)}</h2>
+            <p>{finishedTask ? `Bạn vừa nhập định với “${finishedTask.title}”.` : "Thời gian tu luyện đã được ghi vào hành trình hôm nay."}</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {finishedTask && finishedTask.status !== "done" && (
+              <Button onClick={() => { if (setStatus(finishedTask.id, "done")) dismissLastSession(); }}>
+                <CheckCircle2 className="size-4" /> Việc đã hoàn thành
+              </Button>
+            )}
+            <Button variant="outline" onClick={dismissLastSession}>Tiếp tục tu luyện</Button>
+          </div>
+        </section>
+      )}
       {/* Đầu bảng đã ghi "BẾ QUAN" ngay trên đây, nên trên điện thoại cả khối
           này là nói lại cùng một tên bằng câu dài hơn. Số phút thì đồng hồ
           khổng lồ ngay dưới đã hiện rồi. */}
@@ -72,15 +95,17 @@ export default function FocusView({ onNew }: { onNew: () => void }) {
       {/* ------------------------------------------------------ đồng hồ */}
       <section
         className={cn(
-          "relative overflow-hidden rounded-2xl border p-6 sm:p-8",
+          "focus-sanctum relative overflow-hidden rounded-2xl border p-6 sm:p-8",
           isWork
             ? "border-primary/30 bg-gradient-to-br from-primary/14 to-card"
             : "border-success/35 bg-gradient-to-br from-success/14 to-card",
         )}
+        data-session-state={running ? "running" : inSession ? "paused" : "ready"}
+        data-session-mode={isWork ? "work" : "rest"}
       >
         <div className="relative flex flex-col items-center gap-7 lg:flex-row lg:items-center lg:gap-9">
           {/* Đồng hồ ôm quanh đạo nhân đang ngồi thiền trong động phủ */}
-          <div className="border-border relative aspect-[4/3] w-full shrink-0 overflow-hidden rounded-xl border sm:aspect-auto sm:h-[288px] sm:w-[340px]">
+          <div className="focus-scene-frame border-border relative aspect-[4/3] w-full shrink-0 overflow-hidden rounded-xl border sm:aspect-auto sm:h-[288px] sm:w-[340px]">
             <MeditationScene
               running={running}
               resting={!isWork}
@@ -117,6 +142,8 @@ export default function FocusView({ onNew }: { onNew: () => void }) {
                 isWork ? "text-gold-bright" : "text-success",
                 !running && "opacity-80",
               )}
+              data-session-state={running ? "running" : inSession ? "paused" : "ready"}
+              role="status"
             >
               {isWork ? (
                 <Crosshair className="size-3" />
@@ -139,35 +166,49 @@ export default function FocusView({ onNew }: { onNew: () => void }) {
           </div>
 
           <div className="w-full min-w-0 flex-1 space-y-4">
-            <div className="grid gap-2">
-              <Label>Nhiệm vụ đang làm</Label>
-              <Select
-                disabled={inSession}
-                value={taskId ?? "free"}
-                onValueChange={(v) => onPickTask(v === "free" ? undefined : v)}
-              >
-                {/* Chốt bề ngang: `SelectTrigger` mặc định là `w-fit`, nên
-                    tên nhiệm vụ dài bảy chục ký tự kéo cả ô ra ngoài khung. */}
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="free">Tập trung tự do</SelectItem>
-                  {task &&
-                    !candidates.some(
-                      (candidate) => candidate.id === task.id,
-                    ) && (
-                      <SelectItem value={task.id}>
-                        {task.title} · đã chọn
+            <div className="focus-quest-board" data-game-state={inSession ? "locked" : task ? "selected" : "available"}>
+              <div className="focus-quest-insignia" aria-hidden="true">
+                <ListChecks className="size-5" />
+                <span>{task ? "有" : "道"}</span>
+              </div>
+              <div className="focus-quest-body">
+                <div className="focus-quest-heading">
+                  <span>MỤC TIÊU NHẬP ĐỊNH</span>
+                  <span className="focus-quest-state">{inSession ? "ĐÃ KHÓA" : task ? "ĐÃ CHỌN" : "TỰ DO"}</span>
+                </div>
+                <Select
+                  disabled={inSession}
+                  value={taskId ?? "free"}
+                  onValueChange={(v) => onPickTask(v === "free" ? undefined : v)}
+                >
+                  {/* Giữ chiều rộng trong bảng khế ước; tên dài được cắt gọn thay vì đẩy tràn khung. */}
+                  <SelectTrigger className="w-full focus-quest-select">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="free">Tập trung tự do</SelectItem>
+                    {task &&
+                      !candidates.some(
+                        (candidate) => candidate.id === task.id,
+                      ) && (
+                        <SelectItem value={task.id}>
+                          {task.title} · đã chọn
+                        </SelectItem>
+                      )}
+                    {candidates.map((t) => (
+                      <SelectItem key={t.id} value={t.id}>
+                        {t.title}
                       </SelectItem>
-                    )}
-                  {candidates.map((t) => (
-                    <SelectItem key={t.id} value={t.id}>
-                      {t.title}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p>{task ? "Gắn phiên nhập định với nhiệm vụ này để theo dõi đường tu." : "Chọn một nhiệm vụ, hoặc nhập định tự do để tĩnh tâm."}</p>
+              </div>
+              <CultivationProp3D
+                kind="quest-scroll"
+                active={running}
+                className="focus-quest-scroll size-[68px] sm:size-[84px]"
+              />
             </div>
 
             {task && (
@@ -210,8 +251,18 @@ export default function FocusView({ onNew }: { onNew: () => void }) {
               </div>
             )}
 
-            <div className="flex flex-wrap gap-2">
-              <Button size="lg" className="gap-2" onClick={toggle}>
+            <div className="focus-action-deck">
+              <span className="focus-action-deck-label">THAO TÁC</span>
+              <div className="focus-actions flex flex-wrap gap-2" aria-label="Điều khiển bế quan">
+              <Button
+                size="lg"
+                className="gap-2 focus-session-toggle"
+                onClick={toggle}
+                title={running ? "Tạm dừng phiên bế quan" : inSession ? "Tiếp tục phiên bế quan" : "Bắt đầu phiên bế quan"}
+                data-game-state={running ? "active" : inSession ? "paused" : "available"}
+                data-game-action="focus-toggle"
+                aria-pressed={running}
+              >
                 {running ? (
                   <Pause className="size-4" />
                 ) : (
@@ -225,14 +276,20 @@ export default function FocusView({ onNew }: { onNew: () => void }) {
                 className="gap-2"
                 onClick={stopEarly}
                 disabled={!inSession}
+                data-game-state={inSession ? "available" : "locked"}
+                data-game-action="focus-record"
+                title={inSession ? "Kết thúc và lưu thời gian bế quan" : "Bắt đầu phiên trước khi ghi nhận thời gian"}
               >
-                <Square className="size-3.5" /> Kết thúc & ghi nhận
+                {inSession ? <Square className="size-3.5" /> : <LockKeyhole className="size-3.5" />}
+                Kết thúc & ghi nhận
               </Button>
               <Button
-                variant="outline"
+                variant="secondary"
                 size="lg"
                 className="gap-2"
                 onClick={() => reset(isWork ? "break" : "work")}
+                data-game-state="available"
+                data-game-action="focus-mode"
               >
                 <ArrowLeftRight className="size-4" />
                 {isWork
@@ -241,6 +298,7 @@ export default function FocusView({ onNew }: { onNew: () => void }) {
                     : "Sang nghỉ"
                   : "Sang làm"}
               </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -259,7 +317,7 @@ export default function FocusView({ onNew }: { onNew: () => void }) {
           ].map((s) => (
             <div
               key={s.label}
-              className="border-border bg-surface/60 flex items-baseline justify-between gap-2 rounded-xl border px-3 py-2 text-left sm:block sm:p-3 sm:text-center"
+              className="focus-stat flex items-baseline justify-between gap-2 rounded-xl border px-3 py-2 text-left sm:block sm:p-3 sm:text-center"
             >
               <strong className="tabular block text-lg leading-none">
                 {s.value}
@@ -316,22 +374,14 @@ export default function FocusView({ onNew }: { onNew: () => void }) {
                 key={t.id}
                 onClick={() => onPickTask(t.id)}
                 disabled={inSession}
+                aria-pressed={t.id === taskId}
+                data-game-state={inSession ? "locked" : t.id === taskId ? "selected" : "available"}
                 className={cn(
-                  // `min-w-0`: ô của lưới mặc định không co nhỏ hơn nội dung,
-                  // nên một tên việc dài kéo nút ra ngoài mép bảng - và
-                  // `truncate` ở dòng chữ bên trong không bao giờ được dùng tới.
-                  "flex min-w-0 items-center gap-2.5 rounded-xl border p-3 text-left transition-colors",
-                  t.id === taskId
-                    ? "border-primary bg-primary/12"
-                    : "border-border bg-surface/60 hover:border-primary/50 hover:bg-surface",
+                  "focus-task-choice",
+                  t.id === taskId && "is-selected",
                 )}
               >
-                <span
-                  className={cn(
-                    "size-2 shrink-0 rounded-full",
-                    PRIORITY_UI[t.priority].dot,
-                  )}
-                />
+                <span className="focus-task-seal"><Crosshair className="size-3.5" /><i className={PRIORITY_UI[t.priority].dot} /></span>
                 <span className="min-w-0 flex-1">
                   <strong className="block truncate text-sm font-medium">
                     {t.title}

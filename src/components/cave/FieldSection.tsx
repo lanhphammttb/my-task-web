@@ -70,7 +70,10 @@ export default function FieldSection() {
                 key={slot}
                 type="button"
                 onClick={() => setSeedFor(slot)}
-                className="border-border/70 text-muted-foreground hover:border-gold/50 hover:text-gold group flex min-h-24 items-center gap-3 rounded-xl border border-dashed px-3 py-3 text-left transition-colors"
+                className="field-plot-card field-plot-empty border-border/70 text-muted-foreground hover:border-gold/50 hover:text-gold group flex min-h-24 items-center gap-3 rounded-xl border border-dashed px-3 py-3 text-left transition-colors"
+                data-field-state="empty"
+                data-game-state="available"
+                aria-label={`Ô đất ${slot + 1} trống. Bấm để gieo hạt.`}
               >
                 {/* Luống đất đã cuốc sẵn: nhìn ra ngay đây là chỗ trồng được,
                     chứ không phải một ô trống chưa tải xong. */}
@@ -108,7 +111,8 @@ export default function FieldSection() {
           return (
             <div
               key={slot}
-              className="flex min-h-24 flex-col justify-between gap-2 rounded-xl border p-3"
+              className="field-plot-card flex min-h-24 flex-col justify-between gap-2 rounded-xl border p-3"
+              data-field-state={s.ready ? "ready" : "growing"}
               style={{ borderColor: `${s.herb.tone}4d` }}
             >
               <div className="flex items-start gap-3">
@@ -120,7 +124,7 @@ export default function FieldSection() {
                   >
                     {s.herb.name}
                   </h4>
-                  <p className="text-muted-foreground mt-0.5 text-[11px]">
+                  <p className="field-plot-status text-muted-foreground mt-0.5 text-[11px]">
                     {s.ready
                       ? `Đã chín · thu được ${s.herb.yield} nhánh`
                       : `Còn ${formatDuration(s.remain)} bế quan nữa`}
@@ -135,6 +139,7 @@ export default function FieldSection() {
                 disabled={!s.ready}
                 onClick={() => harvestPlot(slot)}
                 className="gap-1.5"
+                data-game-state={s.ready ? "available" : "growing"}
               >
                 <Scissors className="size-3.5" />
                 {s.ready ? "Hái" : `${Math.round(s.ratio * 100)}%`}
@@ -201,6 +206,7 @@ export default function FieldSection() {
                 <ChoiceCard
                   key={id}
                   disabled={!afford}
+                  gameState={afford ? "available" : "insufficient-resource"}
                   tone={herb.tone}
                   title={herb.name}
                   leading={<HerbPlant herb={herb} ratio={1} size={52} />}

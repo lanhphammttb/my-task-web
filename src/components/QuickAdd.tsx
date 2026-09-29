@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CornerDownLeft, Plus } from "lucide-react";
+import { CornerDownLeft, ScrollText } from "lucide-react";
 import { useApp } from "../store/AppStore";
 import { clampEstimate } from "../lib/validation";
 import { parseQuick } from "../lib/quickParse";
@@ -37,28 +37,33 @@ export default function QuickAdd({ date }: { date: string }) {
   return (
     <div>
       <div
+        data-quick-add-state={focused ? "inscribing" : value.trim() ? "draft" : "idle"}
         className={cn(
-          "flex items-center gap-2.5 rounded-xl border bg-card pr-1.5 pl-3.5 transition-colors",
+          "quick-add-seal flex items-center gap-2.5 rounded-xl border bg-card pr-1.5 pl-3.5 transition-colors",
           focused ? "border-primary ring-primary/20 ring-2" : "border-border",
         )}
       >
-        <Plus className="text-primary size-4 shrink-0" strokeWidth={2.5} />
+        <span className="quick-add-sigil" aria-hidden="true"><ScrollText className="size-4" strokeWidth={2} /></span>
         <input
+          id="quick-add-task"
+          aria-label="Tên nhiệm vụ cần ghi"
+          enterKeyHint="done"
           value={value}
           onChange={(e) => setValue(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && submit()}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
-          placeholder="Thêm nhanh nhiệm vụ..."
+          placeholder="Thêm nhanh nhiệm vụ vào Nhật Khoá..."
           className="placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent py-2.5 text-sm outline-none"
         />
         <Button
           size="sm"
-          className="h-8 gap-1.5"
+          className="quick-add-submit h-8 gap-1.5"
+          data-add-state={value.trim() ? "ready" : "locked"}
           onClick={submit}
           disabled={!value.trim()}
         >
-          Thêm <CornerDownLeft className="size-3.5" />
+          Ghi việc <CornerDownLeft className="size-3.5" />
         </Button>
       </div>
       {focused && (

@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import type { CSSProperties } from "react";
 import { useApp } from "../../store/AppStore";
 import { caveAt, nextCave } from "../../lib/cave";
 import {
@@ -84,7 +85,7 @@ export default function CaveRoom({
   return (
     <section
       aria-label={`Động phủ bậc ${bac.level}: ${bac.name}`}
-      className="border-gold/30 overflow-hidden rounded-xl border shadow-[0_10px_40px_rgba(0,0,0,0.5)]"
+      className="cave-room border-gold/30 overflow-hidden rounded-xl border shadow-[0_10px_40px_rgba(0,0,0,0.5)]"
     >
     <div
       /* Điện thoại dùng khung 4:3 chứ không 16:9: rộng 292px thì 16:9 chỉ cao
@@ -161,7 +162,8 @@ export default function CaveRoom({
           left: `${p.x}%`,
           top: `${p.day}%`,
           width: `${p.w}%`,
-        } as const;
+          "--room-prop-landscape-size": `${p.w}%`,
+        } as CSSProperties & { "--room-prop-landscape-size": string };
 
         // Món nào có mục quản thì bấm được; còn lại chỉ để ngắm, không nên
         // giả vờ là nút bấm.
@@ -170,8 +172,10 @@ export default function CaveRoom({
             key={p.file}
             type="button"
             onClick={() => onGo(p.anchor!)}
-            aria-label={`${p.ten} — mở mục quản`}
-            className="absolute aspect-square -translate-x-1/2 -translate-y-full transition-transform hover:scale-105 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--gold-bright)]"
+            aria-label={`${p.ten} — mở ${p.anchor === "focus" ? "Bế Quan" : p.anchor === "cave-pill" ? "Đan đường" : p.anchor === "cave-field" ? "Linh điền" : p.anchor === "cave-technique" ? "Công pháp" : "Nơi ở"}`}
+            title={`${p.ten} · chạm để tương tác`}
+            data-room-hotspot={p.anchor}
+            className="cave-room-prop cave-room-hotspot absolute aspect-square -translate-x-1/2 -translate-y-full transition-transform hover:scale-105 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--gold-bright)]"
             style={style}
           >
             {anh}
@@ -179,7 +183,7 @@ export default function CaveRoom({
         ) : (
           <span
             key={p.file}
-            className="pointer-events-none absolute aspect-square -translate-x-1/2 -translate-y-full"
+            className="cave-room-prop pointer-events-none absolute aspect-square -translate-x-1/2 -translate-y-full"
             style={style}
           >
             {anh}
@@ -219,7 +223,8 @@ export default function CaveRoom({
     </div>
 
     {/* Màn hẹp: chữ nằm hẳn dưới khung phòng, không che đồ đạc */}
-    <div className="flex flex-col gap-0.5 bg-black/55 p-2.5 sm:hidden">{chu}</div>
+    <div className="cave-room-caption flex flex-col gap-0.5 bg-black/55 p-2.5 sm:hidden">{chu}</div>
+
     </section>
   );
 }

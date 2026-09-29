@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Check, Flame, Lock, Route, Sparkles, Trophy, Zap } from 'lucide-react';
+import { Check, ChevronDown, Flame, Lock, Route, Sparkles, Trophy, Zap } from 'lucide-react';
 import { formatDuration } from '../lib/date';
 import { bestStreak, currentStreak } from '../lib/stats';
 import { effectiveXp, progressOf, xpBreakdown } from '../lib/economy';
@@ -12,6 +12,7 @@ import { useApp } from '../store/AppStore';
 import ProgressRing from '../components/ProgressRing';
 import RealmSeal from '../components/RealmSeal';
 import RealmScene from '../components/RealmScene';
+import CultivationProp3D from '../components/CultivationProp3D';
 import { Meter, Section, StatTile } from '../components/primitives';
 import ExpeditionSection from '../components/ExpeditionSection';
 import SectSection from '../components/SectSection';
@@ -40,6 +41,7 @@ export default function AwardsView({ onTribulation }: { onTribulation: () => voi
   const focusTotal = data.sessions.reduce((s, x) => s + x.minutes, 0);
   const nextUp = locked[0];
   const [tab, setTab] = useState('awards-realm');
+  const [showLadder, setShowLadder] = useState(false);
 
   const tabs: KhuTab[] = [
     { id: 'awards-realm', label: 'Cảnh giới', art: railSrc('tien-lo'), Icon: Route },
@@ -69,10 +71,24 @@ export default function AwardsView({ onTribulation }: { onTribulation: () => voi
           backgroundImage: `linear-gradient(140deg, ${c.realm.color}1f, transparent 65%)`,
         }}
       >
-        {/* Tranh sơn thuỷ của cảnh giới hiện tại, làm dải riêng phía trên */}
+        {/* Dùng ảnh đường Phi Thăng ở thẻ này; cảnh giới hiện tại đã làm nền
+            toàn màn nên lặp lại cùng bức tranh trong cùng cửa sổ sẽ bị rối. */}
         <div className="relative h-32 overflow-hidden sm:h-56">
-          <RealmScene realmIndex={c.realmIndex} />
-          <div className="absolute bottom-3 left-5">
+          <img
+            src="/art/world/ascension-sky-v1.webp"
+            alt=""
+            loading="lazy"
+            decoding="async"
+            className="absolute inset-0 size-full object-cover object-center"
+          />
+          <div className="realm-path-tint absolute inset-0" style={{ background: c.realm.color }} />
+          <div className="realm-path-vignette absolute inset-0" />
+          <CultivationProp3D
+            kind="realm-gate"
+            active={progress.readyForTribulation}
+            className="realm-gate-relic absolute bottom-[-13%] right-[8%] z-[1] size-[112px] sm:bottom-[-11%] sm:right-[10%] sm:size-[190px]"
+          />
+          <div className="absolute bottom-3 left-5 z-[2]">
             <p className="font-heading text-lg font-bold drop-shadow-lg" style={{ color: c.realm.color }}>
               {c.realm.name}
             </p>
@@ -178,13 +194,50 @@ export default function AwardsView({ onTribulation }: { onTribulation: () => voi
 
       {/* ---------------------------------------------------- bậc thang */}
       {tab === 'awards-realm' && (
-      <Section icon={Route} title="Đạo lộ" subtitle="Chín cảnh giới, mỗi cảnh giới chín tầng, rồi phi thăng">
-        <ol className="space-y-2">
-          {ladder.map((r) => (
-            <RealmRow key={r.realm.name} row={r} />
-          ))}
-        </ol>
-      </Section>
+        <section className="realm-map-panel game-panel rounded-xl border p-3 sm:p-4" aria-labelledby="realm-map-title">
+          <header className="realm-map-header">
+            <div className="realm-map-heading">
+              <span className="realm-map-sigil" aria-hidden="true"><Route className="size-4" /></span>
+              <div className="min-w-0">
+                <h3 id="realm-map-title">Đạo lộ</h3>
+                <p>{c.ascended ? 'Đạo lộ viên mãn · Phi Thăng' : `Chặng ${c.realmIndex + 1}/${ladder.length} · Tiếp theo: ${ladder[c.realmIndex + 1]?.realm.name ?? 'Phi Thăng'}`}</p>
+              </div>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="game-button realm-map-toggle"
+              aria-expanded={showLadder}
+              aria-controls="realm-ladder-list"
+              onClick={() => setShowLadder((open) => !open)}
+            >
+              {showLadder ? 'Thu gọn' : `Xem ${ladder.length} cảnh giới`}
+              <ChevronDown className={`size-3.5 transition-transform ${showLadder ? 'rotate-180' : ''}`} />
+            </Button>
+          </header>
+          <ol className="realm-map-track" aria-label="Tiến trình qua các cảnh giới">
+            {ladder.map((row) => {
+              const Icon = row.realm.icon;
+              const routeState = row.status === 'current' ? 'current' : row.status === 'done' ? 'done' : 'locked';
+              const description = row.status === 'current'
+                ? `${row.realm.name}, tầng ${row.tier} trên ${row.realm.tiers}, đang tu luyện`
+                : row.status === 'done' ? `${row.realm.name}, đã vượt qua` : `${row.realm.name}, chưa khai mở`;
+              return (
+                <li key={row.realm.name} data-route-state={routeState} aria-label={description} aria-current={row.status === 'current' ? 'step' : undefined}>
+                  <span className="realm-map-node" aria-hidden="true"><Icon className="size-3.5" /></span>
+                </li>
+              );
+            })}
+          </ol>
+          <div id="realm-ladder-list" hidden={!showLadder}>
+            {showLadder && (
+              <ol className="realm-map-details space-y-2">
+                {ladder.map((r) => <RealmRow key={r.realm.name} row={r} />)}
+              </ol>
+            )}
+          </div>
+        </section>
       )}
 
       {/* Tông môn trước, thám hiểm sau: danh phận rồi mới tới chuyện đi lại. */}
@@ -198,9 +251,10 @@ export default function AwardsView({ onTribulation }: { onTribulation: () => voi
       {tab === 'awards-achievements' && (
       <Section id="awards-achievements" icon={Trophy} title={`Thành tựu đã mở (${unlocked.length}/${all.length})`}>
         {unlocked.length === 0 ? (
-          <p className="text-muted-foreground text-sm">
-            Chưa có kỳ ngộ nào. Hoàn thành nhiệm vụ đầu tiên là mở được chiếc đầu tiên.
-          </p>
+          <div className="achievement-empty-state">
+            <span className="achievement-empty-icon" aria-hidden="true"><Trophy className="size-5" /></span>
+            <div><strong>Chưa lập chiến công đầu tiên</strong><p>Hoàn thành nhiệm vụ đầu tiên để khai mở ấn Nhập Đạo.</p></div>
+          </div>
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {unlocked.map((a) => (
@@ -212,17 +266,24 @@ export default function AwardsView({ onTribulation }: { onTribulation: () => voi
       )}
 
       {tab === 'awards-achievements' && (
-      <Section icon={Lock} title={`Chưa mở (${locked.length})`} subtitle="Sắp xếp theo mức độ gần đạt">
+      <Section icon={Lock} title={`Chưa mở (${locked.length})`} subtitle="Ghim cơ duyên gần nhất lên đầu, các mốc còn lại theo tiến độ">
         {nextUp && (
-          <p className="border-primary/30 bg-primary/[0.07] mb-3 rounded-lg border px-3 py-2 text-xs">
-            Gần nhất: <strong className="font-semibold">{nextUp.title}</strong>{' '}
-            <span className="tabular text-muted-foreground">
-              ({nextUp.current}/{nextUp.target})
-            </span>
-          </p>
+          <article className="achievement-next-seal mb-3" data-achievement-state={nextUp.current > 0 ? 'advancing' : 'locked'}>
+            <div className="achievement-next-icon" aria-hidden="true"><nextUp.icon className="size-5" /></div>
+            <div className="min-w-0 flex-1">
+              <p className="achievement-next-eyebrow">CƠ DUYÊN GẦN NHẤT</p>
+              <strong className="achievement-next-title">{nextUp.title}</strong>
+              <p className="achievement-next-condition">{nextUp.description}</p>
+              <div className="achievement-next-progress" role="progressbar" aria-label={`Tiến độ ${nextUp.title}`} aria-valuemin={0} aria-valuemax={nextUp.target} aria-valuenow={nextUp.current}>
+                <Meter value={nextUp.ratio} height={5} />
+              </div>
+              <p className="achievement-next-count">Tiến độ: {nextUp.current}/{nextUp.target}</p>
+            </div>
+            <span className="achievement-next-percent">{Math.round(nextUp.ratio * 100)}%</span>
+          </article>
         )}
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {locked.map((a) => (
+          {locked.filter((a) => a.id !== nextUp?.id).map((a) => (
             <AwardCard key={a.id} award={a} />
           ))}
         </div>
@@ -240,8 +301,10 @@ function RealmRow({ row }: { row: RealmProgress }) {
 
   return (
     <li
+      data-realm-state={row.status}
+      aria-current={isCurrent ? 'step' : undefined}
       className={cn(
-        'flex items-center gap-2.5 rounded-xl border p-2.5 transition-colors sm:gap-3 sm:p-3',
+        'realm-path-row flex items-center gap-2.5 rounded-xl border p-2.5 transition-colors sm:gap-3 sm:p-3',
         isCurrent ? 'bg-card' : 'border-border bg-card/50',
       )}
       style={isCurrent ? { borderColor: `${row.realm.color}66`, background: `${row.realm.color}12` } : undefined}
@@ -275,11 +338,12 @@ function RealmRow({ row }: { row: RealmProgress }) {
             {row.realm.name}
           </strong>
           {isCurrent && (
-            <span className="bg-primary text-primary-foreground rounded-full px-1.5 py-px text-[10px] font-bold">
-              {row.realm.tiers > 1 ? `tầng ${row.tier}/${row.realm.tiers}` : 'đang ở đây'}
+            <span className="realm-path-seal" data-realm-mark="current">
+              {row.realm.tiers > 1 ? `Tầng ${row.tier}/${row.realm.tiers}` : 'Đang tu luyện'}
             </span>
           )}
-          {isDone && <Check className="text-success size-3.5" strokeWidth={3} />}
+          {isDone && <span className="realm-path-seal" data-realm-mark="done"><Check className="size-3" strokeWidth={3} /> Đã vượt qua</span>}
+          {!isCurrent && !isDone && <span className="realm-path-seal" data-realm-mark="locked">Chưa khai mở</span>}
         </div>
         {/* Gói hai dòng trên màn hẹp: mười bậc, mỗi bậc một câu dài bốn
             dòng thì riêng cái thang đã 1437px - dài gấp đôi màn hình. */}
@@ -287,7 +351,7 @@ function RealmRow({ row }: { row: RealmProgress }) {
           {row.realm.note}
         </p>
         {isCurrent && row.realm.tiers > 1 && (
-          <div className="mt-2">
+          <div className="realm-path-progress mt-2" role="progressbar" aria-label={`Tiến độ ${row.realm.name}`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(row.ratio * 100)}>
             <Meter value={row.ratio} height={4} barClassName="bg-primary" />
           </div>
         )}
@@ -303,13 +367,15 @@ function RealmRow({ row }: { row: RealmProgress }) {
 function AwardCard({ award }: { award: AchievementState }) {
   const tone = TONE_UI[award.tone];
   const Icon = award.icon;
+  const gameState = award.unlocked ? 'unlocked' : award.current > 0 ? 'advancing' : 'locked';
   // Có huy hiệu vẽ riêng trong public/art/award thì dùng, không thì dùng icon nét.
   const [hasArt, setHasArt] = useState(true);
 
   return (
     <article
+      data-achievement-state={gameState}
       className={cn(
-        'rounded-xl border p-4 transition-colors',
+        'achievement-game-card rounded-xl border p-4 transition-colors',
         award.unlocked ? cn('border-border bg-card ring-1', tone.ring) : 'border-border bg-card/50',
       )}
     >
@@ -318,8 +384,8 @@ function AwardCard({ award }: { award: AchievementState }) {
             phải dùng icon nét thay thế mới cần nền. Huy hiệu chưa mở hiện dạng xám
             mờ kèm ổ khoá nhỏ — thấy trước cái mình đang nhắm tới thì mới có động lực. */}
         <div
-          className={cn(
-            'relative grid size-11 shrink-0 place-items-center rounded-xl',
+            className={cn(
+            'achievement-game-seal relative grid size-11 shrink-0 place-items-center rounded-xl',
             hasArt ? null : award.unlocked ? cn(tone.bg, tone.text) : 'bg-muted text-muted-foreground/50',
           )}
         >
@@ -347,18 +413,26 @@ function AwardCard({ award }: { award: AchievementState }) {
           )}
         </div>
         <div className="min-w-0 flex-1">
-          <strong className={cn('block text-sm font-semibold', !award.unlocked && 'text-muted-foreground')}>
-            {award.title}
-          </strong>
+          <div className="achievement-game-heading">
+            <strong className={cn('block text-sm font-semibold', !award.unlocked && 'text-muted-foreground')}>
+              {award.title}
+            </strong>
+            <span className="achievement-game-state">
+              {award.unlocked ? <><Check className="size-3" /> Đã khai mở</> : award.current > 0 ? <><Sparkles className="size-3" /> Đang tích lũy</> : <><Lock className="size-3" /> Chưa mở</>}
+            </span>
+          </div>
           <p className="text-muted-foreground mt-0.5 text-xs leading-snug">{award.description}</p>
         </div>
       </div>
 
       {!award.unlocked && (
-        <div className="mt-3">
-          <Meter value={award.ratio} height={5} />
-          <p className="text-muted-foreground tabular mt-1.5 text-right text-[11px]">
-            {award.current}/{award.target}
+        <div className="achievement-game-progress mt-3">
+          <div role="progressbar" aria-label={`Tiến độ ${award.title}`} aria-valuemin={0} aria-valuemax={award.target} aria-valuenow={award.current}>
+            <Meter value={award.ratio} height={5} />
+          </div>
+          <p className="text-muted-foreground tabular mt-1.5 flex justify-between text-[11px]">
+            <span>{award.current}/{award.target}</span>
+            <span>{Math.round(award.ratio * 100)}%</span>
           </p>
         </div>
       )}

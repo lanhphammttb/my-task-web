@@ -60,7 +60,7 @@ const ELDER_SLUG: Record<string, string> = {
 
 export const elderPortrait = (elder: string) => {
   const slug = ELDER_SLUG[elder];
-  return slug ? `/art/elder/${slug}.png` : undefined;
+  return slug ? `/art/elder/${slug}.webp` : undefined;
 };
 
 /** Lời tiền bối ngẫu nhiên, dùng cho khoảnh khắc đột phá. */

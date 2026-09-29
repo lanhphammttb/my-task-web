@@ -14,8 +14,8 @@ export function setSoundEnabled(value: boolean) {
 
 let audio: AudioContext | null = null;
 
-function ctx(): AudioContext | null {
-  if (!soundOn) return null;
+function ctx(requireSfx = true): AudioContext | null {
+  if (requireSfx && !soundOn) return null;
   try {
     const Ctor =
       window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
@@ -28,21 +28,93 @@ function ctx(): AudioContext | null {
   }
 }
 
-/** Một nốt đơn dạng hình sin, tắt dần để nghe mềm chứ không "bíp" gắt. */
+/** Một tiếng khánh nhỏ có các bội âm kim loại nhẹ, thay cho tiếng bíp thuần. */
 function tone(freq: number, startAfter: number, duration: number, peak = 0.16) {
   const c = ctx();
   if (!c) return;
   const t0 = c.currentTime + startAfter;
-  const osc = c.createOscillator();
   const gain = c.createGain();
-  osc.type = 'sine';
-  osc.frequency.setValueAtTime(freq, t0);
+  const body = c.createOscillator();
+  const overtone = c.createOscillator();
+  const shimmer = c.createOscillator();
+  body.type = overtone.type = shimmer.type = 'sine';
+  body.frequency.setValueAtTime(freq, t0);
+  overtone.frequency.setValueAtTime(freq * 2.71, t0);
+  shimmer.frequency.setValueAtTime(freq * 5.04, t0);
   gain.gain.setValueAtTime(0.0001, t0);
-  gain.gain.exponentialRampToValueAtTime(peak, t0 + 0.015);
+  gain.gain.exponentialRampToValueAtTime(peak, t0 + 0.009);
   gain.gain.exponentialRampToValueAtTime(0.0001, t0 + duration);
-  osc.connect(gain).connect(c.destination);
-  osc.start(t0);
-  osc.stop(t0 + duration + 0.02);
+  const mix = c.createGain();
+  const bodyGain = c.createGain();
+  const overtoneGain = c.createGain();
+  const shimmerGain = c.createGain();
+  bodyGain.gain.value = 0.74;
+  overtoneGain.gain.value = 0.2;
+  shimmerGain.gain.value = 0.06;
+  body.connect(bodyGain).connect(mix);
+  overtone.connect(overtoneGain).connect(mix);
+  shimmer.connect(shimmerGain).connect(mix);
+  mix.connect(gain).connect(c.destination);
+  for (const osc of [body, overtone, shimmer]) {
+    osc.start(t0);
+    osc.stop(t0 + duration + 0.02);
+  }
+}
+
+/** Tạo gió núi/tiếng hang bằng WebAudio, không tải nhạc ngoài hoặc bật trước thao tác. */
+export function startAmbient(kind: 'mountain' | 'cave' = 'cave') {
+  const c = ctx(false);
+  if (!c) return () => {};
+  const bus = c.createGain();
+  const tint = c.createBiquadFilter();
+  const level = kind === 'cave' ? 0.026 : 0.018;
+  tint.type = 'lowpass';
+  tint.frequency.value = kind === 'cave' ? 420 : 780;
+  tint.Q.value = 0.35;
+  bus.gain.setValueAtTime(0.0001, c.currentTime);
+  bus.gain.exponentialRampToValueAtTime(level, c.currentTime + 1.5);
+  tint.connect(bus).connect(c.destination);
+
+  const length = Math.max(1, Math.floor(c.sampleRate * 2));
+  const noiseBuffer = c.createBuffer(1, length, c.sampleRate);
+  const channel = noiseBuffer.getChannelData(0);
+  for (let i = 0; i < length; i++) channel[i] = (Math.random() * 2 - 1) * 0.18;
+  const noise = c.createBufferSource();
+  const noiseGain = c.createGain();
+  noise.buffer = noiseBuffer;
+  noise.loop = true;
+  noiseGain.gain.value = kind === 'cave' ? 0.35 : 0.22;
+  noise.connect(noiseGain).connect(tint);
+  noise.start();
+
+  const drone = c.createOscillator();
+  const droneGain = c.createGain();
+  drone.type = 'sine';
+  drone.frequency.value = kind === 'cave' ? 110 : 146.83;
+  droneGain.gain.value = 0.24;
+  drone.connect(droneGain).connect(tint);
+  drone.start();
+
+  const lfo = c.createOscillator();
+  const lfoDepth = c.createGain();
+  lfo.frequency.value = kind === 'cave' ? 0.07 : 0.11;
+  lfoDepth.gain.value = level * 0.42;
+  lfo.connect(lfoDepth).connect(bus.gain);
+  lfo.start();
+
+  let stopped = false;
+  return () => {
+    if (stopped) return;
+    stopped = true;
+    const stopAt = c.currentTime + 0.45;
+    bus.gain.cancelScheduledValues(c.currentTime);
+    bus.gain.setValueAtTime(Math.max(bus.gain.value, 0.0001), c.currentTime);
+    bus.gain.exponentialRampToValueAtTime(0.0001, stopAt);
+    for (const source of [noise, drone, lfo]) {
+      try { source.stop(stopAt + 0.03); } catch { /* already stopped */ }
+    }
+    window.setTimeout(() => { tint.disconnect(); bus.disconnect(); }, 550);
+  };
 }
 
 // Giấy vàng, kim quang, ngọc bích, chu sa - đúng tông tu tiên, không phải màu tiệc sinh nhật.
@@ -74,6 +146,12 @@ function fire(options: confetti.Options) {
 export function soundComplete() {
   tone(880, 0, 0.18);
   tone(1320, 0.055, 0.22, 0.1);
+}
+
+/** Khánh ngắn mở phiên nhập định, đủ nhận biết nhưng không át nhạc nền. */
+export function soundFocusStart() {
+  tone(659.25, 0, 0.32, 0.075);
+  tone(987.77, 0.085, 0.48, 0.055);
 }
 
 /** Chuỗi nốt đi lên khi đột phá. */

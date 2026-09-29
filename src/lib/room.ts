@@ -167,6 +167,9 @@ export const PROPS: Prop[] = [
     file: 'bo-doan',
     ten: 'Bồ đoàn',
     x: 50, day: 80, w: 14,
+    // Bồ đoàn dẫn thẳng tới cùng màn Bế Quan trên toàn app, không tạo thêm
+    // một trang "Tĩnh thất" lặp lại chức năng.
+    anchor: 'focus',
     co: () => true,
     dieuKien: '',
   },
@@ -260,18 +263,20 @@ export function theDaoNhan(d: AppData, tab?: string): TheDaoNhan {
   const dem = gio >= 21 || gio < 5;
   const xongHet = s.total > 0 && s.done === s.total;
 
-  // Ngồi ngay trên bồ đoàn, nên phải trùng chỗ với nó.
-  if (tab === 'cave-refine') return { file: 'ngoi-thien', mo: 'Đang tẩy tuỷ', x: 50, day: 81, w: 13 };
+  // Tâm thân người nằm trên mặt bồ đoàn; đáy sprite cao hơn chân đế một chút
+  // để người tu trông đang ngồi trên đệm thay vì ở phía trước nó.
+  if (tab === 'cave-refine') return { file: 'ngoi-thien', mo: 'Đang tẩy tuỷ', x: 50, day: 71, w: 10 };
   if (tab === 'cave-pill') return { file: 'luyen-dan', mo: 'Đang luyện đan', x: 63, day: 80, w: 13 };
   if (tab === 'cave-technique') return { file: 'doc-sach', mo: 'Đang đọc ngọc giản', x: 79, day: 76, w: 12 };
 
   // Đêm mà xong hết việc thì đi ngủ - nằm trên ngọc sàng nếu đã sắm được.
   if (dem && (xongHet || s.total === 0)) {
-    const co = d.caveLevel >= 4;
-    return co
-      ? { file: 'ngu', mo: 'Đang ngủ trên ngọc sàng', x: 31, day: 71, w: 15 }
-      : { file: 'ngu', mo: 'Đang ngủ', x: 38, day: 86, w: 14 };
+    // Chỉ nằm ngủ khi đã có ngọc sàng; bồ đoàn là chỗ nghỉ hợp lý ở động phủ
+    // bậc thấp, nên không để đạo nhân nằm lệch dưới sàn cạnh tọa cụ.
+    if (d.caveLevel >= 4) return { file: 'ngu', mo: 'Đang ngủ trên ngọc sàng', x: 31, day: 71, w: 15 };
+    return { file: 'ngoi-thien', mo: 'Đang tĩnh tọa trên bồ đoàn', x: 50, day: 71, w: 10 };
   }
+  if (tab === 'cave-stone') return { file: 'ngoi-thien', mo: 'Đang tĩnh tọa trên bồ đoàn', x: 50, day: 71, w: 10 };
   if (xongHet) return { file: 'mung', mo: 'Xong hết việc hôm nay', x: 38, day: 86, w: 13 };
 
   return { file: 'idle', mo: 'Đạo nhân', x: 38, day: 86, w: 12 };

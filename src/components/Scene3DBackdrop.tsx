@@ -1,588 +1,568 @@
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import {
+  formationRingGeometry,
+  formationSealTexture,
   glowTexture,
-  islandGeometry,
-  mistTexture,
-  pagodaGeometry,
   qiField,
-  ridgeGeometry,
-  skyPanelTexture,
+  rng,
 } from "./scene3d/build";
 
-/**
- * Lớp thế giới 3D chạy suốt app: núi non nhiều tầng, đảo tiên lơ lửng có tháp
- * đứng trên, sương trôi và dòng linh khí bay lên. Máy quay dịch theo con trỏ
- * nên các tầng lệch nhau - đó là chỗ sinh ra cảm giác đứng trong một không gian
- * thật thay vì nhìn một tấm ảnh phẳng.
- *
- * Lớp này nằm đè lên nền tranh 2D nên nền vẽ trong suốt, và mọi thứ đều để độ
- * mờ vừa phải: tranh phía dưới vẫn phải đọc được, 3D chỉ thêm chiều sâu chứ
- * không giành chỗ.
- *
- * Nạp trễ vì three.js khá nặng; chưa tải xong thì nền tranh 2D vẫn đủ đẹp.
- */
+const SANCTUARY_ART = "/art/3d/floating-sanctuary-v1.webp";
+const DRAGON_ART = "/art/3d/jade-dragon-spirit-v1.webp";
+const GOLD = new THREE.Color("#f1d18a");
+const PALE = new THREE.Color("#eff8ff");
+
 interface Props {
-  /** Màu cảnh giới hiện tại, dạng hex. Đổi cảnh giới thì cả thế giới đổi sắc. */
   color: string;
-  /** Nền sáng thì hạ độ đậm để không loè trên giấy tuyên. */
   light?: boolean;
-  /**
-   * Panorama trời của cảnh giới hiện tại. Bọc mặt trong một mặt cầu rất lớn.
-   * Cố tình để bán trong suốt: lớp 3D nằm ĐÈ LÊN bộ tranh cảnh giới 2D, phủ
-   * kín là xoá luôn tranh vừa vẽ.
-   */
-  sky?: string;
-  /**
-   * 0..1 - hạ xuống khi có bảng đang mở, để nền lùi hẳn ra sau và không tranh
-   * chú ý với nội dung người dùng đang đọc.
-   */
   intensity?: number;
   className?: string;
 }
 
-/** Màu mực nền của mọi bóng núi, bóng đảo. Sắc cảnh giới pha thêm lên trên. */
-const INK = new THREE.Color("#0a0c11");
-
-/** Pha vào đèn cho ánh sáng nhạt bớt, kẻo mặt được chiếu bị nhuộm quá gắt. */
-const PALE = new THREE.Color("#ffffff");
-
-/** Sắc vàng kim của app. Hạt linh khí ngả về đây để không lẫn vào nền tranh. */
-const GOLD = new THREE.Color("#f2d492");
-
-/**
- * Ba tầng núi ở ba độ sâu: tầng gần trôi nhanh hơn tầng xa, đó là chiều sâu.
- *
- * `w` và `drop` cố tình để rộng gấp mấy lần tầm nhìn ở độ sâu tương ứng, kể cả
- * trên màn siêu rộng. Hụt một chút là vách cắt hai đầu hoặc đáy phẳng của khối
- * lọt vào khung và hiện thành bậc vuông sắc cạnh giữa lưng trời.
- */
-const RIDGES = [
-  {
-    peaks: [0.1, 0.62, 0.3, 0.86, 0.28, 0.7, 0.2, 0.78, 0.16],
-    w: 260,
-    h: 17,
-    drop: 60,
-    y: -18.8,
-    z: -46,
-    o: 0.09,
-  },
-  {
-    peaks: [0.08, 0.46, 0.22, 0.6, 0.18, 0.5, 0.55, 0.2, 0.4],
-    w: 200,
-    h: 14,
-    drop: 50,
-    y: -13.4,
-    z: -32,
-    o: 0.12,
-  },
-  {
-    peaks: [0.06, 0.3, 0.12, 0.36, 0.1, 0.26, 0.16, 0.32, 0.08],
-    w: 150,
-    h: 11,
-    drop: 40,
-    y: -8.9,
-    z: -19,
-    o: 0.16,
-  },
-];
-
-/**
- * Đảo tiên, đặt hết lên nửa trên khung hình.
- *
- * Nửa dưới màn hình là sân, là nền tranh 2D vốn đã kín chi tiết, mà giữa màn
- * hình là chỗ đứng của HUD và nút đột phá - thả đảo xuống đấy chỉ tổ rối mắt.
- * Khoảng trời hai bên phía trên mới là chỗ trống thật sự để đảo có đất diễn.
- */
-const ISLANDS = [
-  { x: -15, y: 6.5, z: -24, s: 1.8, tiers: 3, bob: 0.9 },
-  { x: 13, y: 8, z: -27, s: 2.2, tiers: 4, bob: 1.2 },
-  { x: -21, y: 2, z: -33, s: 2.4, tiers: 0, bob: 1 },
-  { x: 20, y: 3, z: -30, s: 2, tiers: 0, bob: 0.8 },
-  { x: -9, y: 11.5, z: -38, s: 2.6, tiers: 5, bob: 1.4 },
-  { x: 8, y: 12.5, z: -36, s: 2.1, tiers: 0, bob: 1.3 },
-];
-
-/** Vật liệu có màu và độ mờ được nhuộm lại theo cảnh giới ở mỗi khung hình. */
-interface Tinted {
-  mat: THREE.Material & { color: THREE.Color; opacity: number };
-  /** Độ mờ gốc, sẽ nhân với độ đậm chung. */
+interface TintedMaterial {
+  mat: THREE.Material & { color?: THREE.Color; opacity: number };
+  original: THREE.Color;
   base: number;
-  /** Pha bao nhiêu phần sắc cảnh giới vào màu mực. 1 là lấy trọn sắc. */
   mix: number;
-  /** Nhân sáng/tối sau khi pha. */
   shade: number;
 }
 
+/**
+ * A lightweight 2.5D scene layered over the realm painting: real alpha-cutout game art,
+ * a lit cultivation seal, drifting qi and an occasional spirit-dragon flyby.
+ * The old procedural low-poly mountain/island layer has been retired.
+ */
 export default function Scene3DBackdrop({
   color,
   light = false,
-  sky,
   intensity = 1,
   className,
 }: Props) {
   const host = useRef<HTMLDivElement>(null);
-
-  // Cảnh giới và độ đậm đổi ngay giữa lúc cảnh đang chạy, nên nhét vào ref để
-  // vòng lặp đọc được giá trị mới mà không phải dựng lại toàn bộ thế giới.
-  const want = useRef({ color, light, sky, intensity });
-
-  // Khi người dùng tắt hiệu ứng chuyển động, cảnh đứng yên và chỉ vẽ lại đúng
-  // lúc có gì đó thật sự đổi. Hàm vẽ lại ấy được gắn vào đây.
+  const want = useRef({ color, light, intensity });
   const redraw = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     const el = host.current;
     if (!el) return;
 
-    const reduce =
+    const reducedMotion =
       window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+    let small = window.innerWidth < 768;
+    let disposed = false;
 
-    // Máy không có WebGL (hoặc bị tắt, hoặc môi trường test) thì bỏ hẳn lớp 3D
-    // chứ không làm sập cả app - phía dưới vẫn còn nguyên nền tranh 2D.
     let renderer: THREE.WebGLRenderer;
     try {
       renderer = new THREE.WebGLRenderer({
-        antialias: true,
+        antialias: !small,
         alpha: true,
         powerPreference: "low-power",
+        precision: small ? "mediump" : "highp",
       });
     } catch {
       return;
     }
-
-    // Máy nhỏ gánh ít hạt và ít đảo hơn: nền đẹp mấy cũng vô nghĩa nếu gõ việc
-    // vào bị giật.
-    const small = window.innerWidth < 768;
-    renderer.setPixelRatio(
-      Math.min(small ? 1.4 : 1.75, window.devicePixelRatio),
-    );
+    renderer.setClearColor(0x000000, 0);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.12;
+    renderer.setPixelRatio(Math.min(small ? 1.15 : 1.65, window.devicePixelRatio || 1));
     el.appendChild(renderer.domElement);
 
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(48, 1, 0.1, 220);
-    camera.position.set(0, 0, 14);
+    const camera = new THREE.PerspectiveCamera(46, 1, 0.1, 180);
+    camera.position.set(0, 0, 7);
 
-    // Lấy trạng thái ban đầu qua `want` chứ không qua props: hiệu ứng này chỉ
-    // chạy đúng một lần, đọc thẳng props sẽ khoá cứng giá trị của lần render
-    // đầu và mọi lần đột phá sau đó đọc phải giá trị cũ.
     const tint = new THREE.Color(want.current.color);
-    const fog = new THREE.FogExp2(tint.getHex(), 0.0125);
+    const targetColor = new THREE.Color();
+    const fog = new THREE.FogExp2(tint.getHex(), 0.0048);
     scene.fog = fog;
 
-    const tinted: Tinted[] = [];
-    const track = (
-      mat: Tinted["mat"],
+    scene.add(new THREE.HemisphereLight(0xb8d7e2, 0x172018, 0.72));
+    const keyLight = new THREE.DirectionalLight(PALE, 2.1);
+    keyLight.position.set(-7, 12, 8);
+    scene.add(keyLight);
+    const rimLight = new THREE.PointLight(0x83d9c6, 1.8, 36, 2);
+    rimLight.position.set(4, 6, -8);
+    scene.add(rimLight);
+
+    const tinted: TintedMaterial[] = [];
+    const opacityMaterials: Array<{ mat: THREE.Material & { opacity: number }; base: number }> = [];
+    const textures = new Set<THREE.Texture>();
+    const track = <T extends THREE.Material & { color?: THREE.Color; opacity: number }>(
+      mat: T,
       base: number,
       mix: number,
-      shade: number,
+      shade = 1,
+    ): T => {
+      if (mat.color) tinted.push({ mat, original: mat.color.clone(), base, mix, shade });
+      return mat;
+    };
+    const trackOpacity = <T extends THREE.Material & { opacity: number }>(
+      mat: T,
+      base: number,
     ) => {
-      tinted.push({ mat, base, mix, shade });
+      opacityMaterials.push({ mat, base });
       return mat;
     };
 
-    // ------------------------------------------------------------------ đèn
-    // Một đèn hướng duy nhất từ trên chếch trái. Núi và đảo chỉ cần chừng ấy để
-    // có mặt sáng mặt tối, còn lại cứ để chìm trong bóng cho ra chất thuỷ mặc.
-    const key = new THREE.DirectionalLight(tint.getHex(), 2.4);
-    key.position.set(-8, 12, 6);
-    scene.add(key);
-    scene.add(new THREE.AmbientLight(0xffffff, 0.1));
-
-    let disposed = false;
     const glowTex = glowTexture();
-    const mistTex = mistTexture();
+    const sealTex = formationSealTexture();
+    textures.add(glowTex);
+    textures.add(sealTex);
 
-    // --------------------------------------------------------- panorama trời
-    // Tấm phẳng đặt xa, KHÔNG phải mặt cầu bọc kín: lớp 3D đè lên tranh cảnh
-    // giới 2D nên phủ kín trời là xoá mất tranh. Bốn mép tan dần để hoà vào
-    // tranh phía dưới thay vì cắt ngang màn một đường cứng.
-    let skyTex: THREE.Texture | null = null;
-    let skyMat: THREE.MeshBasicMaterial | null = null;
-    let skyShown: string | undefined;
-
-    /**
-     * Nạp panorama trời, và đổi tấm khi lên cảnh giới mới.
-     *
-     * Phải đi qua `want` chứ không đọc thẳng prop `sky`: hiệu ứng dựng cảnh
-     * chỉ chạy đúng một lần, nên đọc thẳng là khoá cứng tấm trời của lần render
-     * đầu - đột phá xong trời vẫn y nguyên cho tới khi tải lại trang, đúng thứ
-     * tính năng này sinh ra để tránh.
-     *
-     * Đổi tấm thì chỉ thay texture trên vật liệu cũ, không dựng lại mặt phẳng:
-     * dựng lại là mất luôn hiệu ứng chuyển sắc đang chạy dở.
-     */
-    const syncSky = () => {
-      const url = want.current.sky;
-      if (url === skyShown) return;
-      skyShown = url;
-      if (!url) return;
-
-      const img = new Image();
-      img.onload = () => {
-        // Bỏ qua nếu cảnh đã dọn, hoặc người dùng đã đột phá tiếp trong lúc
-        // ảnh còn đang tải và giờ tấm này không còn là tấm đang cần.
-        if (disposed || skyShown !== url) return;
-        const next = skyPanelTexture(img);
-
-        if (skyMat) {
-          skyTex?.dispose();
-          skyTex = next;
-          skyMat.map = next;
-          skyMat.needsUpdate = true;
-        } else {
-          skyTex = next;
-          skyMat = new THREE.MeshBasicMaterial({
-            map: next,
-            transparent: true,
-            depthWrite: false,
-            fog: false,
-          });
-          const panel = new THREE.Mesh(new THREE.PlaneGeometry(210, 105), skyMat);
-          panel.position.set(2, 12, -88);
-          panel.renderOrder = -1;
-          scene.add(panel);
-          track(skyMat, 0.5, 0, 1);
+    const loader = new THREE.TextureLoader();
+    const loadArt = (url: string) => {
+      const tex = loader.load(url, (loaded) => {
+        if (disposed) {
+          loaded.dispose();
+          return;
         }
+        loaded.colorSpace = THREE.SRGBColorSpace;
+        loaded.anisotropy = Math.min(4, renderer.capabilities.getMaxAnisotropy());
         redraw.current?.();
-      };
-      // Thiếu file thì im lặng bỏ qua, thế giới vẫn chạy như cũ.
-      img.onerror = () => {};
-      img.src = url;
+      });
+      tex.colorSpace = THREE.SRGBColorSpace;
+      textures.add(tex);
+      return tex;
     };
-    syncSky();
 
-    // ------------------------------------------------------------- sao trời
-    const starCount = small ? 240 : 460;
-    const starPos = new Float32Array(starCount * 3);
+    // Distant lantern sparks are a quiet depth cue, kept sparse on phones.
+    const starCount = small ? 100 : 250;
+    const starSeed = rng(112);
+    const starPositions = new Float32Array(starCount * 3);
     for (let i = 0; i < starCount; i++) {
-      starPos[i * 3] = (Math.random() - 0.5) * 130;
-      starPos[i * 3 + 1] = (Math.random() - 0.5) * 70;
-      starPos[i * 3 + 2] = -62 - Math.random() * 44;
+      starPositions[i * 3] = (starSeed() - 0.5) * 110;
+      starPositions[i * 3 + 1] = (starSeed() - 0.5) * 54;
+      starPositions[i * 3 + 2] = -42 - starSeed() * 45;
     }
-    const starGeo = new THREE.BufferGeometry();
-    starGeo.setAttribute("position", new THREE.BufferAttribute(starPos, 3));
-    const starMat = new THREE.PointsMaterial({
-      size: 0.36,
-      transparent: true,
-      depthWrite: false,
-      fog: false,
-    });
-    const stars = new THREE.Points(starGeo, track(starMat, 0.45, 1, 1.25));
-    scene.add(stars);
-
-    // ------------------------------------------------- quầng linh khí phía xa
-    const halo = new THREE.Sprite(
-      new THREE.SpriteMaterial({
-        map: glowTex,
-        transparent: true,
-        depthWrite: false,
-        fog: false,
-      }),
-    );
-    halo.scale.set(78, 78, 1);
-    halo.position.set(7, 13, -56);
-    scene.add(halo);
-    track(halo.material, 0.1, 1, 1);
-
-    // ---------------------------------------------------------------- núi non
-    const ridges = RIDGES.map((r, i) => {
-      const mat = new THREE.MeshLambertMaterial({
-        transparent: true,
-        depthWrite: false,
-      });
-      // Núi xa phải sáng hơn nền chứ không tối hơn: bóng gần đen đặt trên nền
-      // đêm là chìm mất tăm, còn dãy núi bắt sương mới ra được chất thuỷ mặc.
-      const mesh = new THREE.Mesh(
-        ridgeGeometry(r.peaks, r.w, r.h, r.drop),
-        track(mat, r.o, 0.85, 1.1),
-      );
-      mesh.position.set(0, r.y, r.z);
-      scene.add(mesh);
-      // Tầng gần trôi nhanh và xa hơn tầng xa - đó là chỗ sinh ra chiều sâu.
-      return { mesh, amp: 2 + i * 2, speed: 0.02 * (i + 1) };
-    });
-
-    // ------------------------------------------------------------- đảo tiên
-    const islandSpecs = small ? ISLANDS.slice(0, 4) : ISLANDS;
-    const islandGroups: {
-      group: THREE.Group;
-      spec: (typeof ISLANDS)[number];
-      phase: number;
-    }[] = [];
-
-    islandSpecs.forEach((spec, i) => {
-      const group = new THREE.Group();
-
-      const rockMat = new THREE.MeshLambertMaterial({
-        transparent: true,
-        flatShading: true,
-        depthWrite: false,
-      });
-      const rock = new THREE.Mesh(
-        islandGeometry(i + 1),
-        track(rockMat, 0.5, 0.52, 1),
-      );
-      rock.rotation.y = i * 1.1;
-      group.add(rock);
-
-      if (spec.tiers > 0) {
-        const towerMat = new THREE.MeshLambertMaterial({
-          transparent: true,
-          depthWrite: false,
-        });
-        const tower = new THREE.Mesh(
-          pagodaGeometry(spec.tiers),
-          track(towerMat, 0.62, 0.7, 1.2),
-        );
-        tower.scale.setScalar(0.78);
-        tower.position.y = 0.2;
-        tower.rotation.y = 0.4 + i * 0.3;
-        group.add(tower);
-      }
-
-      // Hào quang bám quanh đảo: chính lớp này khiến đảo dính vào không khí chứ
-      // không nổi lên như miếng dán cắt rời.
-      const aura = new THREE.Sprite(
-        new THREE.SpriteMaterial({
-          map: glowTex,
+    const starGeometry = new THREE.BufferGeometry();
+    starGeometry.setAttribute("position", new THREE.BufferAttribute(starPositions, 3));
+    const stars = new THREE.Points(
+      starGeometry,
+      track(
+        new THREE.PointsMaterial({
+          size: 0.19,
           transparent: true,
           depthWrite: false,
           fog: false,
         }),
+        0.34,
+        0.8,
+        1.2,
+      ),
+    );
+    scene.add(stars);
+
+    // Real cutout art becomes a depth-layered object instead of another flat background.
+    const sanctuaryTexture = loadArt(SANCTUARY_ART);
+    const sanctuaryMaterial = trackOpacity(
+      new THREE.MeshBasicMaterial({
+        map: sanctuaryTexture,
+        transparent: true,
+        alphaTest: 0.018,
+        depthWrite: false,
+        side: THREE.DoubleSide,
+        toneMapped: false,
+      }),
+      0.84,
+    );
+    const sanctuary = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), sanctuaryMaterial);
+    sanctuary.position.set(3.5, 7.8, -30);
+    sanctuary.scale.set(4.7, 4.95, 1);
+    sanctuary.rotation.z = -0.025;
+    sanctuary.renderOrder = 2;
+    scene.add(sanctuary);
+
+    // A hovering jade seal frames the disciple portrait and gives the scene a real 3D focal point.
+    const formation = new THREE.Group();
+    const ringSpecs = [
+      { radius: 2.35, tube: 0.045, color: 0xffdf91, opacity: 0.95, tilt: 0.13 },
+      { radius: 2.1, tube: 0.032, color: 0x9dffe7, opacity: 0.9, tilt: -0.32 },
+      { radius: 2.62, tube: 0.018, color: 0xffe7ae, opacity: 0.76, tilt: 0.52 },
+    ];
+    const rings: THREE.Mesh[] = [];
+    ringSpecs.forEach((spec, i) => {
+      // A broad, low-opacity jade/gold underglow keeps the formation readable
+      // against pale skies on mobile; the finer tube above it carries the metal edge.
+      const haloMaterial = trackOpacity(
+        new THREE.MeshBasicMaterial({
+          color: spec.color,
+          transparent: true,
+          opacity: 0.22,
+          depthWrite: false,
+          side: THREE.DoubleSide,
+          toneMapped: false,
+        }),
+        0.22,
       );
-      aura.scale.set(4.6, 3.4, 1);
-      aura.position.y = -0.2;
-      group.add(aura);
-      track(aura.material, 0.16, 1, 1);
+      const halo = new THREE.Mesh(
+        formationRingGeometry(spec.radius, spec.tube * 2.5, 112),
+        haloMaterial,
+      );
+      halo.rotation.set(spec.tilt, i * 0.36, i * 0.72);
+      halo.renderOrder = 3;
+      formation.add(halo);
 
-      group.position.set(spec.x, spec.y, spec.z);
-      group.scale.setScalar(spec.s);
-      scene.add(group);
-      islandGroups.push({ group, spec, phase: i * 1.7 });
+      const mat = track(
+        new THREE.MeshPhysicalMaterial({
+          color: spec.color,
+          emissive: spec.color,
+          emissiveIntensity: 0.12,
+          metalness: 0.78,
+          roughness: 0.24,
+          clearcoat: 0.92,
+          clearcoatRoughness: 0.18,
+          transparent: true,
+          opacity: spec.opacity,
+          depthWrite: false,
+          side: THREE.DoubleSide,
+        }),
+        spec.opacity,
+        0.035,
+        1.1,
+      );
+      const ring = new THREE.Mesh(
+        formationRingGeometry(spec.radius, spec.tube, 112),
+        mat,
+      );
+      ring.rotation.set(spec.tilt, i * 0.36, i * 0.72);
+      formation.add(ring);
+      rings.push(ring);
     });
+    formation.position.set(0, 5.05, -13.5);
+    formation.renderOrder = 4;
+    scene.add(formation);
 
-    // ---------------------------------------------------------------- sương
-    const mists: THREE.Sprite[] = [];
-    for (let i = 0; i < (small ? 8 : 16); i++) {
-      const sprite = new THREE.Sprite(
-        new THREE.SpriteMaterial({
-          map: mistTex,
+    // Engraved lightwork beneath the tilted metal hoops makes the seal read as a
+    // deliberate game spell on narrow screens, while the hoops retain the 3D depth.
+    const sealMaterial = trackOpacity(
+      new THREE.SpriteMaterial({
+        map: sealTex,
+        color: 0xffffff,
+        transparent: true,
+        opacity: 0.76,
+        depthWrite: false,
+        fog: false,
+        toneMapped: false,
+        blending: THREE.AdditiveBlending,
+      }),
+      0.76,
+    );
+    const sealSprite = new THREE.Sprite(sealMaterial);
+    sealSprite.scale.set(small ? 6.1 : 5.35, small ? 6.1 : 5.35, 1);
+    sealSprite.position.set(0, 0, 0.15);
+    sealSprite.renderOrder = 3;
+    formation.add(sealSprite);
+
+    const glyphs: THREE.Mesh[] = [];
+    for (let i = 0; i < 10; i++) {
+      const angle = (i / 10) * Math.PI * 2;
+      const shardMaterial = track(
+        new THREE.MeshStandardMaterial({
+          color: i % 2 ? 0x7ec7b5 : 0xe5c16e,
+          emissive: i % 2 ? 0x153f38 : 0x60430f,
+          emissiveIntensity: 0.55,
+          metalness: 0.48,
+          roughness: 0.24,
           transparent: true,
           depthWrite: false,
         }),
+        0.22,
+        0.7,
+        1.2,
       );
-      const w = 12 + Math.random() * 16;
-      sprite.scale.set(w, w * 0.42, 1);
-      sprite.position.set(
-        (Math.random() - 0.5) * 120,
-        -4 + Math.random() * 18,
-        -20 - Math.random() * 30,
-      );
-      scene.add(sprite);
-      mists.push(sprite);
-      track(sprite.material, 0.1, 0.85, 1);
+      const shard = new THREE.Mesh(new THREE.OctahedronGeometry(0.075, 0), shardMaterial);
+      shard.position.set(Math.cos(angle) * 2.75, Math.sin(angle) * 1.65, Math.sin(angle) * 0.25);
+      formation.add(shard);
+      glyphs.push(shard);
     }
 
-    // ----------------------------------------------------------- dòng linh khí
-    const qi = qiField(small ? 420 : 1100, 90, 46, 34);
+    const orb = new THREE.Mesh(
+      new THREE.DodecahedronGeometry(0.255, 0),
+      track(
+        new THREE.MeshPhysicalMaterial({
+          // Deep mineral jade with a restrained inner warmth; the previous
+          // pale mint + strong glow read as a plastic bead against the sky.
+          color: 0x27553f,
+          emissive: 0x07190f,
+          emissiveIntensity: 0.22,
+          metalness: 0.38,
+          roughness: 0.3,
+          clearcoat: 0.68,
+          clearcoatRoughness: 0.2,
+          opacity: 0.99,
+        }),
+        0.96,
+        0.035,
+        1.08,
+      ),
+    );
+    orb.position.set(2.55, 6.25, -12.8);
+    scene.add(orb);
+
+    const orbOrbitMaterial = new THREE.MeshPhysicalMaterial({
+      color: 0xb89555,
+      emissive: 0x39280e,
+      emissiveIntensity: 0.2,
+      metalness: 0.91,
+      roughness: 0.24,
+      clearcoat: 0.82,
+      transparent: true,
+      opacity: 0.86,
+      depthWrite: false,
+    });
+    const orbOrbit = new THREE.Group();
+    const orbGoldRing = new THREE.Mesh(
+      formationRingGeometry(0.37, 0.013, 80),
+      orbOrbitMaterial,
+    );
+    orbGoldRing.rotation.set(0.7, 0.22, -0.42);
+    orbOrbit.add(orbGoldRing);
+    const orbFineRing = new THREE.Mesh(
+      formationRingGeometry(0.45, 0.006, 80),
+      new THREE.MeshBasicMaterial({
+        color: 0x907c50,
+        transparent: true,
+        opacity: 0.58,
+        depthWrite: false,
+      }),
+    );
+    orbFineRing.rotation.set(-0.86, 0.28, 0.52);
+    orbOrbit.add(orbFineRing);
+    scene.add(orbOrbit);
+
+    const orbGlow = new THREE.Sprite(
+      new THREE.SpriteMaterial({
+        map: glowTex,
+        color: 0xb49a61,
+        transparent: true,
+        depthWrite: false,
+        fog: false,
+        blending: THREE.AdditiveBlending,
+      }),
+    );
+    orbGlow.scale.set(0.9, 0.9, 1);
+    orbGlow.position.copy(orb.position);
+    orbGlow.position.z -= 0.35;
+    scene.add(orbGlow);
+    track(orbGlow.material, 0.13, 0.12, 1.05);
+
+    const qi = qiField(small ? 220 : 620, 72, 42, 33, 41);
     scene.add(qi.points);
 
-    // ------------------------------------------------------------------ khung
-    let aspect = 1;
+    // The dragon cutout is a true alpha texture on a moving 3D plane. Keep the
+    // creature itself as the effect: a broad additive halo/trail bleached the scene.
+    const dragonTexture = loadArt(DRAGON_ART);
+    const dragonMaterial = new THREE.MeshBasicMaterial({
+      map: dragonTexture,
+      transparent: true,
+      alphaTest: 0.075,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+      toneMapped: false,
+      opacity: 0,
+    });
+    const dragon = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), dragonMaterial);
+    dragon.scale.set(small ? 6.5 : 9.2, small ? 4.35 : 6.15, 1);
+    dragon.position.set(-10, 8, -18);
+    dragon.renderOrder = 3;
+    scene.add(dragon);
+
+    let skyAspect = 1;
+    let formationX = 0;
+    let formationY = 5.05;
+    let sanctuaryY = 7.8;
     const resize = () => {
-      const w = el.clientWidth || 1;
-      const h = el.clientHeight || 1;
-      // Để three tự đặt luôn kích thước CSS của canvas: không có rule CSS nào
-      // cho thẻ canvas, bỏ qua bước này là canvas phình to gấp devicePixelRatio
-      // lần và cảnh bị cắt mất một góc.
-      renderer.setSize(w, h);
-      aspect = w / h;
-      camera.aspect = aspect;
+      const width = Math.max(1, el.clientWidth);
+      const height = Math.max(1, el.clientHeight);
+      small = window.innerWidth < 768;
+      renderer.setPixelRatio(Math.min(small ? 1.15 : 1.65, window.devicePixelRatio || 1));
+      renderer.setSize(width, height);
+      skyAspect = width / height;
+      camera.aspect = skyAspect;
       camera.updateProjectionMatrix();
 
-      // Hạt phải to nhỏ theo chiều cao khung, nếu không thì màn hình càng cao
-      // hạt trông càng bé li ti.
-      qi.material.uniforms.uScale.value = (h * renderer.getPixelRatio()) / 900;
+      // The desktop seal sits behind the disciple area; mobile keeps its portrait framing.
+      formationX = small ? 0 : -skyAspect * 1.78;
+      formationY = small ? 5.05 : -2.05;
+      formation.position.set(formationX, formationY, -13.5);
+      formation.scale.setScalar(small ? 1 : 0.84);
+      sealSprite.scale.set(small ? 6.1 : 5.35, small ? 6.1 : 5.35, 1);
 
-      // Màn dọc hẹp thì kéo đảo vào gần trục giữa, không thì chúng nằm hết
-      // ngoài rìa và điện thoại chẳng thấy đảo nào.
-      const pull = Math.min(1, Math.max(0.42, aspect / 1.6));
-      for (const it of islandGroups) it.group.position.x = it.spec.x * pull;
+      // Keep one distant sanctuary in the scene, scaled for each viewport.
+      sanctuary.position.x = small ? 3.15 : Math.min(13, skyAspect * 5.25);
+      sanctuaryY = small ? 7.8 : 8.35;
+      sanctuary.scale.set(small ? 4.7 : 6.35, small ? 4.95 : 6.65, 1);
+
+      orb.position.set(formationX + (small ? 2.55 : 2.15), formationY + (small ? 1.2 : 1.75), -12.8);
+      orbOrbit.position.copy(orb.position);
+      orbGlow.position.copy(orb.position);
+      orbGlow.position.z -= 0.35;
+
+      dragon.scale.set(small ? 5.35 : 6.8, small ? 3.55 : 4.55, 1);
+      qi.material.uniforms.uScale.value = (height * renderer.getPixelRatio()) / 950;
     };
     resize();
-    const ro = new ResizeObserver(resize);
-    ro.observe(el);
+    const observer = new ResizeObserver(resize);
+    observer.observe(el);
+    window.addEventListener("resize", resize, { passive: true });
 
-    // Con trỏ điều khiển hướng nhìn, biên độ nhỏ để không gây chóng mặt.
     const aim = { x: 0, y: 0 };
-    const onMove = (e: PointerEvent) => {
-      aim.x = (e.clientX / window.innerWidth - 0.5) * 2;
-      aim.y = (e.clientY / window.innerHeight - 0.5) * 2;
+    const onMove = (event: PointerEvent) => {
+      aim.x = (event.clientX / Math.max(1, window.innerWidth) - 0.5) * 2;
+      aim.y = (event.clientY / Math.max(1, window.innerHeight) - 0.5) * 2;
     };
-    if (!reduce)
-      window.addEventListener("pointermove", onMove, { passive: true });
+    if (!small && !reducedMotion) window.addEventListener("pointermove", onMove, { passive: true });
 
-    // ------------------------------------------------------- nhuộm theo cảnh giới
-    const targetColor = new THREE.Color();
-    let dim = 0;
     let lastLight = want.current.light;
-
-    /** Đổi cách pha hạt linh khí giữa nền sáng và nền tối. */
     const applyMode = (isLight: boolean) => {
-      // Nền giấy sáng mà cộng thêm ánh sáng thì hạt bay màu trắng xoá, không
-      // thấy gì; chuyển sang pha thường và để hạt đậm hơn nền mới đọc được.
-      qi.material.blending = isLight
-        ? THREE.NormalBlending
-        : THREE.AdditiveBlending;
+      qi.material.blending = isLight ? THREE.NormalBlending : THREE.AdditiveBlending;
       qi.material.needsUpdate = true;
     };
     applyMode(lastLight);
 
-    /** Kéo màu, độ đậm và mọi vật liệu về đúng trạng thái cảnh giới đang tu. */
+    let dim = 0;
     const applyTint = (dt: number) => {
-      const w = want.current;
-      // Rẻ như so hai chuỗi khi trời không đổi, nên gọi mỗi khung cũng không sao.
-      syncSky();
-      targetColor.set(w.color);
-
-      // Đột phá cảnh giới thì cả thế giới chuyển sắc từ từ chứ không giật một
-      // cái sang màu mới - đó mới là cảm giác "cảnh giới vừa đổi".
-      const ease = dt <= 0 ? 1 : 1 - Math.exp(-dt * 1.6);
+      const target = want.current;
+      targetColor.set(target.color);
+      const ease = dt <= 0 ? 1 : 1 - Math.exp(-dt * 1.25);
       tint.lerp(targetColor, ease);
+      const targetDim = (target.light ? 0.82 : 1) * Math.max(0, Math.min(1, target.intensity));
+      dim += (targetDim - dim) * (dt <= 0 ? 1 : 1 - Math.exp(-dt * 2.6));
 
-      const wantDim =
-        (w.light ? 0.6 : 1) * Math.max(0, Math.min(1, w.intensity));
-      dim += (wantDim - dim) * (dt <= 0 ? 1 : 1 - Math.exp(-dt * 3));
-
-      if (w.light !== lastLight) {
-        lastLight = w.light;
-        applyMode(w.light);
+      if (target.light !== lastLight) {
+        lastLight = target.light;
+        applyMode(lastLight);
       }
-
       fog.color.copy(tint);
-      key.color.copy(tint).lerp(PALE, 0.55);
-      key.intensity = 3.2 * (0.4 + 0.6 * dim);
+      keyLight.color.copy(tint).lerp(PALE, 0.68);
+      keyLight.intensity = 2.25 * (0.5 + dim * 0.5);
+      rimLight.intensity = 1.2 * dim;
 
-      for (const it of tinted) {
-        it.mat.color.copy(INK).lerp(tint, it.mix).multiplyScalar(it.shade);
-        it.mat.opacity = it.base * dim;
+      for (const { mat, original, base, mix, shade } of tinted) {
+        mat.color?.copy(original).lerp(tint, mix).multiplyScalar(shade);
+        mat.opacity = base * dim;
       }
-
-      // Hạt lấy sắc cảnh giới nhưng kéo mạnh về vàng kim: để nguyên sắc cảnh
-      // giới thì hạt trùng màu nền tranh và biến mất hẳn khỏi mắt người nhìn.
-      qi.material.uniforms.uColor.value
-        .copy(tint)
-        .lerp(GOLD, 0.55)
-        .multiplyScalar(w.light ? 0.5 : 1.5);
-      qi.material.uniforms.uOpacity.value = (w.light ? 0.85 : 0.9) * dim;
+      for (const { mat, base } of opacityMaterials) mat.opacity = base * dim;
+      qi.material.uniforms.uColor.value.copy(tint).lerp(GOLD, 0.62);
+      qi.material.uniforms.uOpacity.value = (target.light ? 0.63 : 0.84) * dim * (small ? 0.52 : 0.86);
     };
 
-    // ------------------------------------------------------------- vòng lặp
-    // Tự cộng thời gian thay vì hỏi Clock: tạm dừng lúc ẩn tab rồi quay lại là
-    // cảnh chạy tiếp đúng chỗ cũ, không nhảy vọt vì một delta khổng lồ.
+    const clamp01 = (n: number) => Math.max(0, Math.min(1, n));
+    const smooth = (edge0: number, edge1: number, x: number) => {
+      const n = clamp01((x - edge0) / (edge1 - edge0));
+      return n * n * (3 - 2 * n);
+    };
     let t = 0;
-    let last = 0;
+    let lastFrame = 0;
     let raf = 0;
+    const animateDragon = (time: number) => {
+      const duration = 7.6;
+      const period = 22;
+      // Let the first pass begin at once, then keep it as a periodic world event.
+      const phase = (time % period + period) % period;
+      const u = clamp01(phase / duration);
+      const active = phase >= 0 && phase <= duration;
+      const sweep = small ? Math.max(4.8, skyAspect * 8.6) : Math.max(10, skyAspect * 8.2);
+      const x = -sweep + sweep * 2 * u;
+      const y = (small ? 5.7 : 6.9) + Math.sin(u * Math.PI) * 0.8;
+      const z = -17.8 + Math.sin(u * Math.PI * 2) * 1.15;
+      const fade = active ? smooth(0, 0.1, u) * (1 - smooth(0.83, 1, u)) : 0;
 
-    const frame = (now: number) => {
-      raf = requestAnimationFrame(frame);
-      const dt = Math.min(0.05, last ? (now - last) / 1000 : 0.016);
-      last = now;
+      dragon.position.set(x, y, z);
+      dragon.rotation.z = Math.cos(u * Math.PI) * 0.075;
+      dragonMaterial.opacity = fade * 0.76 * dim;
+    };
+
+    const render = (now: number) => {
+      raf = requestAnimationFrame(render);
+      if (small && lastFrame && now - lastFrame < 1000 / 30) return;
+      const dt = Math.min(0.05, lastFrame ? (now - lastFrame) / 1000 : 0.016);
+      lastFrame = now;
       t += dt;
-
       applyTint(dt);
 
-      const damp = 1 - Math.exp(-dt * 3);
-      // Cộng thêm một nhịp trôi rất chậm: không ai chạm chuột thì cảnh vẫn thở.
-      camera.position.x +=
-        (aim.x * 1.6 + Math.sin(t * 0.07) * 0.9 - camera.position.x) * damp;
-      camera.position.y +=
-        (-aim.y * 1 + Math.cos(t * 0.05) * 0.5 - camera.position.y) * damp;
-      camera.lookAt(0, 0, -28);
+      const damp = 1 - Math.exp(-dt * 2.1);
+      camera.position.x += (aim.x * (small ? 0.12 : 0.8) + Math.sin(t * 0.055) * 0.25 - camera.position.x) * damp;
+      camera.position.y += (-aim.y * (small ? 0.08 : 0.45) + Math.cos(t * 0.04) * 0.16 - camera.position.y) * damp;
+      camera.lookAt(0, 0, -26);
 
-      stars.rotation.z = t * 0.004;
-      halo.scale.setScalar(78 * (1 + Math.sin(t * 0.5) * 0.03));
+      stars.rotation.z = t * 0.0018;
+      formation.rotation.y = Math.sin(t * 0.22) * 0.18;
+      formation.rotation.z = Math.sin(t * 0.16) * 0.08;
+      sealSprite.material.rotation = -t * 0.018;
+      sanctuary.position.y = sanctuaryY + Math.sin(t * 0.32) * 0.16;
+      sanctuary.rotation.y = Math.sin(t * 0.09) * 0.035;
+      rings.forEach((ring, i) => {
+        ring.rotation.z += dt * (i % 2 ? -0.045 : 0.035);
+      });
+      glyphs.forEach((glyph, i) => {
+        glyph.rotation.x += dt * (0.28 + (i % 3) * 0.08);
+        glyph.rotation.y += dt * 0.42;
+      });
+      orb.position.y = formationY + (small ? 1.2 : 1.75) + Math.sin(t * 0.8) * 0.19;
+      orb.rotation.x += dt * 0.22;
+      orb.rotation.y += dt * 0.31;
+      orbOrbit.position.copy(orb.position);
+      orbOrbit.rotation.z += dt * 0.12;
+      orbOrbit.rotation.y += dt * 0.08;
+      orbGlow.position.y = orb.position.y;
       qi.material.uniforms.uTime.value = t;
 
-      for (const r of ridges) r.mesh.position.x = Math.sin(t * r.speed) * r.amp;
-
-      for (const it of islandGroups) {
-        // Đảo dập dềnh và xoay rất chậm quanh trục đứng: đủ để mắt bắt được
-        // rằng đây là khối có bề dày, không phải hình cắt dán.
-        it.group.position.y =
-          it.spec.y + Math.sin(t * 0.28 + it.phase) * it.spec.bob;
-        it.group.rotation.y = Math.sin(t * 0.05 + it.phase) * 0.25;
-      }
-
-      for (const m of mists) {
-        m.position.x += dt * (0.45 + (m.position.z + 52) * 0.02);
-        if (m.position.x > 66) m.position.x = -66;
-      }
-
+      animateDragon(t);
       renderer.render(scene, camera);
     };
+
+    const drawStill = () => {
+      applyTint(0);
+      qi.material.uniforms.uTime.value = 3.6;
+      animateDragon(0);
+      renderer.render(scene, camera);
+    };
+    redraw.current = drawStill;
 
     const onVisibility = () => {
       if (document.hidden) {
         cancelAnimationFrame(raf);
         raf = 0;
-      } else if (!raf && !reduce) {
-        last = 0;
-        raf = requestAnimationFrame(frame);
+      } else if (!raf && !reducedMotion) {
+        lastFrame = 0;
+        raf = requestAnimationFrame(render);
       }
     };
-
-    if (reduce) {
-      // Tôn trọng lựa chọn tắt chuyển động: dựng một khung tĩnh, chỉ vẽ lại khi
-      // cảnh giới hoặc chế độ sáng tối thật sự đổi.
-      const still = () => {
-        applyTint(0);
-        qi.material.uniforms.uTime.value = 6;
-        renderer.render(scene, camera);
-      };
-      redraw.current = still;
-      still();
-    } else {
-      raf = requestAnimationFrame(frame);
+    if (reducedMotion) drawStill();
+    else {
+      raf = requestAnimationFrame(render);
       document.addEventListener("visibilitychange", onVisibility);
     }
 
     return () => {
       cancelAnimationFrame(raf);
       redraw.current = null;
-      ro.disconnect();
+      observer.disconnect();
+      window.removeEventListener("resize", resize);
       window.removeEventListener("pointermove", onMove);
       document.removeEventListener("visibilitychange", onVisibility);
       disposed = true;
-      glowTex.dispose();
-      mistTex.dispose();
-      skyTex?.dispose();
-      scene.traverse((o) => {
-        const mesh = o as THREE.Mesh;
-        mesh.geometry?.dispose?.();
-        const mat = mesh.material as
-          THREE.Material | THREE.Material[] | undefined;
-        if (Array.isArray(mat)) mat.forEach((x) => x.dispose());
-        else mat?.dispose?.();
+      scene.traverse((object) => {
+        const renderable = object as THREE.Mesh;
+        renderable.geometry?.dispose?.();
+        const material = renderable.material as THREE.Material | THREE.Material[] | undefined;
+        if (Array.isArray(material)) material.forEach((entry) => entry.dispose());
+        else material?.dispose?.();
       });
+      textures.forEach((texture) => texture.dispose());
       renderer.dispose();
-      el.removeChild(renderer.domElement);
+      if (renderer.domElement.parentElement === el) el.removeChild(renderer.domElement);
     };
-    // Dựng đúng một lần. Mọi thay đổi từ props đi qua `want` và được vòng lặp
-    // nhuộm dần vào cảnh - dựng lại cả thế giới mỗi lần đột phá thì vừa giật
-    // vừa mất luôn hiệu ứng chuyển sắc.
   }, []);
 
   useEffect(() => {
-    // Ghi ref ở đây chứ không ghi thẳng trong thân hàm: ghi lúc render là đụng
-    // vào giá trị ngoài luồng render của React, đúng thứ chế độ nghiêm ngặt bắt
-    // lỗi và cũng là thứ dễ sinh trạng thái lệch khi React render thử hai lần.
-    want.current = { color, light, sky, intensity };
-    // Ở chế độ tắt chuyển động không có vòng lặp nào chạy, nên props đổi thì
-    // phải tự gọi vẽ lại một khung.
+    want.current = { color, light, intensity };
     redraw.current?.();
-  }, [color, light, sky, intensity]);
+  }, [color, light, intensity]);
 
-  return <div ref={host} className={className} aria-hidden />;
+  return <div ref={host} className={className} aria-hidden="true" />;
 }

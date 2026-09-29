@@ -35,7 +35,7 @@ import type { KhuTab } from '../components/KhuTabs';
  * Động Phủ: nơi ở của người tu. Chứa linh căn, túi linh thạch và đàn linh thú.
  * Đây là phần "chơi" của app - nhưng mọi nguồn lực đều đến từ việc làm thật.
  */
-export default function CaveView() {
+export default function CaveView({ onMeditate }: { onMeditate: () => void }) {
   const { data, awaken, rerollRoot, summon, feedBeast, setActiveBeast } = useApp();
   const [revealed, setRevealed] = useState<Beast | null>(null);
   // Mở Động Phủ ra là đứng ở túi linh thạch - chỗ trả lời câu "tôi đang có gì".
@@ -76,7 +76,7 @@ export default function CaveView() {
           đoạn giải thích cơ chế. Đoạn văn cũ nói linh căn/công pháp/linh điền
           dùng để làm gì - mà ngay dưới đây mỗi mục đều đã tự giới thiệu, nên
           nó chỉ là một lớp chữ chắn giữa người chơi và nhà của họ. */}
-      <CaveRoom onGo={setTab} tab={tab} />
+      <CaveRoom onGo={(anchor) => anchor === 'focus' ? onMeditate() : setTab(anchor)} tab={tab} />
 
       <KhuTabs tabs={tabs} dang={tab} onChon={setTab} nhan="Các mục trong Động Phủ" />
 
@@ -350,8 +350,14 @@ export default function CaveView() {
                         key={b.id}
                         disabled={!mine}
                         onClick={() => setActiveBeast(isActive ? undefined : b.id)}
+                        aria-pressed={!!mine && isActive}
+                        aria-label={mine
+                          ? `${b.name}, ${RARITIES[b.rarity].label}${isActive ? ", đang đồng hành" : ", chạm để đổi linh thú đồng hành"}`
+                          : `Chưa thu phục: ${RARITIES[b.rarity].label}`}
+                        data-beast-state={!mine ? "locked" : isActive ? "active" : "owned"}
+                        data-beast-rarity={b.rarity}
                         className={cn(
-                          'flex items-center gap-2.5 rounded-lg border p-2.5 text-left transition-colors',
+                          'beast-codex-card flex items-center gap-2.5 rounded-lg border p-2.5 text-left transition-colors',
                           isActive
                             ? 'border-primary bg-primary/12'
                             : mine

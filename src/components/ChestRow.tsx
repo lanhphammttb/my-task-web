@@ -117,8 +117,10 @@ export default function ChestRow({ date }: { date: string }) {
           return (
             <div
               key={c.rule.id}
+              data-chest-state={c.opened ? "opened" : canOpen ? "ready" : c.earned ? "history-locked" : "locked"}
+              data-chest-grade={c.rule.grade}
               className={cn(
-                "flex items-center gap-3 rounded-xl border p-3 transition-colors",
+                "chest-reward-frame flex items-center gap-3 rounded-xl border p-3 transition-colors",
                 canOpen && "shadow-[0_0_18px_-6px_var(--gold-glow)]",
                 c.opened && "opacity-55",
               )}

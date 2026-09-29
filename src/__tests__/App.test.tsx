@@ -49,6 +49,11 @@ describe('Ứng dụng web', () => {
 
     expect(await screen.findByRole('heading', { name: 'Hành Sự Đường' })).toBeDefined();
     expect((await screen.findAllByText('Chốt tài liệu bàn giao module thanh toán')).length).toBeGreaterThan(0);
+    await screen.findByRole('heading', { name: 'Việc của bạn' });
+    const quests = screen.getByRole('heading', { name: 'Nhật khoá tông môn' }).closest('section')!;
+    expect(quests.querySelector('#quests-body')?.hasAttribute('hidden')).toBe(true);
+    fireEvent.click(within(quests).getByRole('button', { name: /Mở rộng Nhật khoá tông môn/ }));
+    expect(quests.querySelector('#quests-body')?.hasAttribute('hidden')).toBe(false);
   });
 
   it('giữ một menu Bế Quan và không lặp nút chung ở sảnh', async () => {
@@ -173,8 +178,11 @@ describe('Ứng dụng web', () => {
     openPanel('Tiên Lộ');
 
     expect(await screen.findByRole('heading', { name: 'Tiên Lộ' })).toBeDefined();
-    // Bậc thang phải liệt kê đủ từ cảnh giới đầu tới đích phi thăng.
+    // Tóm tắt giữ đường tu luôn thấy; danh sách mười cảnh giới chỉ bung ra khi cần.
     expect((await screen.findAllByText('Luyện Khí')).length).toBeGreaterThan(0);
+    const routeToggle = await screen.findByRole('button', { name: 'Xem 10 cảnh giới' });
+    expect(screen.queryByText('Phi Thăng')).toBeNull();
+    fireEvent.click(routeToggle);
     expect(await screen.findByText('Phi Thăng')).toBeDefined();
 
     // Thành tựu nằm ở tab riêng từ khi Tiên Lộ bỏ lối cuộn một trang dài.
@@ -258,7 +266,10 @@ describe('Ứng dụng web', () => {
     expect(tabs.map((t) => t.textContent)).not.toContain('Tẩy tuỷ');
     for (const tab of tabs) {
       fireEvent.click(tab);
-      expect(document.getElementById(tab.getAttribute('aria-controls')!)).not.toBeNull();
+      expect(
+        document.getElementById(tab.getAttribute('aria-controls')!),
+        `Thiếu bảng nội dung cho tab ${tab.textContent}`,
+      ).not.toBeNull();
     }
     openPanel('Tiên Lộ');
     const path = await screen.findByRole('tablist', { name: 'Các mục trong Tiên Lộ' });

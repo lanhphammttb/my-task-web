@@ -159,6 +159,7 @@ export default function CelebrationLayer() {
       {celebration && (
         <motion.div
           key="celebration"
+          data-celebration={celebration.kind}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -172,7 +173,7 @@ export default function CelebrationLayer() {
             exit={{ scale: 0.9, y: 10, opacity: 0 }}
             transition={{ type: "spring", stiffness: 320, damping: 22 }}
             onClick={(e) => e.stopPropagation()}
-            className="glass-panel panel-solid corner-marks w-full max-w-sm overflow-hidden rounded-2xl text-center"
+            className="celebration-reward-frame glass-panel panel-solid corner-marks w-full max-w-sm overflow-hidden rounded-2xl text-center"
             style={{
               boxShadow: `0 0 0 1px ${tone}55, 0 24px 60px rgb(0 0 0 / 70%), 0 0 60px ${tone}33`,
             }}

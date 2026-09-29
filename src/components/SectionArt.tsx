@@ -19,6 +19,7 @@ export default function SectionArt({
   caption,
   tone,
   focus,
+  preview,
   children,
   className,
 }: {
@@ -33,6 +34,8 @@ export default function SectionArt({
    * giữa ra là được đúng một ô đen. Neo lại thì trúng chủ thể.
    */
   focus?: string;
+  /** A small Three.js prop preview for sections with a physical object. */
+  preview?: ReactNode;
   /** Chữ nhỏ dưới ô tranh, thường là tên nơi chốn */
   caption?: string;
   /** Màu viền và màu chữ chú thích, thường lấy theo tông của mục */
@@ -69,9 +72,15 @@ export default function SectionArt({
       </div>
 
       {children && (
-        <p className="text-muted-foreground min-w-48 flex-1 text-xs leading-relaxed">
+        <p className={cn("text-muted-foreground flex-1 text-xs leading-relaxed", preview ? "min-w-0" : "min-w-48")}>
           {children}
         </p>
+      )}
+
+      {preview && (
+        <div className="section-art-preview shrink-0" aria-hidden="true">
+          {preview}
+        </div>
       )}
     </div>
   );

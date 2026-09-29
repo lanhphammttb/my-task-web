@@ -1,3 +1,4 @@
+import { useLayoutEffect, useRef } from "react";
 import type { LucideIcon } from "lucide-react";
 import ArtImage from "./ArtImage";
 import { cn } from "@/lib/utils";
@@ -40,17 +41,48 @@ export default function KhuTabs({
   /** Nhãn trợ năng, ví dụ "Các mục trong Động Phủ" */
   nhan: string;
 }) {
+  const listRef = useRef<HTMLDivElement>(null);
+  const selectedRef = useRef<HTMLButtonElement>(null);
+
+  // Tab được mở từ hotspot trong căn phòng cũng phải cuộn vào tầm mắt; nếu
+  // không, trạng thái đổi nhưng mục đang chọn vẫn nằm ngoài màn hình ngang.
+  useLayoutEffect(() => {
+    const showSelected = () => {
+      const selected = selectedRef.current;
+      const list = listRef.current;
+      if (!selected || !list) return;
+      const viewport = list.getBoundingClientRect();
+      const item = selected.getBoundingClientRect();
+      const gutter = 8;
+      let next = list.scrollLeft;
+      if (item.left < viewport.left + gutter) next += item.left - viewport.left - gutter;
+      else if (item.right > viewport.right - gutter) next += item.right - viewport.right + gutter;
+      next = Math.max(0, Math.min(next, list.scrollWidth - list.clientWidth));
+      if (Math.abs(next - list.scrollLeft) < 1) return;
+      // Set scrollLeft directly: smooth scroll can be interrupted by touch
+      // scroll-snap on mobile, leaving the selected tab clipped at the edge.
+      list.scrollLeft = next;
+    };
+
+    showSelected();
+    window.addEventListener("resize", showSelected, { passive: true });
+    return () => window.removeEventListener("resize", showSelected);
+  }, [dang, tabs.length]);
+
   return (
     <div
       role="tablist"
       aria-label={nhan}
+      ref={listRef}
       className="khu-tabs"
     >
       {tabs.map((t) => (
         <button
           key={t.id}
           type="button"
+          id={`${t.id}-tab`}
           role="tab"
+          ref={t.id === dang ? selectedRef : undefined}
           aria-selected={t.id === dang}
           aria-controls={t.id}
           className={cn("khu-tab", t.id === dang && "khu-tab-dang")}

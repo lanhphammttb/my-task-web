@@ -18,6 +18,7 @@ export default function ChoiceCard({
   tone,
   leading,
   trailing,
+  gameState,
   children,
 }: {
   onClick: () => void;
@@ -29,6 +30,8 @@ export default function ChoiceCard({
   leading?: ReactNode;
   /** Nội dung nằm sát mép phải hàng tiêu đề, ví dụ giá tiền */
   trailing?: ReactNode;
+  /** Trạng thái lựa chọn theo tài nguyên game */
+  gameState?: "available" | "insufficient-resource";
   children?: ReactNode;
 }) {
   return (
@@ -36,7 +39,9 @@ export default function ChoiceCard({
       type="button"
       onClick={onClick}
       disabled={disabled}
+      data-game-state={gameState}
       className={cn(
+        "game-choice-card",
         "border-border bg-muted/30 hover:bg-muted hover:border-gold/45",
         "flex w-full min-w-0 items-center gap-3 rounded-lg border px-3 py-2.5 text-left",
         "transition-colors focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none",

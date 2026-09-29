@@ -78,3 +78,16 @@ it('updates an idle timer when preferences change and starts with the shown dura
   act(() => result.current.timer.toggle());
   expect(result.current.timer.seconds).toBe(2400);
 });
+
+it('keeps an active focus session through a reload', () => {
+  const first = renderHook(() => useFocusTimer(), { wrapper });
+  act(() => first.result.current.toggle());
+  const saved = JSON.parse(localStorage.getItem('my-task/focus-timer/v1')!);
+  expect(saved.started).toBe(true);
+  expect(saved.endsAt).toBeTypeOf('number');
+  first.unmount();
+
+  const restored = renderHook(() => useFocusTimer(), { wrapper });
+  expect(restored.result.current.inSession).toBe(true);
+  expect(restored.result.current.running).toBe(true);
+});

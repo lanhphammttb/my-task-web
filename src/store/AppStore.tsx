@@ -508,7 +508,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (!t) return false;
       const applied = setStatus(id, t.status === 'done' ? 'todo' : 'done');
       // Chỉ chúc mừng khi thật sự đã đổi trạng thái, không chúc mừng lúc bị chặn.
-      if (applied && t.status !== 'done') notify(`Hoàn thành: ${t.title}`);
+      if (applied && t.status !== 'done') {
+        notify(`Hoàn thành: ${t.title} · +${taskValue(t)} tu vi`);
+      }
       return applied;
     },
     [data.tasks, setStatus, notify],

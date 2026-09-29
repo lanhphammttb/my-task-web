@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { PROPS, monTiepTheo, dungTrongPhong, denSang } from "../lib/room";
+import { PROPS, monTiepTheo, dungTrongPhong, denSang, theDaoNhan } from "../lib/room";
 import { emptyData } from "../lib/storage";
 import { todayKey } from "../lib/date";
 import type { AppData, Task } from "../types";
@@ -17,6 +17,15 @@ import type { AppData, Task } from "../types";
 const oBac = (n: number): AppData => ({ ...emptyData(), caveLevel: n });
 
 describe("đồ trong động phủ", () => {
+  it("bồ đoàn đi tới Bế Quan chung, không mở một mục Tĩnh thất riêng", () => {
+    expect(PROPS.find((p) => p.file === "bo-doan")?.anchor).toBe("focus");
+  });
+
+  it("đạo nhân ngồi ngay trên bồ đoàn khi ở màn chính căn phòng", () => {
+    const pose = theDaoNhan(oBac(1), "cave-stone");
+    expect(pose).toMatchObject({ file: "ngoi-thien", x: 50, day: 71 });
+  });
+
   it("không bao giờ gợi ý thứ đã ở sau lưng", () => {
     for (const bac of [1, 2, 3, 4, 5]) {
       const d = oBac(bac);

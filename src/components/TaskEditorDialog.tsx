@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Plus, Trash2, TriangleAlert, X } from "lucide-react";
+import { ChevronDown, Plus, ScrollText, Trash2, TriangleAlert, X } from "lucide-react";
 import type { Priority, Recurrence, Subtask, Task } from "../types";
 import { todayKey } from "../lib/date";
 import { uid } from "../lib/storage";
@@ -73,6 +73,7 @@ export default function TaskEditorDialog({
   const { addTask, updateTask, removeTask, data } = useApp();
   const [draft, setDraft] = useState<Draft>(blank(defaultDate ?? todayKey()));
   const [subInput, setSubInput] = useState("");
+  const [advancedOpen, setAdvancedOpen] = useState(true);
   /** Đã bấm lưu ít nhất một lần - trước đó không báo lỗi "chưa có tên". */
   const [tried, setTried] = useState(false);
 
@@ -80,6 +81,11 @@ export default function TaskEditorDialog({
     if (!open) return;
     setSubInput("");
     setTried(false);
+    const hasAdvancedDetails = Boolean(
+      task &&
+        (task.startTime || task.deadline || task.recurrence !== "none" || task.goalId || task.tags.length || task.note || task.subtasks.length),
+    );
+    setAdvancedOpen(window.innerWidth >= 640 || hasAdvancedDetails);
     setDraft(
       task
         ? {
@@ -153,15 +159,17 @@ export default function TaskEditorDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[92vh] gap-0 overflow-y-auto sm:max-w-[640px]">
-        <DialogHeader>
+      <DialogContent data-task-editor-state={task ? "editing" : "inscribing"} className="task-editor-mobile task-editor-inscribing max-h-[92vh] gap-0 overflow-hidden sm:max-w-[640px]">
+        <DialogHeader className="task-editor-heading">
+          <p className="task-editor-eyebrow"><ScrollText className="size-3.5" /> {task ? "HIỆU CHỈNH NHIỆM VỤ" : "KHẮC LỆNH HÀNH SỰ"}</p>
           <DialogTitle>{task ? "Sửa nhiệm vụ" : "Nhiệm vụ mới"}</DialogTitle>
-          <DialogDescription className="sr-only sm:not-sr-only">
+          <DialogDescription>
             Càng cụ thể càng dễ bắt tay vào làm. Đặt hạn chót để app nhắc bạn
             đúng lúc.
           </DialogDescription>
         </DialogHeader>
 
+        <div className="task-editor-scroll">
         <div className="grid gap-4 py-5 sm:grid-cols-2">
           <div className="grid gap-2 sm:col-span-2">
             <Label htmlFor="task-title">Tên nhiệm vụ *</Label>
@@ -177,8 +185,8 @@ export default function TaskEditorDialog({
             />
           </div>
 
-          <div className="grid gap-2 sm:col-span-2">
-            <Label>Mức ưu tiên</Label>
+          <fieldset className="grid gap-2 sm:col-span-2">
+            <legend className="text-sm leading-none font-medium">Mức ưu tiên</legend>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               {PRIORITY_ORDER.map((p) => {
                 const meta = PRIORITY_UI[p];
@@ -187,6 +195,8 @@ export default function TaskEditorDialog({
                   <button
                     key={p}
                     type="button"
+                    data-task-priority={p}
+                    aria-pressed={active}
                     onClick={() => set("priority", p)}
                     className={cn(
                       "flex items-center justify-center gap-1.5 rounded-lg border px-2 py-2 text-xs font-medium transition-all",
@@ -202,7 +212,7 @@ export default function TaskEditorDialog({
                 );
               })}
             </div>
-          </div>
+          </fieldset>
 
           <div className="grid gap-2">
             <Label htmlFor="task-date">Ngày thực hiện</Label>
@@ -214,6 +224,30 @@ export default function TaskEditorDialog({
             />
           </div>
 
+          <div className="grid gap-2">
+            <Label htmlFor="task-estimate">Dự kiến (phút)</Label>
+            <Input
+              id="task-estimate"
+              type="number"
+              min={0}
+              step={5}
+              value={draft.estimateMin}
+              onChange={(e) => set("estimateMin", e.target.value)}
+            />
+          </div>
+
+          <button
+            type="button"
+            className="task-editor-advanced-toggle sm:hidden"
+            aria-expanded={advancedOpen}
+            aria-controls="task-editor-advanced"
+            onClick={() => setAdvancedOpen((value) => !value)}
+          >
+            <span><ScrollText className="size-4" /> Tuỳ chọn chi tiết</span>
+            <ChevronDown className={cn("size-4 transition-transform", advancedOpen && "rotate-180")} />
+          </button>
+
+          <div id="task-editor-advanced" className="task-editor-advanced grid gap-4 sm:col-span-2 sm:grid-cols-2" hidden={!advancedOpen}>
           <div className="grid gap-2">
             <Label htmlFor="task-start">Giờ bắt đầu</Label>
             <Input
@@ -235,24 +269,12 @@ export default function TaskEditorDialog({
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="task-estimate">Dự kiến (phút)</Label>
-            <Input
-              id="task-estimate"
-              type="number"
-              min={0}
-              step={5}
-              value={draft.estimateMin}
-              onChange={(e) => set("estimateMin", e.target.value)}
-            />
-          </div>
-
-          <div className="grid gap-2">
-            <Label>Lặp lại</Label>
+            <Label htmlFor="task-recurrence">Lặp lại</Label>
             <Select
               value={draft.recurrence}
               onValueChange={(v) => set("recurrence", v as Recurrence)}
             >
-              <SelectTrigger>
+              <SelectTrigger id="task-recurrence" className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -266,18 +288,18 @@ export default function TaskEditorDialog({
           </div>
 
           <div className="grid gap-2">
-            <Label>Thuộc mục tiêu</Label>
+            <Label htmlFor="task-goal">Thuộc mục tiêu</Label>
             <Select
               value={draft.goalId}
               onValueChange={(v) => set("goalId", v)}
             >
-              <SelectTrigger>
+              <SelectTrigger id="task-goal" className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="none">Không thuộc mục tiêu nào</SelectItem>
                 {data.goals
-                  .filter((g) => !g.archived)
+                  .filter((g) => !g.archived || g.id === draft.goalId)
                   .map((g) => (
                     <SelectItem key={g.id} value={g.id}>
                       <span className="flex items-center gap-2">
@@ -285,7 +307,7 @@ export default function TaskEditorDialog({
                           className="size-2 rounded-full"
                           style={{ background: g.color }}
                         />
-                        {g.title}
+                        {g.title}{g.archived && " · Đã lưu trữ"}
                       </span>
                     </SelectItem>
                   ))}
@@ -314,12 +336,13 @@ export default function TaskEditorDialog({
             />
           </div>
 
-          <div className="grid gap-2 sm:col-span-2">
-            <Label>Các bước nhỏ</Label>
+          <fieldset className="grid gap-2 sm:col-span-2">
+            <legend className="text-sm leading-none font-medium">Các bước nhỏ</legend>
             <div className="space-y-2">
-              {draft.subtasks.map((s) => (
+              {draft.subtasks.map((s, index) => (
                 <div key={s.id} className="flex gap-2">
                   <Input
+                    aria-label={`Bước nhỏ ${index + 1}`}
                     value={s.title}
                     onChange={(e) =>
                       set(
@@ -333,7 +356,7 @@ export default function TaskEditorDialog({
                   <Button
                     variant="ghost"
                     size="icon"
-                    aria-label="Xoá bước"
+                    aria-label={`Xoá bước ${index + 1}`}
                     onClick={() =>
                       set(
                         "subtasks",
@@ -347,6 +370,7 @@ export default function TaskEditorDialog({
               ))}
               <div className="flex gap-2">
                 <Input
+                  aria-label="Thêm bước nhỏ"
                   value={subInput}
                   onChange={(e) => setSubInput(e.target.value)}
                   onKeyDown={(e) => {
@@ -367,11 +391,12 @@ export default function TaskEditorDialog({
                 </Button>
               </div>
             </div>
+          </fieldset>
           </div>
         </div>
 
         {issues.length > 0 && (
-          <ul className="mb-2 space-y-1.5">
+          <ul role="alert" className="task-editor-validation mb-2 space-y-1.5">
             {issues.map((v) => (
               <li
                 key={v.code}
@@ -388,8 +413,9 @@ export default function TaskEditorDialog({
             ))}
           </ul>
         )}
+        </div>
 
-        <DialogFooter className="sticky bottom-0 z-10 -mx-4 -mb-4 mt-2 border-t border-border bg-popover px-4 pt-3 pb-4 sm:justify-between">
+        <DialogFooter className="task-editor-actions -mx-4 -mb-4 border-t border-border bg-popover px-4 pt-3 pb-4 sm:justify-between">
           {task ? (
             <Button
               variant="ghost"
@@ -408,7 +434,7 @@ export default function TaskEditorDialog({
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               Huỷ
             </Button>
-            <Button onClick={submit} disabled={blockers.length > 0}>
+            <Button className="task-editor-save" data-save-state={blockers.length > 0 ? "locked" : "ready"} onClick={submit} disabled={blockers.length > 0}>
               {task ? "Lưu thay đổi" : "Thêm nhiệm vụ"}
             </Button>
           </div>

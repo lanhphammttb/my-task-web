@@ -3,6 +3,7 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import App from "../App";
 import { seedData } from "../lib/seed";
 import { aphorismOfDay } from "../lib/elders";
+import { todayKey } from "../lib/date";
 
 /**
  * Sảnh trên điện thoại là một cây khác, nên phải canh riêng.
@@ -54,13 +55,14 @@ describe("sảnh trên điện thoại", () => {
     expect(screen.queryByRole("heading", { name: "Việc hôm nay" })).toBeNull();
   });
 
-  it("không lặp lại thứ thanh đầu đã nói", () => {
+  it("không lặp vòng tu vi nhưng vẫn giữ cao nhân trong thế giới", () => {
     render(<App />);
     const sanh = screen.getByRole("main", { name: "Sảnh tu luyện" });
     // Thanh đầu đã ghi cảnh giới và thanh tu vi, nên sảnh không dựng vòng nữa.
     expect(within(sanh).queryByText(/^Tầng \d+\/\d+$/)).toBeNull();
-    // Châm ngôn tiền bối cũng vậy: một màn điện thoại không chứa nổi cả hai.
-    expect(within(sanh).queryByText(aphorismOfDay().text, { exact: false })).toBeNull();
+    const teaching = within(sanh).getByLabelText("Lời tiền bối");
+    expect(within(teaching).getByText(aphorismOfDay().text, { exact: false })).toBeDefined();
+    expect(within(teaching).getByRole("img", { name: /Chân dung/ })).toBeDefined();
   });
 
   it("mỗi việc có hai lối: đánh dấu xong, và vào bế quan", () => {
@@ -95,11 +97,63 @@ describe("sảnh trên điện thoại", () => {
     expect(sau.length).toBeLessThan(truoc.length + 1);
   });
 
-  it("dãy nút tròn vẫn là lối đi duy nhất tới các khu", () => {
+  it("đổi khu bằng thanh đáy và giữ lối về Sơn Môn", async () => {
     render(<App />);
-    const rail = screen.getByRole("navigation", {
-      name: "Các nơi trong tiên giới",
-    });
-    expect(within(rail).getAllByRole("button")).toHaveLength(6);
+    expect(screen.queryByRole("navigation", { name: "Các nơi trong tiên giới" })).toBeNull();
+    const nav = screen.getByRole("navigation", { name: "Thanh điều hướng chính" });
+    expect(within(nav).getAllByRole("button")).toHaveLength(8);
+    fireEvent.click(within(nav).getByRole("button", { name: "Hành Sự" }));
+    expect(await screen.findByRole("dialog", { name: "Hành Sự Đường" })).toBeDefined();
+    expect(within(nav).getByRole("button", { name: "Hành Sự" }).getAttribute("aria-current")).toBe("page");
+    fireEvent.click(within(nav).getByRole("button", { name: "Sơn Môn" }));
+    expect(screen.getByRole("main", { name: "Sảnh tu luyện" }).hasAttribute("inert")).toBe(false);
+  });
+
+  it("giữ một hàng mục lục và đưa bồ đoàn về đúng màn Bế Quan chung", async () => {
+    render(<App />);
+    const nav = screen.getByRole("navigation", { name: "Thanh điều hướng chính" });
+    fireEvent.click(within(nav).getByRole("button", { name: "Động Phủ" }));
+
+    const cave = await screen.findByRole("dialog", { name: "Động Phủ" });
+    await within(cave).findByRole("tablist", { name: "Các mục trong Động Phủ" });
+    expect(within(cave).queryByRole("tab", { name: "Tĩnh thất" })).toBeNull();
+    expect(within(cave).queryByRole("group", { name: "Thao tác trong động phủ" })).toBeNull();
+    fireEvent.click(within(cave).getByRole("tab", { name: "Đan đường" }));
+    expect(within(cave).getByRole("tab", { name: "Đan đường" }).getAttribute("aria-selected")).toBe("true");
+    expect(within(cave).getByRole("heading", { name: "Đan đường" })).toBeDefined();
+
+    fireEvent.click(within(cave).getByRole("button", { name: "Bồ đoàn — mở Bế Quan" }));
+
+    expect(await screen.findByRole("dialog", { name: "Bế Quan" })).toBeDefined();
+    expect(screen.queryByRole("dialog", { name: "Động Phủ" })).toBeNull();
+    expect(await screen.findByRole("heading", { name: "Bế quan tu luyện" })).toBeDefined();
+  });
+
+  it("hiện mọi khu trực tiếp và chỉ có một nút Cài đặt", async () => {
+    render(<App />);
+    expect(screen.getAllByRole("button", { name: "Cài đặt" })).toHaveLength(1);
+    const nav = screen.getByRole("navigation", { name: "Thanh điều hướng chính" });
+    expect(within(nav).queryByRole("button", { name: "Thêm" })).toBeNull();
+    for (const name of ["Tiên Lộ", "Đại Nguyện", "Tu Hành Lục"]) {
+      expect(within(nav).getByRole("button", { name })).toBeDefined();
+    }
+    fireEvent.click(within(nav).getByRole("button", { name: "Đại Nguyện" }));
+    expect(await screen.findByRole("dialog", { name: "Đại Nguyện" })).toBeDefined();
+  });
+
+  it("báo phần thưởng đang chờ và dẫn thẳng tới nơi xử lý", async () => {
+    const data = seedData();
+    data.tasks[0] = {
+      ...data.tasks[0],
+      date: todayKey(),
+      status: "done",
+      completedAt: new Date().toISOString(),
+      completedOn: todayKey(),
+    };
+    localStorage.setItem("my-task-planner/v1", JSON.stringify(data));
+    render(<App />);
+    const signal = screen.getByRole("button", { name: /hòm kỳ ngộ đang chờ mở/i });
+    fireEvent.click(signal);
+    expect(await screen.findByRole("dialog", { name: "Hành Sự Đường" })).toBeDefined();
   });
 });

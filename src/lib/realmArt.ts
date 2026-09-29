@@ -1,9 +1,8 @@
 /**
  * Hằng số ảnh nền cảnh giới.
  *
- * Tách khỏi `HubScene.tsx` vì bốn tệp khác cũng dùng, mà tệp component thì chỉ
+ * Tách khỏi `HubScene.tsx` vì nhiều tệp khác cũng dùng, mà tệp component thì chỉ
  * nên xuất component - lẫn hằng số vào là Fast Refresh mất tác dụng cho cả tệp.
- * Cùng chỗ với `lib/icons.ts` và `lib/sky.ts` cho nhất quán.
  */
 
 /**

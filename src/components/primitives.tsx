@@ -86,8 +86,9 @@ export function Section({
   return (
     <section
       id={id}
+      data-panel-tone={tone}
       className={cn(
-        "scroll-mt-4 rounded-xl border p-4 sm:p-5",
+        "game-panel scroll-mt-4 rounded-xl border p-4 sm:p-5",
         tone === "default" && "border-border bg-card/80 backdrop-blur-[2px]",
         tone === "accent" &&
           "border-primary/35 bg-primary/[0.07] backdrop-blur-[2px]",
@@ -110,7 +111,7 @@ export function Section({
                 onClick={() => setOpen((v) => !v)}
                 aria-expanded={open}
                 aria-controls={id ? `${id}-body` : undefined}
-                className="text-muted-foreground hover:text-gold mt-0.5 shrink-0 transition-colors"
+                className="game-panel-collapse mt-0.5 shrink-0"
               >
                 <ChevronDown
                   className={cn(
@@ -134,7 +135,7 @@ export function Section({
                         ? "text-destructive"
                         : tone === "accent"
                           ? "text-primary"
-                          : "text-muted-foreground",
+                          : "text-gold",
                     )}
                   />
                 )}
@@ -185,7 +186,7 @@ export function EmptyState({
   return (
     <div
       className={cn(
-        "border-border/70 rounded-xl border border-dashed px-4 py-8 text-center",
+        "game-empty-state border-border/70 rounded-xl border px-4 py-8 text-center",
         className,
       )}
     >
@@ -230,12 +231,12 @@ export function Meter({
     Math.max(0, Math.min(1, Number.isFinite(value) ? value : 0)) * 100;
   return (
     <div
-      className={cn("bg-muted w-full overflow-hidden rounded-full", className)}
+      className={cn("game-meter-track bg-muted w-full overflow-hidden rounded-full", className)}
       style={{ height }}
     >
       <div
         className={cn(
-          "bg-primary h-full rounded-full transition-[width] duration-700 ease-out",
+          "game-meter-fill bg-primary h-full rounded-full transition-[width] duration-700 ease-out",
           barClassName,
         )}
         style={{ width: `${pct}%` }}
@@ -261,15 +262,15 @@ export function StatTile({
   return (
     <div
       className={cn(
-        "border-border bg-card/80 rounded-lg border p-4",
+        "game-stat-tile rounded-lg border p-4",
         className,
       )}
     >
-      <div className="text-muted-foreground flex items-center gap-1.5 text-xs">
-        {Icon && <Icon className="size-3.5" />}
+      <div className="game-stat-heading text-muted-foreground flex items-center gap-1.5 text-xs">
+        {Icon && <span className="game-stat-crest"><Icon className="size-3.5" /></span>}
         {label}
       </div>
-      <div className="tabular mt-1.5 text-2xl font-bold tracking-tight">
+      <div className="game-stat-value tabular mt-1.5 text-2xl font-bold tracking-tight">
         {value}
       </div>
       {hint && <div className="text-muted-foreground text-xs">{hint}</div>}

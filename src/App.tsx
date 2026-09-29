@@ -35,10 +35,10 @@ import HubCenter from "./components/hub/HubCenter";
 import WorldRail from "./components/hub/WorldRail";
 import OverlayPanel from "./components/hub/OverlayPanel";
 import WorkSanctuary from "./components/hub/WorkSanctuary";
+import MobileNavigation from "./components/hub/MobileNavigation";
 import FooterMenu from "./components/hub/FooterMenu";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { skyForRealm } from "./lib/sky";
 import { cn } from "@/lib/utils";
 import { hasKeyboardLayer } from "./lib/keyboard";
 const TodayView = lazy(() => import("./views/TodayView"));
@@ -268,7 +268,8 @@ function Shell() {
   return (
     <div
       className={cn(
-        "relative h-full min-h-0 overflow-hidden",
+        "relative isolate h-full min-h-0 overflow-hidden",
+        laDienThoai && "mobile-shell",
         bigMoment && "world-shake",
       )}
     >
@@ -277,24 +278,30 @@ function Shell() {
           giác đang bước sang một chỗ khác. */}
       <HubScene
         realmIndex={c.realmIndex}
-        override={view === "cave" ? nenPhong(data.caveLevel) : undefined}
-        overrideFallback={view === "cave" ? nenPhongLui(data.caveLevel) : undefined}
+        override={laDienThoai && !view ? "/art/world/son-mon-dawn-v1.webp" : view === "cave" ? nenPhong(data.caveLevel) : undefined}
+        overrideFallback={laDienThoai && !view ? "/art/realm/01-luyen-khi.jpg" : view === "cave" ? nenPhongLui(data.caveLevel) : undefined}
+        overridePosition={laDienThoai && !view ? "50% 50%" : undefined}
+        className={cn(
+          laDienThoai && !view && "mobile-home-scene",
+          !laDienThoai && !view && "desktop-home-scene",
+        )}
       />
-      {/* Lớp 3D phủ lên nền ảnh, tô theo màu cảnh giới đang tu */}
-      <Suspense fallback={null}>
+      {/* Three.js phủ nhẹ cả web lẫn mobile; động phủ giữ nguyên cảnh trong nhà. */}
+      {view !== "cave" && <Suspense fallback={null}>
         <Scene3DBackdrop
           color={c.realm.color}
-          sky={skyForRealm(c.realmIndex)}
           light={!isDark}
           // Mở bảng ra là thế giới lùi lại một bước, nhường mắt cho nội dung.
-          /* Vào động phủ thì tắt hẳn: lớp 3D vẽ đè lên ảnh nền, để nguyên
-             thì đứng trong nhà vẫn thấy núi non bên ngoài. */
-          intensity={view === "cave" ? 0 : panelOpen ? 0.38 : 1}
-          className="pointer-events-none fixed inset-0 -z-10"
+          intensity={panelOpen ? 0.38 : 1}
+          // Đặt scene trong stacking context ở z-0: HubScene nằm tại -z-20,
+          // còn HUD/nội dung đều >= z-10, nên WebGL hiện trên tranh nền mà không phủ UI.
+          className={cn("pointer-events-none fixed inset-0 z-0 game-scene-3d", laDienThoai && "mobile-scene-3d")}
         />
-      </Suspense>
+      </Suspense>}
 
-      <HeaderHUD onSettings={() => setSettingsOpen(true)} />
+      <div inert={laDienThoai && panelOpen} aria-hidden={laDienThoai && panelOpen}>
+        <HeaderHUD onSettings={() => setSettingsOpen(true)} />
+      </div>
       {storageError && <div role="alert" className="fixed inset-x-2 top-2 z-[100] rounded-lg border bg-background p-3 text-sm shadow-lg">
         <p>{storageError}</p>
         <button className="mr-4 underline" onClick={() => { try { if (storageLoadError()) exportStoredFile(); else exportFile(data); } catch { /* Keep the error visible if storage is inaccessible. */ } }}>Xuất bản sao JSON</button>
@@ -314,7 +321,7 @@ function Shell() {
           "hub-scroll absolute inset-x-0 z-10 flex flex-col items-center overscroll-contain transition-opacity duration-300",
           // Sảnh điện thoại tự vừa màn, không có gì để cuộn; bật cuộn ở đó chỉ
           // tạo ra cái thanh nảy lên nảy xuống khi chạm.
-          laDienThoai ? "overflow-hidden" : "overflow-y-auto",
+          "overflow-x-hidden overflow-y-auto",
           panelOpen && "pointer-events-none opacity-0",
         )}
       >
@@ -346,7 +353,7 @@ function Shell() {
           Đặt NGOÀI khu cuộn để nó đứng yên khi nội dung cuộn, và LUÔN hiện kể
           cả lúc bảng đang mở: ẩn đi thì muốn sang nơi khác phải đóng bảng rồi
           mở lại, đúng kiểu lạc đường mà cả đợt sửa này sinh ra để dẹp. */}
-      <WorldRail view={view} onSelect={(v, at) => { if (v === "today") setDate(todayKey()); open(v, at); }} />
+      {!laDienThoai && <WorldRail view={view} onSelect={(v, at) => { if (v === "today") setDate(todayKey()); open(v, at); }} />}
 
       {/* ------------------------------------------------------ bảng phủ */}
       <AnimatePresence mode="wait">
@@ -394,7 +401,13 @@ function Shell() {
             onClose={closePanel}
           >
             <WorkSanctuary view={view} onSelect={open}>
-            <Suspense fallback={<p role="status">Đang tải…</p>}>
+            <Suspense fallback={
+              <div className="game-loading" role="status">
+                <span className="game-loading-seal" aria-hidden="true">✧</span>
+                <span>Đang mở sổ tu hành…</span>
+                <small>Linh khí đang hội tụ</small>
+              </div>
+            }>
             {view === "today" && (
               <TodayView
                 date={date}
@@ -425,28 +438,24 @@ function Shell() {
             {view === "focus" && (
               <FocusView onNew={openNew} />
             )}
-            {view === "cave" && <CaveView />}
+            {view === "cave" && <CaveView onMeditate={() => open("focus")} />}
             {view === "awards" && (
               <AwardsView onTribulation={() => setTribulationOpen(true)} />
             )}
-            {view === "stats" && <StatsView />}
+            {view === "stats" && (
+              <StatsView onOpenDay={openDay} onOpenGoals={() => open("goals")} />
+            )}
             </Suspense>
             </WorkSanctuary>
           </OverlayPanel>
         ) : null}
       </AnimatePresence>
 
-      {/*
-        Điện thoại + đang mở một khu: bỏ hẳn thanh đáy.
-
-        Tấm trượt bám tới mép dưới màn, nên thanh đáy nằm đè lên nội dung của
-        nó. Mà lúc ấy thanh đáy cũng không còn việc gì: "Sơn Môn" là về sảnh -
-        tấm trượt đã có nút đóng và phím Escape; "+" thêm việc thì đã có trong
-        từng khu.
-
-        Vẫn giữ khi đang TRA CỨU, vì ô tìm kiếm nằm chính trong thanh ấy.
-      */}
-      {!(laDienThoai && view !== null) && (
+      {laDienThoai ? (
+        <MobileNavigation view={view} searching={searching} query={query} onQuery={setQuery}
+          onSelect={(v) => { if (v === null) closePanel(); else { if (v === "today") setDate(todayKey()); open(v); } }}
+          alert={chestAlert} />
+      ) : (
       <FooterMenu
         view={view}
         searching={searching}
