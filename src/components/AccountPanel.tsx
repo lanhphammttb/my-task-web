@@ -81,6 +81,12 @@ export default function AccountPanel() {
           <TrangThaiChip />
         </div>
 
+        {sync.status === "mat-mang" && sync.loi && (
+          <p role="status" className="text-warning break-words text-xs leading-relaxed">
+            Lỗi đồng bộ gần nhất: {sync.loi}
+          </p>
+        )}
+
         <p className="text-muted-foreground text-xs leading-relaxed">
           Máy chủ đang giữ sổ ghi. Mỗi việc bạn làm xong được gửi lên và ký ở đó
           bằng khoá mà trình duyệt không có, nên tu vi không còn sửa được từ máy
@@ -255,7 +261,7 @@ export function TrangThaiChip() {
     "da-noi": { chu: "đã đồng bộ", mau: "text-success" },
     "dang-gui": { chu: `đang gửi ${sync.pending}`, mau: "text-gold" },
     "mat-mang": {
-      chu: `mất mạng${sync.pending ? ` · ${sync.pending} chờ` : ""}`,
+      chu: `chưa đồng bộ${sync.pending ? ` · ${sync.pending} chờ` : ""}`,
       mau: "text-warning",
     },
   };

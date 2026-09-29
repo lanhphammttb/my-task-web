@@ -35,7 +35,7 @@ export default function HeaderHUD({ onSettings }: { onSettings: () => void }) {
     "dang-noi": { label: "Đang kết nối máy chủ", icon: CloudUpload, tone: "text-gold" },
     "da-noi": { label: "Đã đồng bộ", icon: Cloud, tone: "text-success" },
     "dang-gui": { label: `Đang gửi ${sync.pending} thay đổi`, icon: CloudUpload, tone: "text-gold" },
-    "mat-mang": { label: `Mất mạng${sync.pending ? ` · ${sync.pending} thay đổi đang chờ` : ""}`, icon: CloudOff, tone: "text-warning" },
+    "mat-mang": { label: `Chưa đồng bộ${sync.pending ? ` · ${sync.pending} chờ` : ""}`, icon: CloudOff, tone: "text-warning" },
   }[sync.status];
   const SyncIcon = syncMeta.icon;
   // Ảnh đại diện đổi theo bốn mốc cảnh giới; chưa có file thì dùng ảnh chung.
@@ -127,7 +127,7 @@ export default function HeaderHUD({ onSettings }: { onSettings: () => void }) {
           <span
             role="status"
             aria-label={`Đồng bộ: ${syncMeta.label}`}
-            title={syncMeta.label}
+            title={sync.status === "mat-mang" && sync.loi ? `${syncMeta.label} — ${sync.loi}` : syncMeta.label}
             className={`glass-panel sync-indicator flex min-h-11 items-center gap-1.5 rounded-full px-2.5 text-[10px] font-semibold ${syncMeta.tone}`}
           >
             <SyncIcon className={sync.status === "dang-noi" || sync.status === "dang-gui" ? "size-3.5 animate-pulse" : "size-3.5"} />

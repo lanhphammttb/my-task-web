@@ -264,6 +264,7 @@ export function useServerSync(
       const snapshot = banServer.current;
       apply.current(() => snapshot);
     }
+    setLoi(null);
     authenticated.current = true;
     setStatus('da-noi');
     await day();
@@ -283,9 +284,11 @@ export function useServerSync(
       if (err instanceof ApiError && err.status === 401) {
         authenticated.current = false;
         setUser(null);
+        setLoi(null);
         setStatus('chua-dang-nhap');
       } else {
         if (!owner.current) { const cached = lastUser(); if (cached) attach(cached); }
+        setLoi(err instanceof Error ? err.message : 'Không kết nối được tới máy chủ');
         setStatus('mat-mang');
       }
     } finally { if (connecting.current === connection) connecting.current = null; }
