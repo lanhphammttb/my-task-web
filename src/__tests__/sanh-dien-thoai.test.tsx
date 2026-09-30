@@ -115,6 +115,9 @@ describe("sảnh trên điện thoại", () => {
     fireEvent.click(screen.getByRole("button", { name: "Ghi việc" }));
     const taskTitle = await screen.findByRole("textbox", { name: /Tên nhiệm vụ/ });
     expect(document.activeElement).not.toBe(taskTitle);
+    const taskDialog = document.querySelector<HTMLElement>('[data-slot="dialog-content"].task-editor-mobile');
+    expect(taskDialog?.style.getPropertyValue("--dialog-left-inset")).toBe("0px");
+    expect(taskDialog?.style.getPropertyValue("--dialog-right-inset")).toBe("0px");
     fireEvent.click(screen.getByRole("button", { name: "Huỷ" }));
 
     const nav = screen.getByRole("navigation", { name: "Thanh điều hướng chính" });
@@ -123,6 +126,9 @@ describe("sảnh trên điện thoại", () => {
     fireEvent.click(await within(vows).findByRole("button", { name: "Mục tiêu mới" }));
     const goalTitle = await screen.findByRole("textbox", { name: /Tên mục tiêu/ });
     expect(document.activeElement).not.toBe(goalTitle);
+    const goalDialog = document.querySelector<HTMLElement>('[data-slot="dialog-content"].task-editor-mobile');
+    expect(goalDialog?.style.getPropertyValue("--dialog-left-inset")).toBe("0px");
+    expect(goalDialog?.style.getPropertyValue("--dialog-right-inset")).toBe("0px");
   });
 
   it("giữ một hàng mục lục và đưa bồ đoàn về đúng màn Bế Quan chung", async () => {
