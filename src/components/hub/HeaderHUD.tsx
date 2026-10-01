@@ -1,11 +1,11 @@
-import { CloudOff, Cloud, CloudUpload, Flame, Lock, Moon, ShieldAlert, Sun } from "lucide-react";
+import { CloudOff, Cloud, CloudUpload, Flame, HardDrive, Lock, Moon, ShieldAlert, Sun } from "lucide-react";
 import { useApp } from "../../store/AppStore";
 import { cultivationOf } from "../../lib/cultivation";
 import { effectiveXp, progressOf, stoneBalance } from "../../lib/economy";
 import { currentStreak } from "../../lib/stats";
 import { PILL_ORDER } from "../../lib/pills";
 import { railSrc } from "../../lib/icons";
-import { useRef } from "react";
+import { useRef, type CSSProperties } from "react";
 import { useCountUp } from "../../lib/useCountUp";
 import ArtImage from "../ArtImage";
 import { useChromeVar } from "./useChromeVar";
@@ -30,12 +30,18 @@ export default function HeaderHUD({ onSettings }: { onSettings: () => void }) {
   const intoShown = useCountUp(c.into);
   const isDark = data.settings.theme === "dark";
   const syncMeta = {
-    tat: { label: "Dữ liệu lưu trên máy", icon: Cloud, tone: "text-muted-foreground" },
+    // Không đồng bộ thì đừng vẽ đám mây: dữ liệu nằm trên ổ máy này.
+    tat: { label: "Dữ liệu lưu trên máy", icon: HardDrive, tone: "text-muted-foreground" },
     "chua-dang-nhap": { label: "Chưa đăng nhập đồng bộ", icon: Cloud, tone: "text-muted-foreground" },
     "dang-noi": { label: "Đang kết nối máy chủ", icon: CloudUpload, tone: "text-gold" },
     "da-noi": { label: "Đã đồng bộ", icon: Cloud, tone: "text-success" },
     "dang-gui": { label: `Đang gửi ${sync.pending} thay đổi`, icon: CloudUpload, tone: "text-gold" },
-    "mat-mang": { label: `Chưa đồng bộ${sync.pending ? ` · ${sync.pending} chờ` : ""}`, icon: CloudOff, tone: "text-warning" },
+    "mat-mang": { label: `Mất mạng${sync.pending ? ` · ${sync.pending} chờ` : ""}`, icon: CloudOff, tone: "text-warning" },
+    "loi-may-chu": { label: `Lỗi máy chủ${sync.pending ? ` · ${sync.pending} chờ` : ""}`, icon: CloudOff, tone: "text-warning" },
+    "khong-tuong-thich": { label: "Máy chủ lệch phiên bản", icon: CloudOff, tone: "text-destructive" },
+    "het-phien": { label: `Phiên hết hạn${sync.pending ? ` · ${sync.pending} chờ` : ""}`, icon: CloudOff, tone: "text-warning" },
+    "lenh-ket": { label: "Thao tác bị kẹt", icon: CloudOff, tone: "text-destructive" },
+    "lech-gio": { label: "Đồng hồ máy lệch", icon: CloudOff, tone: "text-warning" },
   }[sync.status];
   const SyncIcon = syncMeta.icon;
   // Ảnh đại diện đổi theo bốn mốc cảnh giới; chưa có file thì dùng ảnh chung.
@@ -57,7 +63,7 @@ export default function HeaderHUD({ onSettings }: { onSettings: () => void }) {
             className="border-gold/70 size-10 rounded-full border object-cover sm:size-11"
           />
           <span
-            className="border-background absolute -right-0.5 -bottom-0.5 grid size-4.5 place-items-center rounded-full border text-[9px] font-bold text-black"
+            className="border-background absolute -right-0.5 -bottom-0.5 grid size-4.5 place-items-center rounded-full border text-[10px] font-bold text-black"
             style={{ background: c.realm.color }}
           >
             {c.ascended ? "仙" : c.tier}
@@ -69,12 +75,10 @@ export default function HeaderHUD({ onSettings }: { onSettings: () => void }) {
             <strong className="font-title truncate text-[12px] font-bold tracking-wide">
               {data.settings.daoName || "Vô Danh Đạo Hữu"}
             </strong>
+            {/* Màu cảnh giới đi qua biến CSS: theme sáng tự sẫm lại cho đủ tương phản (.realm-chip). */}
             <span
-              className="shrink-0 rounded-sm px-1.5 py-px text-[9.5px] font-bold"
-              style={{
-                background: `color-mix(in oklab, ${c.realm.color} 22%, transparent)`,
-                color: c.realm.color,
-              }}
+              className="realm-chip shrink-0 rounded-sm px-1.5 py-px text-[10px] font-bold"
+              style={{ "--realm": c.realm.color } as CSSProperties}
             >
               {c.ascended ? "PHI THĂNG" : `${c.realm.name} ${c.tier}`}
             </span>
@@ -91,7 +95,7 @@ export default function HeaderHUD({ onSettings }: { onSettings: () => void }) {
             <div className="hud-bar h-2 w-28 min-w-0 sm:w-40">
               <span style={{ width: `${Math.round(c.ratio * 100)}%` }} />
             </div>
-            <span className="text-muted-foreground tabular text-[9.5px] whitespace-nowrap">
+            <span className="text-muted-foreground tabular text-[10px] whitespace-nowrap">
               {c.ascended ? "viên mãn" : `${intoShown}/${c.need}`}
             </span>
           </div>
@@ -127,7 +131,7 @@ export default function HeaderHUD({ onSettings }: { onSettings: () => void }) {
           <span
             role="status"
             aria-label={`Đồng bộ: ${syncMeta.label}`}
-            title={sync.status === "mat-mang" && sync.loi ? `${syncMeta.label} — ${sync.loi}` : syncMeta.label}
+            title={sync.loi && sync.status !== "da-noi" && sync.status !== "dang-gui" ? `${syncMeta.label} — ${sync.loi}` : syncMeta.label}
             className={`glass-panel sync-indicator flex min-h-11 items-center gap-1.5 rounded-full px-2.5 text-[10px] font-semibold ${syncMeta.tone}`}
           >
             <SyncIcon className={sync.status === "dang-noi" || sync.status === "dang-gui" ? "size-3.5 animate-pulse" : "size-3.5"} />

@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import { Check, Plus, ScrollText, Sparkles, Timer, Zap } from "lucide-react";
 import type { Task, ViewKey } from "../../types";
 import { useApp } from "../../store/AppStore";
@@ -101,7 +102,7 @@ export default function HubMobile({
           />
         )}
         <span className="hub-mb-elder-copy">
-          <q>{aphorism.text}</q>
+          <q title={aphorism.text}>{aphorism.text}</q>
           <small>{aphorism.elder}</small>
         </span>
       </aside>
@@ -165,7 +166,7 @@ export default function HubMobile({
                     aria-label={`Tập trung việc này: ${t.title}`}
                   >
                     <span className="hub-mb-tieu">{t.title}</span>
-                    <span className="hub-mb-xp" style={{ color: meta.color }}>
+                    <span className="hub-mb-xp" style={{ "--xp": meta.color } as CSSProperties}>
                       +{10 * meta.weight}
                     </span>
                   </button>

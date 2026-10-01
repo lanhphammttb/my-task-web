@@ -3,13 +3,9 @@ import type { LucideIcon } from 'lucide-react';
 import type { ViewKey } from '../../types';
 import { useApp } from '../../store/AppStore';
 import { todayKey } from '../../lib/date';
-import { dayStats } from '../../lib/stats';
-import { chestsForDay, pendingChests } from '../../lib/chest';
-import { isPerfectDay } from '../../lib/achievements';
+import { chestsOfDay, pendingChests } from '../../lib/chest';
 import { plotState } from '../../lib/field';
-import { expeditionState } from '../../lib/expedition';
-import { missionState } from '../../lib/sect';
-import { verifiedFocusMinutes, verifiedTaskCount } from '../../lib/economy';
+import { expeditionStateOf, missionStateOf, verifiedFocusMinutes } from '../../lib/economy';
 
 interface Signal {
   icon: LucideIcon;
@@ -25,14 +21,10 @@ export default function HubSignal({ onExplore }: {
 }) {
   const { data } = useApp();
   const key = todayKey();
-  const stats = dayStats(data.tasks, data.sessions, key);
   const focus = verifiedFocusMinutes(data);
-  const taskCount = verifiedTaskCount(data);
   const signals: Signal[] = [];
 
-  const chests = pendingChests(chestsForDay(
-    key, stats.done, stats.focusMin, isPerfectDay(data.tasks, key), data.chestsOpened,
-  ));
+  const chests = pendingChests(chestsOfDay(data, key));
   if (chests) signals.push({
     icon: Gift,
     text: `${chests} hòm kỳ ngộ đang chờ mở`,
@@ -48,7 +40,7 @@ export default function HubSignal({ onExplore }: {
     anchor: 'cave-field',
   });
 
-  const trip = data.expedition ? expeditionState(data.expedition, taskCount) : null;
+  const trip = expeditionStateOf(data);
   if (trip?.ready) signals.push({
     icon: Compass,
     text: `Đoàn ${trip.site.short} đã trở về`,
@@ -56,7 +48,7 @@ export default function HubSignal({ onExplore }: {
     anchor: 'awards-expedition',
   });
 
-  const mission = data.mission ? missionState(data.mission, taskCount, focus) : null;
+  const mission = missionStateOf(data);
   if (mission?.met || mission?.expired) signals.push({
     icon: AlarmClock,
     text: mission.met ? 'Sứ mệnh đã đạt, vào phục mệnh' : 'Sứ mệnh quá hạn cần xử lý',

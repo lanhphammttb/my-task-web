@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useReducedMotion } from "motion/react";
 import {
   AlertTriangle,
   Check,
@@ -41,6 +42,7 @@ export default function TribulationDialog({
   const { data, attemptTribulation } = useApp();
   const [grade, setGrade] = useState<PillGrade | null>(null);
   const [striking, setStriking] = useState(false);
+  const reduceMotion = useReducedMotion();
 
   const p = progressOf(data);
   const nextIndex = Math.min(ASCENSION_INDEX, p.gateRealm + 1);
@@ -85,7 +87,12 @@ export default function TribulationDialog({
         `fixed` vốn đã là khối chứa cho con `absolute` (đoạn phim nền), nên bỏ
         `relative` không mất gì.
       */}
-      <DialogContent className="overflow-hidden bg-black p-0 sm:max-w-[560px]">
+      {/*
+        `max-h-[90dvh]` + khối nội dung tự cuộn: màn điện thoại thấp (hoặc chữ
+        phóng to) thì nút "Bắt đầu độ kiếp" vẫn cuộn tới được, không bị cắt
+        mất dưới đáy. Video nền nằm ngoài khối cuộn nên vẫn phủ trọn hộp thoại.
+      */}
+      <DialogContent className="max-h-[90dvh] overflow-hidden bg-black p-0 sm:max-w-[560px]">
         {/*
           Nền video chạy suốt hộp thoại. Hộp thoại cao hơn rộng nên giữ được
           phần lớn khung hình, thay vì nhét vào một dải ngang chỉ thấy 22%.
@@ -98,13 +105,16 @@ export default function TribulationDialog({
         <video
           key={striking ? "strike" : "idle"}
           src={
-            striking
+            (striking
               ? "/art/media/do-kiep-chibi.mp4"
-              : "/art/media/thien-loi.mp4"
+              : "/art/media/thien-loi.mp4") +
+            // Giảm chuyển động: đứng ở một khung hình tĩnh thay vì chạy phim.
+            (reduceMotion ? "#t=3" : "")
           }
-          autoPlay
+          autoPlay={!reduceMotion}
+          preload={reduceMotion ? "metadata" : "auto"}
           muted
-          loop={!striking}
+          loop={!striking && !reduceMotion}
           playsInline
           aria-hidden
           className={cn(
@@ -124,7 +134,7 @@ export default function TribulationDialog({
           }}
         />
 
-        <div className="relative z-10 p-6">
+        <div className="relative z-10 max-h-[90dvh] overflow-y-auto overscroll-contain p-6">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Zap className="text-warning size-4" />
@@ -259,8 +269,9 @@ export default function TribulationDialog({
 
                 <p className="text-muted-foreground mt-3 text-[11px] leading-relaxed">
                   Thất bại không bao giờ đẩy bạn tụt xuống cảnh giới cũ, và mỗi
-                  lần vấp lại cộng thêm 10% cơ hội cho lần sau. Tu vi gốc từ
-                  công việc đã làm vẫn được giữ nguyên trong hồ sơ.
+                  lần vấp lại cộng thêm 10% cơ hội cho lần sau. Hồ sơ công việc
+                  đã làm không bị xoá, nhưng phần hao tổn ở trên bị trừ thẳng
+                  vào tu vi dùng để xét cảnh giới.
                 </p>
               </div>
 

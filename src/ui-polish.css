@@ -1,0 +1,351 @@
+/*
+ * Đợt mài giũa UI (10/2026) - điện thoại trước, KHÔNG đổi bố cục màn rộng.
+ *
+ * Nạp sau index.css và hub.css (xem main.tsx) nên rule cùng độ đặc hiệu ở đây
+ * thắng. Gom một chỗ để còn đọc được "điện thoại trông thế nào" mà không phải
+ * lần qua bốn nghìn dòng CSS đã chồng nhiều lớp.
+ *
+ * Lưu ý: tệp này KHÔNG nằm trong @layer nào, nên nó thắng cả tiện ích Tailwind
+ * (vốn ở @layer utilities) - chỉ viết ở đây những gì thật sự muốn đè.
+ */
+
+/* ===================================================== G1: tương phản màu */
+
+/* Màu cảnh giới / tu vi đi qua biến CSS (style={{ "--realm": ... }}) để theme
+   sáng tự sẫm lại. Màu ngọc #5fb3a0 trên nền kem chỉ được ~2:1. */
+.realm-chip {
+  color: var(--realm);
+  background: color-mix(in oklab, var(--realm) 22%, transparent);
+}
+.hub-mb-xp,
+.today-dong-xp {
+  color: var(--xp, var(--gold-bright));
+}
+html:not(.dark) .realm-chip {
+  color: color-mix(in oklab, var(--realm) 40%, black);
+  background: color-mix(in oklab, var(--realm) 14%, white);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--realm) 38%, transparent);
+}
+html:not(.dark) .hub-mb-xp,
+html:not(.dark) .today-dong-xp {
+  color: color-mix(in oklab, var(--xp, var(--gold)) 45%, black);
+  text-shadow: none;
+}
+
+/* Nút "Ghi việc" khi ô còn trống: mờ 50% trên nền kem thì gần như biến mất -
+   người mới không biết có nút ở đó. Giữ rõ chữ, chỉ đổi sang viền nét đứt. */
+.quick-add-submit[data-slot="button"]:disabled {
+  opacity: 1;
+  border: 1px dashed color-mix(in srgb, var(--gold) 50%, var(--border));
+  color: var(--muted-foreground);
+  background: var(--surface);
+  background-image: none;
+  box-shadow: none;
+  filter: none;
+}
+
+/* .btn-game nằm trong @layer components nên thua tiện ích màu của <Button>
+   (chữ tối trên nền nâu ở nút "Nhận" của hòm). Ép lại màu của nút game. */
+.game-button.btn-game:not(:disabled) {
+  border-color: var(--gold);
+  color: var(--btn-fg);
+  background-image: var(--btn-bg);
+}
+
+/* Xem trước cú pháp nhanh. */
+.quick-add-chip {
+  display: inline-flex;
+  max-width: 100%;
+  align-items: center;
+  gap: 4px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--gold) 32%, var(--border));
+  border-radius: 999px;
+  padding: 2px 8px;
+  background: color-mix(in srgb, var(--surface) 85%, transparent);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ============================================ E1/E6: bảng phủ trên điện thoại */
+
+/* Đầu bảng: một dải 64px (nút về + tên) thay cho 132px; cuộn xuống thì còn
+   52px (data-thu-gon do OverlayPanel bật). */
+.mobile-shell .mobile-panel .panel-header {
+  min-height: 0;
+}
+.mobile-shell .mobile-panel > .panel-solid > .panel-header > .panel-header-content {
+  min-height: 60px;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px 8px 10px;
+  isolation: isolate;
+  transition: min-height 200ms ease, padding 200ms ease;
+}
+/* G1: màn tối sau tên bảng. Chữ kem trên tranh sáng (theme sáng) không đọc nổi. */
+.mobile-shell .mobile-panel .panel-header-content::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background: linear-gradient(90deg, rgb(12 9 5 / 74%), rgb(12 9 5 / 42%) 72%, rgb(12 9 5 / 22%));
+  content: "";
+  pointer-events: none;
+}
+.mobile-shell .mobile-panel .panel-header h1 {
+  font-size: 18px;
+  line-height: 1.2;
+}
+.mobile-shell .mobile-panel[data-thu-gon] > .panel-solid > .panel-header > .panel-header-content {
+  min-height: 52px;
+  padding-block: 4px;
+}
+.mobile-shell .mobile-panel[data-thu-gon] .panel-header h1 {
+  font-size: 16px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .mobile-shell .mobile-panel > .panel-solid > .panel-header > .panel-header-content { transition: none; }
+}
+
+/* E6: lề 16px hai bên cho MỌI bảng (Tu Hành Lục, Tra cứu, Động Phủ từng dính
+   sát mép). Hành Sự/Đại Nguyện tự có lề trong .sanctuary nên trải ra mép. */
+.mobile-shell .mobile-panel .panel-noi-dung {
+  padding: 12px max(16px, env(safe-area-inset-right, 0px)) 24px max(16px, env(safe-area-inset-left, 0px));
+}
+.mobile-shell .mobile-panel .panel-noi-dung > .sanctuary {
+  margin: -12px -16px 0;
+}
+
+/* Tranh "Việc nhỏ hôm nay, đạo lộ ngày mai" - đầu bảng đã có tranh và tên,
+   trên điện thoại dải này chỉ đẩy việc đầu tiên xuống gần đáy màn. */
+.mobile-shell .mobile-panel .sanctuary-scene {
+  display: none;
+}
+
+/* Nhật / Tuần / Nguyệt: một thanh phân đoạn gọn thay cho ba thẻ cao 64px. */
+.mobile-shell .mobile-panel .journal-chapters {
+  gap: 0;
+  padding: 8px 16px 0;
+  border-bottom: 0;
+  background: none;
+}
+.mobile-shell .mobile-panel .journal-chapters button {
+  min-height: 44px;
+  gap: 0;
+  border: 1px solid color-mix(in srgb, var(--gold) 34%, var(--border));
+  border-left-width: 0;
+  border-radius: 0;
+  padding: 0 6px;
+  background: color-mix(in srgb, var(--surface) 82%, transparent);
+  box-shadow: none;
+  transform: none;
+}
+.mobile-shell .mobile-panel .journal-chapters button:first-child {
+  border-left-width: 1px;
+  border-radius: 10px 0 0 10px;
+}
+.mobile-shell .mobile-panel .journal-chapters button:last-child {
+  border-radius: 0 10px 10px 0;
+}
+.mobile-shell .mobile-panel .journal-chapters button[aria-current] {
+  background: color-mix(in srgb, var(--gold) 24%, var(--surface));
+  box-shadow: inset 0 0 0 1px var(--gold-bright);
+}
+.mobile-shell .mobile-panel .journal-chapter-seal {
+  display: none;
+}
+.mobile-shell .mobile-panel .journal-chapter-copy {
+  text-align: center;
+}
+.mobile-shell .mobile-panel .journal-chapters strong {
+  font-size: 13px;
+  white-space: nowrap;
+}
+@media (max-width: 360px) {
+  .mobile-shell .mobile-panel .journal-chapters strong { font-size: 12px; }
+}
+.mobile-shell .mobile-panel .sanctuary-journal {
+  padding: 10px 16px 16px;
+}
+
+/* Sổ hôm nay: khít lại để việc đầu tiên lên trong nửa trên màn hình
+   (mục tiêu: mép trên thẻ việc đầu < 320px ở 375×812). */
+.mobile-shell .mobile-panel .journal-today {
+  gap: 8px;
+}
+.mobile-shell .mobile-panel .journal-date-ribbon {
+  padding: 4px;
+}
+.mobile-shell .mobile-panel .journal-date-seal[data-slot="button"] {
+  width: 38px;
+  height: 38px;
+}
+.mobile-shell .mobile-panel .journal-day-summary {
+  padding-bottom: 6px;
+}
+.mobile-shell .mobile-panel .journal-today > .game-panel {
+  padding: 10px 12px 12px;
+}
+.mobile-shell .mobile-panel .journal-today > .game-panel > header {
+  margin-bottom: 8px;
+}
+.mobile-shell .mobile-panel .journal-today > .game-panel > header h3 {
+  font-size: 14px;
+}
+
+/* E4: Động Phủ - chọn một mục là gập căn phòng (ảnh cao ~250px) lại. */
+.cave-room-mo {
+  display: none;
+}
+.mobile-shell .mobile-panel .cave-room-wrap[data-thu-gon] > .cave-room {
+  display: none;
+}
+.mobile-shell .mobile-panel .cave-room-wrap[data-thu-gon] > .cave-room-mo {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid color-mix(in srgb, var(--gold) 40%, var(--border));
+  border-radius: 999px;
+  padding: 0 14px;
+  color: var(--gold-bright);
+  background: color-mix(in srgb, var(--surface) 82%, transparent);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* ======================================================= E3: Bế Quan */
+.mobile-shell .mobile-panel .focus-sanctum > div {
+  gap: 14px;
+}
+@media (max-height: 760px) {
+  .mobile-shell .mobile-panel .focus-scene-frame {
+    aspect-ratio: auto;
+    height: clamp(150px, 30dvh, 210px);
+  }
+}
+@media (max-width: 640px) {
+  /* Hàng 1: Bắt đầu | Sang nghỉ. Hàng 2: "Kết thúc & ghi nhận" trọn bề ngang
+     để không bị bẻ đôi dòng ở màn 320px. */
+  .focus-actions {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+  .focus-actions > [data-game-action="focus-mode"] {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: stretch;
+  }
+  .focus-actions > [data-game-action="focus-record"] {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    white-space: nowrap;
+  }
+}
+
+/* ======================================================= E5: sảnh điện thoại */
+
+/* Cuộn hết cỡ thì nút "Ghi việc" và thẻ tín hiệu phải nằm trọn trên thanh
+   điều hướng, không bị cắt ngang ở mép vùng cuộn. */
+.mobile-shell .hub-mb {
+  padding-bottom: calc(28px + env(safe-area-inset-bottom, 0px));
+}
+/* Mép trên/dưới vùng cuộn mờ dần thay cho một đường cắt cứng ngang người
+   nhân vật khi cuộn. */
+.mobile-shell .hub-scroll {
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 28px, #000 calc(100% - 16px), transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 28px, #000 calc(100% - 16px), transparent 100%);
+}
+/* Lời tiền bối: hai dòng thay vì "Ngươi thi…". */
+.mobile-shell .hub-mb-elder {
+  width: min(94%, 360px);
+  border-radius: 22px;
+}
+.mobile-shell .hub-mb-elder-copy q {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  font-size: 11px;
+  line-height: 1.3;
+  white-space: normal;
+}
+
+/* ================================================ F1: điện thoại xoay ngang */
+@media (orientation: landscape) and (max-height: 500px) {
+  /* Thanh điều hướng chỉ còn huy hiệu (tên vẫn ở aria-label/title). */
+  .mobile-navigation:not(.is-compact) {
+    height: calc(53px + env(safe-area-inset-bottom, 0px));
+  }
+  .mobile-navigation:not(.is-compact) .mobile-world {
+    height: 52px;
+    padding: 4px 5px;
+  }
+  .mobile-navigation:not(.is-compact) .mobile-world > button {
+    min-height: 44px;
+    font-size: 0;
+  }
+  .mobile-navigation:not(.is-compact) .mobile-world > button > span:last-child {
+    display: none;
+  }
+
+  /* Sảnh: cảnh bên trái, cột việc bên phải, các khối XẾP DỌC trong cột (trước
+     đây chỉ khai báo một hàng lưới nên "Khai quang linh căn" đè lên bảng). */
+  .mobile-shell .hub-mb {
+    height: auto;
+    min-height: 100%;
+    grid-template-rows: auto;
+    grid-auto-rows: auto;
+    align-content: start;
+    padding-bottom: 16px;
+  }
+  .mobile-shell .hub-mb-canh {
+    grid-row: 1 / span 3;
+    align-self: stretch;
+    min-height: 160px;
+  }
+  .mobile-shell .hub-mb-bang {
+    align-self: start;
+  }
+
+  /* Bảng phủ: không tranh, không dải dẫn nhập - nội dung ngay màn đầu. */
+  .mobile-shell .mobile-panel > .panel-solid > .panel-header > .panel-header-content,
+  .mobile-shell .mobile-panel[data-thu-gon] > .panel-solid > .panel-header > .panel-header-content {
+    min-height: 48px;
+    padding-block: 2px;
+  }
+  .mobile-shell .mobile-panel .panel-header > img {
+    display: none;
+  }
+  .mobile-shell .mobile-panel .journal-chapters {
+    padding-top: 6px;
+  }
+  .mobile-shell .mobile-panel .journal-chapters button {
+    min-height: 40px;
+  }
+  .mobile-shell .mobile-panel .cave-room {
+    display: none;
+  }
+  /* Màn ngang chỉ cao ~270px cho nội dung: bỏ dòng đếm và tên khung "Việc của
+     bạn" để thẻ việc đầu tiên lọt vào màn đầu. */
+  .mobile-shell .mobile-panel .journal-today .journal-day-summary,
+  .mobile-shell .mobile-panel .journal-today > .game-panel:first-of-type > header {
+    display: none;
+  }
+  .mobile-shell .mobile-panel .focus-sanctum {
+    padding: 10px;
+  }
+  .mobile-shell .mobile-panel .focus-sanctum > div {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+  .mobile-shell .mobile-panel .focus-scene-frame {
+    width: 42%;
+    height: auto;
+    aspect-ratio: 4 / 3;
+    max-height: 62dvh;
+  }
+  .mobile-shell .mobile-panel h1,
+  .mobile-shell .mobile-panel h2 {
+    scroll-margin-top: 8px;
+  }
+}

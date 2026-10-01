@@ -65,7 +65,7 @@ export default function HubScene({
   return (
     <div
       className={cn(
-        "pointer-events-none fixed inset-0 -z-20 overflow-hidden",
+        "hub-scene pointer-events-none fixed inset-0 -z-20 overflow-hidden",
         className,
       )}
       aria-hidden

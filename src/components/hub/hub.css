@@ -64,7 +64,7 @@
   background: color-mix(in srgb, var(--gold) 12%, transparent);
 }
 .primary-destination small {
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 400;
 }
 .destination-icon {
@@ -173,7 +173,7 @@
   margin-top: 3px;
 }
 .world-attention {
-  font-size: 9px;
+  font-size: 10px;
   color: var(--gold-bright);
   white-space: nowrap;
 }
@@ -232,7 +232,7 @@
     gap: 0;
   }
   .primary-destination {
-    font-size: 9px;
+    font-size: 10px;
     padding: 7px 2px;
     gap: 5px;
   }
@@ -300,132 +300,6 @@
     min-width: 40px;
     min-height: 40px;
   }
-}
-
-/* ==========================================================================
-   Bản đồ tiên giới
-
-   Màn chính. Mọi nơi nằm cùng một mặt phẳng để bỏ hẳn tầng "tab nhỏ" - trước
-   đây phải nhớ Hành Sự nằm trong tab nào, Linh Điền nằm trong mục gập nào của
-   Động Phủ. Ở đây nhìn một phát thấy hết.
-   ========================================================================== */
-
-.world-map {
-  width: 100%;
-  margin-top: 1.25rem;
-}
-
-.world-map-title {
-  font-family: var(--font-title, inherit);
-  font-size: 0.95rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--gold-bright, #e0a83c);
-}
-
-.world-map-hint {
-  margin: 0.15rem 0 0.75rem;
-  font-size: 0.7rem;
-  color: color-mix(in oklab, currentColor 55%, transparent);
-}
-
-.world-map-grid {
-  display: grid;
-  /* Hai cột trên điện thoại, tự giãn ra trên màn rộng. Không đặt số cột cứng:
-     bản đồ mà cuộn dọc mãi thì lại thành danh sách, đúng thứ đang muốn bỏ. */
-  grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
-  gap: 0.6rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.world-place {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  text-align: left;
-  border: 1px solid color-mix(in oklab, var(--gold, #cbb994) 22%, transparent);
-  border-radius: 0.85rem;
-  background: color-mix(in oklab, var(--card, #140e09) 88%, transparent);
-  transition: border-color 0.18s, transform 0.18s, box-shadow 0.18s;
-}
-
-.world-place:hover,
-.world-place:focus-visible {
-  border-color: color-mix(in oklab, var(--gold, #cbb994) 60%, transparent);
-  transform: translateY(-2px);
-}
-
-.world-place-art {
-  width: 100%;
-  height: 4.5rem;
-  object-fit: cover;
-  /* Ảnh chỉ là nền gợi không khí; chữ mới là thứ phải đọc được. */
-  opacity: 0.55;
-}
-
-.world-place-noi {
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-  padding: 0.55rem 0.65rem 0.7rem;
-}
-
-.world-place-ten {
-  font-family: var(--font-title, inherit);
-  font-size: 0.82rem;
-  font-weight: 700;
-  color: var(--gold-bright, #e0a83c);
-}
-
-/* Dòng nói thẳng nơi này để làm gì. Người ta nhớ được là nhờ dòng này, không
-   phải nhờ cái tên Hán Việt - nên nó không được nhỏ tới mức bỏ qua. */
-.world-place-phu {
-  font-size: 0.68rem;
-  line-height: 1.35;
-  color: color-mix(in oklab, currentColor 62%, transparent);
-}
-
-.world-place-trang {
-  margin-top: 0.3rem;
-  font-size: 0.68rem;
-  font-weight: 600;
-  color: color-mix(in oklab, currentColor 48%, transparent);
-}
-
-.world-place-trang-goi {
-  color: var(--gold-bright, #e0a83c);
-}
-
-.world-place-goi {
-  border-color: color-mix(in oklab, var(--gold, #cbb994) 55%, transparent);
-  box-shadow: 0 0 18px -8px var(--gold-glow, #e0a83c);
-}
-
-.world-place-goi .world-place-art {
-  opacity: 0.75;
-}
-
-.world-place-cham {
-  position: absolute;
-  top: 0.5rem;
-  right: 0.5rem;
-  width: 0.5rem;
-  height: 0.5rem;
-  border-radius: 999px;
-  background: var(--gold-bright, #e0a83c);
-  box-shadow: 0 0 8px var(--gold-glow, #e0a83c);
-  animation: pulse-dot 1.6s ease-in-out infinite;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .world-place-cham { animation: none; }
-  .world-place:hover { transform: none; }
 }
 
 /* ==========================================================================
@@ -943,7 +817,7 @@ body[data-scroll-locked] .world-rail {
   transition: filter 0.15s;
 }
 .khu-tab-ten {
-  font-size: 9.5px;
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.02em;
   line-height: 1.15;
@@ -1113,7 +987,7 @@ body[data-scroll-locked] .world-rail {
   margin-top: 2px;
   color: var(--gold);
   font-family: var(--font-title);
-  font-size: 8px;
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: .06em;
   text-overflow: ellipsis;
@@ -1298,7 +1172,7 @@ body[data-scroll-locked] .world-rail {
  * "Sơn Môn" là lối về sảnh, mà ở sảnh thì đã đang ở sảnh rồi - một nút không
  * làm gì, chiếm một phần ba thanh. Dãy nút tròn bên phải mới là nơi đi lại.
  */
-@media (max-width: 767px) {
+@media (max-width: 767px), (pointer: coarse) and (max-width: 900px) {
   .app-navigation .primary-destinations {
     display: none;
   }
@@ -1409,6 +1283,33 @@ body[data-scroll-locked] .world-rail {
   color: var(--gold-bright);
   background-image: linear-gradient(180deg, color-mix(in srgb, var(--gold) 22%, var(--surface)), color-mix(in srgb, var(--gold) 12%, var(--background)));
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--gold) 32%, transparent), 0 0 15px var(--gold-glow);
+}
+
+/*
+ * Vòng focus bàn phím - bằng `outline`, không bằng `box-shadow`.
+ *
+ * shadcn vẽ vòng focus bằng `focus-visible:ring-*`, tức là box-shadow trong
+ * layer utilities. Nhưng mặt kim loại ở trên là CSS KHÔNG layer và đặt
+ * box-shadow/border-color `!important` - CSS không layer luôn thắng CSS trong
+ * layer, nên vòng ring biến mất sạch: người dùng bàn phím không biết mình
+ * đang đứng ở nút nào. Outline không đụng tới box-shadow nên hai thứ sống
+ * chung được. Chỗ nào có kiểu focus riêng (thanh điều hướng, ô tick…) thì
+ * selector cụ thể hơn của chỗ ấy vẫn thắng.
+ */
+[data-slot="button"]:focus-visible,
+:where(button, a[href], summary, [role="button"], [role="tab"], [role="checkbox"], [role="switch"], [role="radio"], [tabindex]:not([tabindex="-1"])):focus-visible {
+  outline: 2px solid var(--gold-bright);
+  outline-offset: 2px;
+}
+
+/* Ô nhập sai: viền và quầng đỏ phải thắng được mặt nghiên mực không layer. */
+[aria-invalid="true"]:is([data-slot="input"], [data-slot="textarea"], [data-slot="select-trigger"], input, textarea, select) {
+  border-color: var(--destructive) !important;
+  box-shadow: inset 0 2px 5px rgb(0 0 0 / 18%), 0 0 0 2px color-mix(in srgb, var(--destructive) 30%, transparent);
+}
+[aria-invalid="true"]:is([data-slot="input"], [data-slot="textarea"], [data-slot="select-trigger"], input, textarea, select):focus-visible {
+  border-color: var(--destructive) !important;
+  box-shadow: inset 0 1px 4px rgb(0 0 0 / 18%), 0 0 0 3px color-mix(in srgb, var(--destructive) 45%, transparent);
 }
 
 .task-editor-mobile button[aria-pressed="false"] {
@@ -1668,7 +1569,7 @@ hr {
   color: var(--gold-bright);
   background: color-mix(in srgb, var(--gold) 9%, var(--background));
   font-family: var(--font-title);
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -1733,7 +1634,7 @@ hr {
   color: var(--gold-bright);
   background: color-mix(in srgb, var(--background) 72%, transparent);
   font-family: var(--font-title);
-  font-size: 9px;
+  font-size: 10px;
   line-height: 1.2;
 }
 
@@ -1864,11 +1765,8 @@ article[data-task-state="complete"] .o-tick {
   filter: brightness(0.95);
 }
 
-/* Thanh điều hướng là bệ khắc, các huy hiệu giữ minh hoạ vật phẩm hiện có. */
-.mobile-navigation {
-  background-image: linear-gradient(180deg, color-mix(in srgb, var(--background) 88%, var(--gold)), var(--background) 36%), repeating-linear-gradient(90deg, transparent 0 9px, color-mix(in srgb, var(--gold) 2%, transparent) 9px 10px);
-  backdrop-filter: blur(14px);
-}
+/* Thanh điều hướng là bệ khắc (định nghĩa gộp nằm ở index.css, ngay chỗ
+   `.mobile-navigation`); các huy hiệu giữ minh hoạ vật phẩm hiện có. */
 
 .mobile-world-medallion {
   overflow: hidden;
@@ -2359,7 +2257,7 @@ li[data-sonner-toast] {
   }
   .mobile-panel .cave-room-caption > div { flex: none; }
   .mobile-panel .cave-room-caption > div p,
-  .mobile-panel .cave-room-caption > p { font-size: 8px; line-height: 1.2; }
+  .mobile-panel .cave-room-caption > p { font-size: 10px; line-height: 1.2; }
   .mobile-panel .cave-room-caption > p { max-width: 54%; text-align: right; }
   .mobile-panel .cave-room-prop { width: min(var(--room-prop-landscape-size), 16dvh) !important; }
   .mobile-panel .cave-room > div:first-child > img.animate-float.pointer-events-none { width: clamp(36px, 10dvh, 48px) !important; }

@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import { Check, Plus } from "lucide-react";
 import type { Task } from "../../types";
 import { useApp } from "../../store/AppStore";
@@ -129,7 +130,7 @@ function Dong({
             {task.status === "doing" ? "Đang làm" : "Trễ hạn"}
           </span>
         )}
-        <span className="today-dong-xp" style={{ color: meta.color }}>
+        <span className="today-dong-xp" style={{ "--xp": meta.color } as CSSProperties}>
           +{10 * meta.weight}
         </span>
       </button>

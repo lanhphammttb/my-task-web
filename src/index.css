@@ -473,11 +473,18 @@
     background: var(--panel-bg);
   }
 
+  /*
+   * CHỈ viết `backdrop-filter` chuẩn, không tự thêm dòng `-webkit-`.
+   *
+   * Lúc build, lightningcss (bộ tối ưu CSS của Tailwind v4) tự sinh tiền tố
+   * cho Safari. Viết tay cả hai dòng thì nó coi dòng chuẩn là trùng rồi bỏ,
+   * chỉ giữ `-webkit-backdrop-filter` - Chrome/Firefox mất hẳn lớp kính mờ.
+   * scripts/check-css.mjs soát lại chỗ này sau mỗi lần build.
+   */
   .glass-panel {
     position: relative;
     background: var(--glass-bg);
     backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
     border: 1px solid var(--glass-border);
     box-shadow: var(--glass-shadow);
   }
@@ -931,7 +938,7 @@
 .sanctuary-seals { position: absolute; right: 24px; bottom: 20px; display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; width: 130px; }
 .sanctuary-seals > span { display: grid; place-items: center; width: 30px; height: 30px; border: 1px solid #b4915960; background: #12221be0; color: #d9b061; border-radius: 50%; }
 .sanctuary-seals > .is-lit { background: #826125; border-color: #edcf8f; color: #fff1cd; box-shadow: 0 0 14px #e6b75265; }
-.sanctuary-seals small { width: 100%; text-align: center; font-size: 9px; color: #fff1cd; text-shadow: 0 1px 3px #000; }
+.sanctuary-seals small { width: 100%; text-align: center; font-size: 10px; color: #fff1cd; text-shadow: 0 1px 3px #000; }
 .journal-chapters { display: flex; background: color-mix(in srgb, var(--card) 94%, #b49159); border-bottom: 1px solid var(--border); }
 .journal-chapters button { flex: 1; padding: 13px 8px; border-bottom: 2px solid transparent; color: var(--muted-foreground); }
 .journal-chapters strong { display: block; font-family: var(--font-title); font-size: 13px; }
@@ -1048,7 +1055,8 @@
  * người mới hiểu app. Màn hẹp thì mỗi dòng thêm vào là một việc bị đẩy khỏi
  * tầm mắt.
  */
-@media (max-width: 767px) {
+/* Cùng mốc với useLaDienThoai() (src/lib/thietBi.ts) để CSS và JS luôn chọn cùng một giao diện. */
+@media (max-width: 767px), (pointer: coarse) and (max-width: 900px) {
   /* Cảnh sáng hơn trên điện thoại.
      Màn rộng có chỗ cho cả cảnh lẫn bảng số nên nền phải lùi lại; điện thoại
      thì cảnh GẦN NHƯ là toàn bộ màn hình, làm mờ nó đi là còn lại một mảng
@@ -1090,13 +1098,32 @@
   transform: translate(-50%, -50%);
 }
 
-@media (max-width: 767px) {
+/* Cùng mốc với useLaDienThoai() (src/lib/thietBi.ts) để CSS và JS luôn chọn cùng một giao diện. */
+@media (max-width: 767px), (pointer: coarse) and (max-width: 900px) {
   /* "0 việc đã làm · 0 phút nhập định hôm nay" trên dải tranh, trong khi ngay
      dưới đó đã có "0/1 việc đã hoàn thành · 0p nhập định". Cùng một số, hai
      lần, cách nhau chưa tới trăm px. */
   .sanctuary-record {
     display: none;
   }
+}
+
+/*
+ * HUD tránh tai thỏ / thanh trạng thái.
+ *
+ * Từ khi có `viewport-fit=cover`, app cài lên màn hình chính vẽ tràn cả dưới
+ * thanh trạng thái (status bar đang để `black-translucent`). Không chừa
+ * safe-area thì ảnh đại diện và linh thạch nằm dưới đồng hồ, pin. Chiều cao
+ * HUD đo bằng ResizeObserver (--hud-h) nên phần chừa thêm tự dồn xuống bảng.
+ */
+.app-hud {
+  --hud-pad: 0.5rem;
+  padding-top: calc(env(safe-area-inset-top, 0px) + var(--hud-pad));
+  padding-left: max(var(--hud-pad), env(safe-area-inset-left, 0px));
+  padding-right: max(var(--hud-pad), env(safe-area-inset-right, 0px));
+}
+@media (min-width: 640px) {
+  .app-hud { --hud-pad: 0.75rem; }
 }
 
 /* Mobile has its own navigation and page composition.
@@ -1128,7 +1155,28 @@
 .mobile-panel .journal-chapter-copy > span { display: none; }
 .mobile-panel .sanctuary-journal { padding: 14px 12px; }
 .mobile-panel input, .mobile-search input { font-size: 16px; }
-.mobile-navigation { position: absolute; inset: auto 0 0; z-index: 45; display: flex; flex-direction: column; justify-content: flex-end; box-sizing: border-box; height: calc(76px + env(safe-area-inset-bottom, 0px)); padding-bottom: env(safe-area-inset-bottom, 0px); background: var(--background); border-top: 1px solid var(--border); box-shadow: 0 -4px 24px #0002; }
+/*
+ * Thanh điều hướng điện thoại - MỘT định nghĩa duy nhất.
+ *
+ * Trước đây có ba khối `.mobile-navigation` (hai trong tệp này, một trong
+ * hub.css) đè nhau từng thuộc tính; kết quả cuối cùng được gộp nguyên vào đây:
+ * bệ khắc vàng (nền chuyển + vân sọc), viền vàng trên, bóng đổ và kính mờ.
+ */
+.mobile-navigation {
+  position: absolute;
+  inset: auto 0 0;
+  z-index: 45;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  box-sizing: border-box;
+  height: calc(76px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--background) 88%, var(--gold)), var(--background) 36%), repeating-linear-gradient(90deg, transparent 0 9px, color-mix(in srgb, var(--gold) 2%, transparent) 9px 10px);
+  border-top: 1px solid color-mix(in srgb, var(--gold) 45%, transparent);
+  box-shadow: 0 -8px 30px #0005, inset 0 1px color-mix(in srgb, var(--gold) 12%, transparent);
+  backdrop-filter: blur(14px);
+}
 .mobile-search { display: flex; flex: none; align-items: center; gap: 10px; padding: 8px 12px; }
 .mobile-search input { min-width: 0; flex: 1; height: 44px; }
 .mobile-search button { display: grid; place-items: center; width: 44px; height: 44px; }
@@ -1146,21 +1194,76 @@
 .mobile-shell .hub-mb-them, .mobile-shell .hub-mb-xem, .mobile-shell .hub-mb-quay { font-size: 14px; min-height: 48px; }
 .mobile-shell .hub-mb-chinh { background-color: var(--background); min-height: 48px; }
 @media (max-width: 767px), (pointer: coarse) and (max-width: 900px) {
-  [data-slot="dialog-content"].task-editor-mobile { top: auto; right: var(--dialog-right-inset, 0px); bottom: var(--dialog-bottom-inset, 0px); left: var(--dialog-left-inset, 0px); width: auto; min-width: 0; box-sizing: border-box; --tw-translate-x: 0px; --tw-translate-y: 0px; translate: 0px 0px; transform: none; max-width: none; max-height: min(90dvh, var(--dialog-visible-height, 90dvh)); border-radius: 20px 20px 0 0; padding-bottom: calc(16px + env(safe-area-inset-bottom)); scroll-padding-block: 20px; }
+  /*
+   * Về 0 bằng biến `--tw-translate-*`, KHÔNG bằng `translate: 0 0`.
+   *
+   * Tailwind v4 căn giữa hộp thoại bằng `translate: var(--tw-translate-x)
+   * var(--tw-translate-y)`. Viết `translate: 0 0; transform: none` nghe hợp lý,
+   * nhưng lúc build lightningcss gộp hai thuộc tính ấy và BỎ MẤT `translate` -
+   * tấm trượt khi đó lệch nửa màn hình. Đặt biến về 0 thì chính quy tắc của
+   * Tailwind tự ra `translate: 0 0`, không có gì để gộp. (scripts/check-css.mjs
+   * soát chỗ này sau build.)
+   */
+  [data-slot="dialog-content"].task-editor-mobile { top: auto; right: var(--dialog-right-inset, 0px); bottom: var(--dialog-bottom-inset, 0px); left: var(--dialog-left-inset, 0px); width: auto; min-width: 0; box-sizing: border-box; --tw-translate-x: 0px; --tw-translate-y: 0px; transform: none; max-width: none; max-height: min(90dvh, var(--dialog-visible-height, 90dvh)); border-radius: 20px 20px 0 0; padding-bottom: calc(16px + env(safe-area-inset-bottom)); scroll-padding-block: 20px; }
   .task-editor-mobile input, .task-editor-mobile textarea { font-size: 16px; }
 }
 
 /* One-row mobile hotbar: every game location and search stays in reach. */
-.mobile-navigation {
-  background: linear-gradient(180deg, color-mix(in srgb, var(--background) 94%, transparent), var(--background));
-  border-top: 1px solid color-mix(in srgb, var(--gold) 45%, transparent);
-  box-shadow: 0 -8px 30px #0005, inset 0 1px color-mix(in srgb, var(--gold) 12%, transparent);
+
+/*
+ * Điện thoại: bỏ kính mờ trên nền đang chuyển động.
+ *
+ * Mỗi `backdrop-filter` bắt trình duyệt chụp lại phần nền phía sau rồi làm mờ
+ * nó MỖI KHUNG HÌNH khi nền thay đổi - mà nền ở đây là tranh đang zoom chậm,
+ * hạt bụi bay và cả lớp WebGL 30 hình/giây. Đo trên máy giả lập (CPU chậm 4
+ * lần): chín lớp mờ chồng lên cảnh ở sảnh, và bảng phủ kín màn còn làm mờ
+ * nguyên một tấm 375x759 nằm dưới nền ĐẶC của chính nó - tốn công mà không ai
+ * nhìn thấy. Trên điện thoại các mảng này vốn đã gần đặc (80-90%), nên thay
+ * bằng nền đặc hơn một chút là mắt không phân biệt được.
+ */
+.mobile-shell .glass-panel,
+.mobile-shell .hub-mb-elder,
+.mobile-shell .hub-mb-bang,
+.mobile-shell .hub-signal,
+.mobile-shell .mobile-navigation {
+  backdrop-filter: none;
+}
+.mobile-shell .app-hud .glass-panel {
+  background: color-mix(in srgb, var(--background) 84%, transparent);
+}
+.mobile-shell .hub-mb-elder { background: color-mix(in srgb, var(--background) 88%, transparent); }
+@media (max-width: 767px), (pointer: coarse) and (max-width: 900px) {
+  /* Lớp nền của hộp thoại phủ cả màn: mờ toàn màn trên cảnh động là đắt nhất. */
+  [data-slot="dialog-overlay"],
+  [data-slot="alert-dialog-overlay"],
+  [data-slot="sheet-overlay"] {
+    backdrop-filter: none !important;
+    background: rgb(5 4 3 / 78%) !important;
+  }
+}
+
+/* Bảng phủ kín màn điện thoại: dừng hoạt ảnh của cảnh nền và sảnh phía sau. */
+.mobile-shell[data-phu-kin] :is(.hub-scene, .hub-scroll) *,
+.mobile-shell[data-phu-kin] :is(.hub-scene, .hub-scroll) *::before,
+.mobile-shell[data-phu-kin] :is(.hub-scene, .hub-scroll) *::after {
+  animation-play-state: paused !important;
 }
 .mobile-navigation.is-compact { height: calc(53px + env(safe-area-inset-bottom, 0px)); }
 .mobile-navigation.is-compact:has(.mobile-search) { height: calc(113px + env(safe-area-inset-bottom, 0px)); }
 .mobile-world { position: relative; top: auto; display: grid; flex: none; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 1px; padding: 4px 3px 5px; }
-.mobile-world > button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-width: 0; min-height: 56px; color: var(--foreground); font-family: var(--font-title); font-size: 8px; line-height: 1.05; text-align: center; border-radius: 10px; }
-.mobile-navigation:not(.is-compact) .mobile-world > button > span:last-child { width: 100%; overflow: hidden; text-overflow: clip; white-space: nowrap; font-size: clamp(6.5px, 1.8vw, 7px); }
+.mobile-world > button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-width: 0; min-height: 56px; color: var(--foreground); font-family: var(--font-title); font-size: 10px; line-height: 1.05; text-align: center; border-radius: 10px; }
+/*
+ * Tên từng chốn dưới huy hiệu: tối thiểu 10px cho đọc được.
+ *
+ * Trước đây là 6,5-7px một dòng - nhét vừa nhưng không ai đọc nổi. Tám nút
+ * trên màn 320px chỉ còn ~38px mỗi nút, nên cho phép xuống DÒNG theo từng chữ
+ * ("Tu Hành / Lục") bằng font Geist (hẹp hơn Montserrat), và thu huy hiệu từ
+ * 34 xuống 30px để hai dòng vẫn nằm gọn trong chiều cao cũ của thanh. Chặn
+ * rộng 38px để màn nào cũng xuống dòng giống nhau - chữ của hai nút cạnh nhau
+ * không dính liền thành một cụm.
+ */
+.mobile-navigation:not(.is-compact) .mobile-world > button > span:last-child { display: block; width: 100%; max-width: 38px; overflow: hidden; font-family: var(--font-sans); font-size: 10px; font-weight: 600; line-height: 1.05; letter-spacing: -0.01em; white-space: normal; overflow-wrap: normal; word-break: keep-all; }
+.mobile-navigation:not(.is-compact) .mobile-world-medallion { width: 30px; height: 30px; }
 .mobile-world-medallion { position: relative; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; color: var(--gold-bright); border: 1px solid color-mix(in srgb, var(--gold) 48%, transparent); background: radial-gradient(circle, color-mix(in srgb, var(--gold) 18%, var(--background)), var(--background)); box-shadow: inset 0 0 0 2px #0003, 0 2px 5px #0004; }
 .mobile-world-medallion img { width: 100%; height: 100%; object-fit: contain; }
 .mobile-world > button[aria-current="page"] { color: var(--gold-bright); background: radial-gradient(ellipse, color-mix(in srgb, var(--gold) 18%, transparent), transparent 75%); }
@@ -1174,7 +1277,7 @@
 .mobile-navigation.is-compact .mobile-world { box-sizing: border-box; height: 52px; grid-template-columns: repeat(8, minmax(0, 1fr)); padding: 4px 5px; }
 .mobile-navigation.is-compact .mobile-world > button { min-height: 44px; gap: 1px; font-size: 0; }
 .mobile-navigation.is-compact .mobile-world-medallion { width: 39px; height: 39px; }
-.sync-indicator-count { display: grid; min-width: 17px; height: 17px; place-items: center; border-radius: 999px; background: var(--gold); color: var(--background); font-size: 9px; }
+.sync-indicator-count { display: grid; min-width: 17px; height: 17px; place-items: center; border-radius: 999px; background: var(--gold); color: var(--background); font-size: 10px; }
 .focus-result { display: flex; align-items: center; justify-content: space-between; gap: 16px; border: 1px solid color-mix(in srgb, var(--gold) 55%, transparent); border-radius: 16px; padding: 16px; background: linear-gradient(135deg, color-mix(in srgb, var(--gold) 16%, var(--card)), var(--card)); box-shadow: 0 0 24px var(--gold-glow); }
 .focus-result p { margin-top: 4px; color: var(--muted-foreground); font-size: 12px; }
 .cultivation-prop-3d { display: block; overflow: visible; isolation: isolate; pointer-events: none; }
@@ -1204,13 +1307,13 @@
 .focus-quest-insignia { position: relative; z-index: 1; display: grid; width: 44px; height: 44px; flex: none; place-items: center; border: 1px solid color-mix(in srgb, var(--gold) 64%, var(--border)); border-radius: 50%; color: var(--gold-bright); background: radial-gradient(circle at 36% 29%, color-mix(in srgb, var(--gold) 29%, var(--surface)), color-mix(in srgb, var(--background) 92%, var(--gold) 8%) 76%); box-shadow: inset 0 0 0 3px rgb(0 0 0 / 17%), 0 0 14px color-mix(in srgb, var(--gold-glow) 28%, transparent); }
 .focus-quest-insignia span { position: absolute; right: -2px; bottom: -3px; display: grid; width: 17px; height: 17px; place-items: center; border: 1px solid var(--gold); border-radius: 50%; color: var(--gold-bright); background: var(--background); font: 700 9px/1 var(--font-title); }
 .focus-quest-body { position: relative; z-index: 1; display: grid; min-width: 0; flex: 1; gap: 5px; }
-.focus-quest-heading { display: flex; min-width: 0; align-items: center; justify-content: space-between; gap: 8px; color: var(--gold-bright); font-size: 9px; font-weight: 800; letter-spacing: .13em; }
-.focus-quest-state { flex: none; border: 1px solid color-mix(in srgb, var(--jade) 46%, var(--border)); border-radius: 999px; padding: 2px 6px; color: color-mix(in srgb, var(--jade) 80%, white); background: color-mix(in srgb, var(--jade) 12%, var(--background)); font-size: 8px; letter-spacing: .08em; }
+.focus-quest-heading { display: flex; min-width: 0; align-items: center; justify-content: space-between; gap: 8px; color: var(--gold-bright); font-size: 10px; font-weight: 800; letter-spacing: .13em; }
+.focus-quest-state { flex: none; border: 1px solid color-mix(in srgb, var(--jade) 46%, var(--border)); border-radius: 999px; padding: 2px 6px; color: color-mix(in srgb, var(--jade) 80%, white); background: color-mix(in srgb, var(--jade) 12%, var(--background)); font-size: 10px; letter-spacing: .08em; }
 .focus-quest-body > p { overflow: hidden; color: var(--muted-foreground); font-size: 10px; line-height: 1.35; text-overflow: ellipsis; white-space: nowrap; }
 .focus-quest-board .focus-quest-select { position: relative; z-index: 1; min-height: 42px; border-color: color-mix(in srgb, var(--gold) 40%, var(--border)); background-color: color-mix(in srgb, var(--background) 88%, transparent); }
 .focus-quest-scroll { position: relative; z-index: 1; flex: none; filter: drop-shadow(0 5px 7px rgb(0 0 0 / 40%)); }
 .focus-action-deck { position: relative; border: 1px solid color-mix(in srgb, var(--game-etched-line) 64%, var(--border)); border-radius: 14px; padding: 16px 11px 11px; background: radial-gradient(ellipse at 15% 0%, color-mix(in srgb, var(--gold) 10%, transparent), transparent 54%), linear-gradient(180deg, color-mix(in srgb, var(--surface) 65%, transparent), color-mix(in srgb, var(--background) 88%, transparent)); box-shadow: inset 0 1px 0 rgb(255 246 220 / 6%), inset 0 -2px 0 rgb(0 0 0 / 18%); }
-.focus-action-deck-label { position: absolute; top: -1px; left: 15px; padding: 0 7px; color: color-mix(in srgb, var(--gold) 82%, var(--muted-foreground)); background: var(--card); font-size: 8px; font-weight: 800; letter-spacing: .16em; transform: translateY(-50%); }
+.focus-action-deck-label { position: absolute; top: -1px; left: 15px; padding: 0 7px; color: color-mix(in srgb, var(--gold) 82%, var(--muted-foreground)); background: var(--card); font-size: 10px; font-weight: 800; letter-spacing: .16em; transform: translateY(-50%); }
 .focus-actions > [data-slot="button"] { min-height: 46px; }
 .realm-path-tint { mix-blend-mode: color; opacity: .18; }
 .realm-path-vignette { background: linear-gradient(90deg, rgb(7 10 11 / 75%), rgb(7 10 11 / 16%) 63%, rgb(7 10 11 / 28%)), linear-gradient(0deg, rgb(7 10 11 / 76%), transparent 67%); }
@@ -1232,9 +1335,9 @@
   .focus-quest-board { gap: 8px; padding: 9px; }
   .focus-quest-insignia { width: 36px; height: 36px; }
   .focus-quest-insignia > svg { width: 17px; height: 17px; }
-  .focus-quest-heading { font-size: 8px; }
-  .focus-quest-state { font-size: 7px; }
-  .focus-quest-body > p { font-size: 9px; }
+  .focus-quest-heading { font-size: 10px; }
+  .focus-quest-state { font-size: 10px; }
+  .focus-quest-body > p { font-size: 10px; }
   .focus-quest-scroll { width: 58px; height: 72px; }
   .focus-core-3d { width: 84px; height: 84px; }
   .section-art-preview { width: 62px; height: 74px; }
@@ -1243,7 +1346,7 @@
 .hub-signal-icon { display: grid; width: 34px; height: 34px; flex: none; place-items: center; border-radius: 50%; color: var(--gold-bright); background: color-mix(in srgb, var(--gold) 16%, transparent); box-shadow: 0 0 12px var(--gold-glow); }
 .hub-signal-icon svg { width: 17px; height: 17px; }
 .hub-signal-copy { min-width: 0; flex: 1; }
-.hub-signal-copy small { display: block; color: var(--muted-foreground); font-size: 9px; font-weight: 700; letter-spacing: .13em; text-transform: uppercase; }
+.hub-signal-copy small { display: block; color: var(--muted-foreground); font-size: 10px; font-weight: 700; letter-spacing: .13em; text-transform: uppercase; }
 .hub-signal-copy strong { display: block; overflow: hidden; margin-top: 1px; color: var(--gold-bright); font-size: 12.5px; text-overflow: ellipsis; white-space: nowrap; }
 .hub-signal-more { display: grid; min-width: 25px; height: 25px; place-items: center; border-radius: 999px; background: color-mix(in srgb, var(--gold) 20%, transparent); color: var(--gold-bright); font-size: 10px; font-weight: 800; }
 .hub-signal-arrow { color: var(--gold); font-size: 23px; line-height: 1; }
@@ -1290,7 +1393,7 @@
 .journal-quest-state { margin-top: 2px; color: var(--muted-foreground); font-size: 10px; }
 .journal-quest-reward { margin-top: 5px; color: color-mix(in srgb, var(--gold-bright) 82%, var(--muted-foreground)); font-size: 10px; font-variant-numeric: tabular-nums; }
 .journal-quest-progress { position: absolute; right: 12px; bottom: 10px; left: 54px; }
-.journal-quest-done { flex: none; border: 1px solid color-mix(in srgb, var(--success) 40%, transparent); border-radius: 999px; padding: 3px 7px; color: var(--success); background: color-mix(in srgb, var(--success) 10%, transparent); font-size: 9px; font-weight: 700; }
+.journal-quest-done { flex: none; border: 1px solid color-mix(in srgb, var(--success) 40%, transparent); border-radius: 999px; padding: 3px 7px; color: var(--success); background: color-mix(in srgb, var(--success) 10%, transparent); font-size: 10px; font-weight: 700; }
 .journal-quest-card:not([data-quest-state="complete"]) { padding-bottom: 25px; }
 
 .journal-quest-card[data-quest-state="advancing"] .journal-quest-seal {
@@ -1312,7 +1415,7 @@
 
 @media (max-width: 640px) {
   .journal-quest-card { min-height: 70px; padding: 11px; }
-  .journal-quest-done { font-size: 9px; }
+  .journal-quest-done { font-size: 10px; }
   .journal-quest-progress { right: 11px; bottom: 8px; left: 53px; }
 }
 
@@ -1351,7 +1454,7 @@
   align-items: center;
   gap: 6px;
   color: var(--gold-bright);
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 800;
   letter-spacing: 0.14em;
 }
@@ -1459,11 +1562,11 @@
   box-shadow: inset 0 0 0 2px rgb(0 0 0 / 30%), 0 0 12px var(--gold-glow);
 }
 
-.achievement-next-eyebrow { color: var(--gold-bright); font-size: 9px; font-weight: 800; letter-spacing: .13em; }
+.achievement-next-eyebrow { color: var(--gold-bright); font-size: 10px; font-weight: 800; letter-spacing: .13em; }
 .achievement-next-title { display: block; margin-top: 2px; color: var(--foreground); font-family: var(--font-title); font-size: 13px; }
 .achievement-next-condition { margin-top: 2px; color: var(--muted-foreground); font-size: 10px; }
 .achievement-next-progress { margin-top: 7px; }
-.achievement-next-count { margin-top: 3px; color: var(--muted-foreground); font-size: 9px; font-variant-numeric: tabular-nums; }
+.achievement-next-count { margin-top: 3px; color: var(--muted-foreground); font-size: 10px; font-variant-numeric: tabular-nums; }
 .achievement-next-percent { flex: none; color: var(--gold-bright); font-family: var(--font-title); font-size: 15px; font-weight: 800; font-variant-numeric: tabular-nums; }
 
 .achievement-game-card {
@@ -1494,7 +1597,7 @@
 .achievement-game-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 7px; }
 .achievement-game-heading > strong { min-width: 0; color: var(--gold-bright); font-family: var(--font-title); font-size: 13px; line-height: 1.4; }
 .achievement-game-card[data-achievement-state="locked"] .achievement-game-heading > strong { color: var(--muted-foreground); }
-.achievement-game-state { display: inline-flex; flex: none; align-items: center; gap: 3px; border: 1px solid color-mix(in srgb, var(--game-etched-line) 54%, transparent); border-radius: 999px; padding: 2px 6px; color: var(--muted-foreground); background: color-mix(in srgb, var(--background) 78%, transparent); font-size: 8px; font-weight: 800; letter-spacing: .035em; white-space: nowrap; }
+.achievement-game-state { display: inline-flex; flex: none; align-items: center; gap: 3px; border: 1px solid color-mix(in srgb, var(--game-etched-line) 54%, transparent); border-radius: 999px; padding: 2px 6px; color: var(--muted-foreground); background: color-mix(in srgb, var(--background) 78%, transparent); font-size: 10px; font-weight: 800; letter-spacing: .035em; white-space: nowrap; }
 .achievement-game-card[data-achievement-state="unlocked"] .achievement-game-state { border-color: color-mix(in srgb, var(--gold-bright) 42%, transparent); color: var(--gold-bright); background: color-mix(in srgb, var(--gold) 9%, var(--background)); }
 .achievement-game-card[data-achievement-state="advancing"] .achievement-game-state { border-color: color-mix(in srgb, var(--jade) 42%, transparent); color: color-mix(in srgb, var(--jade) 72%, white); }
 .achievement-game-progress { border-top: 1px solid color-mix(in srgb, var(--gold) 15%, transparent); padding-top: 9px; }
@@ -1516,7 +1619,7 @@
 .realm-path-row { background-image: linear-gradient(110deg, color-mix(in srgb, var(--surface) 76%, transparent), color-mix(in srgb, var(--background) 90%, transparent)); box-shadow: inset 0 1px 0 rgb(255 243 214 / 5%); }
 .realm-path-row[data-realm-state="done"] { border-color: color-mix(in srgb, var(--success) 29%, var(--border)); }
 .realm-path-row[data-realm-state="locked"] { filter: saturate(.72); }
-.realm-path-seal { display: inline-flex; align-items: center; gap: 3px; border: 1px solid color-mix(in srgb, var(--game-etched-line) 42%, transparent); border-radius: 999px; padding: 2px 6px; color: var(--muted-foreground); background: color-mix(in srgb, var(--background) 75%, transparent); font-size: 8px; font-weight: 800; letter-spacing: .04em; white-space: nowrap; }
+.realm-path-seal { display: inline-flex; align-items: center; gap: 3px; border: 1px solid color-mix(in srgb, var(--game-etched-line) 42%, transparent); border-radius: 999px; padding: 2px 6px; color: var(--muted-foreground); background: color-mix(in srgb, var(--background) 75%, transparent); font-size: 10px; font-weight: 800; letter-spacing: .04em; white-space: nowrap; }
 .realm-path-seal[data-realm-mark="current"] { border-color: color-mix(in srgb, var(--gold-bright) 52%, transparent); color: var(--gold-bright); background: color-mix(in srgb, var(--gold) 12%, var(--background)); }
 .realm-path-seal[data-realm-mark="done"] { border-color: color-mix(in srgb, var(--success) 38%, transparent); color: var(--success); }
 
@@ -1544,16 +1647,16 @@
   .achievement-game-card { padding: 12px; }
   .achievement-game-heading { gap: 5px; }
   .achievement-game-heading > strong { font-size: 12px; }
-  .achievement-game-state { padding-inline: 5px; font-size: 7px; }
+  .achievement-game-state { padding-inline: 5px; font-size: 10px; }
   .realm-path-row { gap: 8px; padding: 9px; }
-  .realm-path-seal { font-size: 7px; }
+  .realm-path-seal { font-size: 10px; }
   .realm-map-panel { gap: 10px; padding: 11px !important; }
   .realm-map-header { gap: 6px; }
   .realm-map-heading { gap: 7px; }
   .realm-map-sigil { width: 30px; height: 30px; }
   .realm-map-heading h3 { font-size: 12px; }
-  .realm-map-heading p { max-width: 46vw; font-size: 9px; }
-  .realm-map-toggle { min-height: 32px !important; gap: 3px; padding-inline: 7px !important; font-size: 9px !important; }
+  .realm-map-heading p { max-width: 46vw; font-size: 10px; }
+  .realm-map-toggle { min-height: 32px !important; gap: 3px; padding-inline: 7px !important; font-size: 10px !important; }
   .realm-map-node { width: 22px; height: 22px; }
   .realm-map-track li:not(:first-child)::before { top: 10px; }
   .realm-map-track li[data-route-state="current"] .realm-map-node { width: 26px; height: 26px; }
@@ -1580,7 +1683,7 @@
 .vow-title-row { display: flex; min-width: 0; flex-wrap: wrap; align-items: center; gap: 5px 8px; }
 .vow-title-row > strong { min-width: 0; flex: 1; color: var(--foreground); font-family: var(--font-title); font-size: 14px; line-height: 1.35; }
 .vow-card[data-vow-state="fulfilled"] .vow-title-row > strong { color: var(--success); }
-.vow-state-stamp { display: inline-flex; flex: none; align-items: center; border: 1px solid color-mix(in srgb, var(--game-etched-line) 43%, transparent); border-radius: 999px; padding: 3px 7px; color: var(--muted-foreground); background: color-mix(in srgb, var(--background) 80%, transparent); font-family: var(--font-title); font-size: 8px; font-weight: 800; letter-spacing: .04em; white-space: nowrap; }
+.vow-state-stamp { display: inline-flex; flex: none; align-items: center; border: 1px solid color-mix(in srgb, var(--game-etched-line) 43%, transparent); border-radius: 999px; padding: 3px 7px; color: var(--muted-foreground); background: color-mix(in srgb, var(--background) 80%, transparent); font-family: var(--font-title); font-size: 10px; font-weight: 800; letter-spacing: .04em; white-space: nowrap; }
 .vow-state-stamp[data-vow-stamp="cultivating"] { border-color: color-mix(in srgb, var(--jade) 48%, transparent); color: color-mix(in srgb, var(--jade) 72%, white); }
 .vow-state-stamp[data-vow-stamp="fulfilled"] { border-color: color-mix(in srgb, var(--success) 50%, transparent); color: var(--success); background: color-mix(in srgb, var(--success) 10%, var(--background)); }
 .vow-state-stamp[data-vow-stamp="overdue"] { border-color: color-mix(in srgb, var(--warning) 48%, transparent); color: var(--warning); }
@@ -1592,7 +1695,7 @@
 .vow-progress-track { box-shadow: inset 0 1px 2px rgb(0 0 0 / 40%); }
 .vow-progress-value { min-width: 76px; color: var(--gold-bright); font-size: 10px; }
 .vow-card[data-vow-state="fulfilled"] .vow-progress-value { color: var(--success); }
-.vow-card[data-vow-state="unstarted"] .vow-progress-value { color: var(--muted-foreground); font-size: 9px; }
+.vow-card[data-vow-state="unstarted"] .vow-progress-value { color: var(--muted-foreground); font-size: 10px; }
 .vow-add-step { min-height: 40px; }
 .vow-expand-button { display: inline-flex; min-height: 36px; align-items: center; gap: 5px; border-radius: 7px; padding: 3px 6px; color: var(--gold-bright); text-decoration: none !important; }
 .vow-expand-button:hover { background: color-mix(in srgb, var(--gold) 10%, transparent); }
@@ -1607,7 +1710,7 @@
 .vow-editor-heading { padding: 3px 30px 14px 0; border-bottom: 1px solid color-mix(in srgb, var(--gold) 24%, var(--border)); }
 .vow-editor-heading [data-slot="dialog-title"] { color: var(--gold-bright); font-family: var(--font-title); font-size: 19px; }
 .vow-editor-heading [data-slot="dialog-description"] { max-width: 42ch; color: var(--muted-foreground); font-size: 11px; line-height: 1.55; }
-.vow-editor-eyebrow { display: flex; align-items: center; gap: 6px; color: var(--gold-bright); font-size: 9px; font-weight: 800; letter-spacing: .14em; }
+.vow-editor-eyebrow { display: flex; align-items: center; gap: 6px; color: var(--gold-bright); font-size: 10px; font-weight: 800; letter-spacing: .14em; }
 .vow-editor-dialog fieldset { min-width: 0; }
 .vow-editor-dialog fieldset legend { margin-bottom: 2px; color: var(--foreground); font-family: var(--font-title); }
 .vow-color-choice { min-width: 44px; min-height: 44px; box-shadow: inset 0 1px 0 rgb(255 245 220 / 30%), inset 0 -3px 0 rgb(0 0 0 / 20%), 0 2px 6px rgb(0 0 0 / 20%); }
@@ -1768,6 +1871,14 @@
   min-height: 2rem;
   padding-inline: 0.4rem;
   font-size: 0.68rem;
+}
+/* `data-[state=on]:bg-muted` của Tailwind nằm trong layer nên bị viền/nền vàng
+   (không layer) của theme đè mất: bấm 90 xong ba nút vẫn trông như nhau. */
+.stats-range [data-slot="toggle-group-item"][data-state="on"] {
+  color: var(--gold-bright);
+  border-color: var(--gold-bright) !important;
+  background: color-mix(in srgb, var(--gold) 22%, transparent);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--gold-glow) 60%, transparent);
 }
 .stats-chart { height: 108px; }
 .stats-bars { min-width: 0; }

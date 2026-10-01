@@ -3,12 +3,9 @@ import type { ViewKey } from "../../types";
 import { useApp } from "../../store/AppStore";
 import { todayKey } from "../../lib/date";
 import { currentStreak, dayStats, isOverdue } from "../../lib/stats";
-import { stoneBalance, verifiedFocusMinutes, verifiedTaskCount } from "../../lib/economy";
+import { expeditionStateOf, missionStateOf, stoneBalance, verifiedFocusMinutes } from "../../lib/economy";
 import { plotState } from "../../lib/field";
-import { expeditionState } from "../../lib/expedition";
-import { missionState } from "../../lib/sect";
-import { chestsForDay, pendingChests } from "../../lib/chest";
-import { isPerfectDay } from "../../lib/achievements";
+import { chestsOfDay, pendingChests } from "../../lib/chest";
 import { nextCave } from "../../lib/cave";
 import { railSrc } from "../../lib/icons";
 import type { RailIcon } from "../../lib/icons";
@@ -71,15 +68,9 @@ export default function WorldRail({
 
     const focus = verifiedFocusMinutes(data);
     const chin = data.field.filter((p) => plotState(p, focus)?.ready).length;
-    const trip = data.expedition
-      ? expeditionState(data.expedition, verifiedTaskCount(data))
-      : null;
-    const mission = data.mission
-      ? missionState(data.mission, verifiedTaskCount(data), focus)
-      : null;
-    const hom_ = pendingChests(
-      chestsForDay(hom, s.done, s.focusMin, isPerfectDay(data.tasks, hom), data.chestsOpened),
-    );
+    const trip = expeditionStateOf(data);
+    const mission = missionStateOf(data);
+    const hom_ = pendingChests(chestsOfDay(data, hom));
     const len = nextCave(data.caveLevel);
     const duTien = !!len && stoneBalance(data) >= len.cost;
     const nguyen = data.goals.filter((g) => !g.archived).length;

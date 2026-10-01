@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import {
   CloudLightning,
   Feather,
@@ -21,20 +22,182 @@ import { useApp } from "../store/AppStore";
 import RealmSeal from "./RealmSeal";
 import { Button } from "@/components/ui/button";
 
+import type { Celebration } from "../store/AppStore";
+
+/** Mốc càng lớn càng đứng đầu thẻ khi nhiều mốc tới cùng lúc. */
+const DO_LON: Record<Celebration["kind"], number> = {
+  ascension: 8,
+  "realm-up": 7,
+  "tribulation-failed": 6,
+  awaken: 5,
+  "tier-up": 4,
+  summon: 3,
+  achievement: 2,
+  "perfect-day": 1,
+};
+
+/**
+ * Thẻ chỉ để chúc mừng thì tự đóng sau vài giây. Thẻ mang thông tin cần đọc
+ * (linh căn vừa khai quang, cảnh giới mới, linh thú, độ kiếp) thì KHÔNG tự đóng:
+ * người dùng chưa kịp đọc hệ ngũ hành của mình đã biến mất là mất luôn.
+ */
+const TU_DONG: ReadonlySet<Celebration["kind"]> = new Set<Celebration["kind"]>(["achievement", "perfect-day"]);
+
+interface MoTa {
+  icon: LucideIcon;
+  eyebrow: string;
+  title: string;
+  body: string;
+  /** Sắc chủ đạo của khoảnh khắc - chỉ dùng làm hào quang trên nền tối. */
+  tone: string;
+  /** Hệ ngũ hành đem ra khoe khi khai quang linh căn. */
+  sealElement: Element | null;
+  /** Huy hiệu kỳ ngộ vừa mở - thứ đáng khoe nhất ở khoảnh khắc này. */
+  badge: string | null;
+  /**
+   * Đoạn video ngắn chạy sau thẻ ăn mừng cho hai mốc lớn nhất. Chưa có file thì
+   * thẻ vẫn hoạt động y như cũ, chỉ mất phần động.
+   */
+  clip: string | null;
+  /** Cảnh giới cần đóng dấu triện; null thì hiện biểu tượng tròn như cũ. */
+  sealRealm: { name: string; tier?: number } | null;
+  /** Huy hiệu linh thú thay cho biểu tượng tròn khi chiêu thú. */
+  emblemBeastId: string | null;
+}
+
+function moTa(c: Celebration): MoTa {
+  const m: MoTa = {
+    icon: Sparkles,
+    eyebrow: "",
+    title: "",
+    body: "",
+    tone: "var(--gold)",
+    sealElement: null,
+    badge: null,
+    clip: null,
+    sealRealm: null,
+    emblemBeastId: null,
+  };
+  switch (c.kind) {
+    case "tier-up": {
+      const realm = REALMS[c.realmIndex];
+      m.icon = realm.icon;
+      m.eyebrow = "Đột phá";
+      m.title = c.label;
+      m.body = `Tu vi đạt ${c.xp}. Khí tức vững hơn một bậc — cứ giữ nhịp này.`;
+      m.tone = realm.color;
+      m.sealRealm = { name: realm.name, tier: Number(c.label.split(" ").at(-1)) || undefined };
+      break;
+    }
+    case "realm-up": {
+      const realm = REALMS[c.realmIndex];
+      m.icon = Zap;
+      m.eyebrow = "Độ kiếp thành công";
+      m.title = `Bước vào ${c.realm}`;
+      m.body = c.note;
+      m.tone = realm.color;
+      m.sealRealm = { name: c.realm };
+      m.clip = "/art/media/dot-pha.mp4";
+      break;
+    }
+    case "ascension":
+      m.icon = Feather;
+      m.eyebrow = "Phi thăng";
+      m.title = "Đạo lộ viên mãn";
+      m.body = `Tu vi ${c.xp}. Bạn đã đi trọn con đường từ Luyện Khí tới Phi Thăng. Đây không phải may mắn — đây là kỷ luật.`;
+      m.tone = "var(--gold-bright)";
+      m.sealRealm = { name: "Phi Thăng" };
+      m.clip = "/art/media/phi-thang.mp4";
+      break;
+    case "perfect-day":
+      m.icon = PartyPopper;
+      m.eyebrow = "Nhật khoá viên mãn";
+      m.title = "Dọn sạch danh sách!";
+      m.body = `${c.count} nhiệm vụ hôm nay đều đã xong. Hôm nay bạn thắng.`;
+      break;
+    case "achievement":
+      m.icon = ACHIEVEMENTS.find((a) => a.id === c.id)?.icon ?? Trophy;
+      m.eyebrow = "Kỳ ngộ mới";
+      m.title = c.title;
+      m.body = c.description;
+      m.badge = `/art/award/${c.id}.png`;
+      break;
+    case "tribulation-failed":
+      m.icon = CloudLightning;
+      m.eyebrow = "Độ kiếp thất bại";
+      m.title = "Thiên lôi quá mạnh";
+      m.body = `Khí tức hao tổn ${c.loss} tu vi, nhưng cảnh giới vẫn giữ nguyên. Lần sau cơ hội lên ${Math.round(c.nextChance * 100)}% — người bền chí rồi cũng qua ${c.realm}.`;
+      m.tone = "var(--cinnabar)";
+      break;
+    case "awaken": {
+      const grade = gradeOf(c.root);
+      m.icon = Sparkles;
+      m.eyebrow = "Khai quang linh căn";
+      m.title = grade.name;
+      m.body = `${rootElementLabel(c.root)} — ${grade.note} Hấp thu linh khí ×${grade.multiplier}.`;
+      m.tone = grade.tone;
+      // Hệ đầu tiên quyết định ấn ngũ hành đem ra khoe.
+      m.sealElement = c.root.elements[0];
+      break;
+    }
+    case "summon": {
+      const beast = beastById(c.beastId);
+      m.emblemBeastId = c.beastId;
+      m.icon = Trophy;
+      m.eyebrow = c.duplicate ? "Thú hồn hợp nhất" : `Thu phục ${RARITIES[beast?.rarity ?? "pham"].label}`;
+      m.title = beast?.name ?? "Linh thú";
+      m.body = c.duplicate
+        ? `${beast?.name} đã theo bạn từ trước — hồn thú nhập vào, nuôi dưỡng tăng thêm.`
+        : `${beast?.lore ?? ""} Thiên phú: +${beast?.perkPerLevel ?? 0}% ${beast ? PERK_LABEL[beast.perk] : ""} mỗi cấp.`;
+      m.tone = beast ? RARITIES[beast.rarity].color : m.tone;
+      break;
+    }
+  }
+  return m;
+}
+
 /**
  * Lớp phủ ăn mừng: khoảnh khắc phần thưởng khi người tu vượt mốc. Đột phá tầng
  * là mốc nhỏ, độ kiếp sang cảnh giới mới là mốc lớn, phi thăng là đích cuối.
- * Tự đóng sau 5 giây để không cản đường nếu người dùng đang làm nhanh.
+ *
+ * Nhiều mốc tới cùng lúc thì gộp vào MỘT thẻ: mốc lớn nhất làm chủ, những mốc
+ * còn lại thành danh sách bên dưới. Trước đây xong việc đầu tiên là ba lớp phủ
+ * nối đuôi nhau, mỗi lớp một trận confetti.
  */
 export default function CelebrationLayer() {
-  const { celebration, dismissCelebration } = useApp();
+  const { celebrations, dismissCelebration } = useApp();
   /** Huy hiệu tải được hay không; tải lỗi thì lùi về icon nét. */
   const [badgeOk, setBadgeOk] = useState(true);
   /** Video mốc lớn tải được hay không; thiếu file thì chỉ mất phần động. */
   const [clipOk, setClipOk] = useState(true);
+  const reduceMotion = useReducedMotion();
+  const titleId = useId();
+  const bodyId = useId();
+  const continueRef = useRef<HTMLButtonElement>(null);
 
-  const hasClip =
-    celebration?.kind === "realm-up" || celebration?.kind === "ascension";
+  // Cùng một khoảnh khắc có thể vào hàng đợi hai lần (StrictMode gọi lại bộ
+  // cập nhật state ở bản dev) - mỗi mốc chỉ kể một lần.
+  const daThay = new Set<string>();
+  const moc = celebrations.filter((c) => {
+    const k = JSON.stringify(c);
+    if (daThay.has(k)) return false;
+    daThay.add(k);
+    return true;
+  });
+  // Mốc lớn nhất làm chủ thẻ; giữ thứ tự tới cho phần còn lại.
+  const celebration = moc.reduce<Celebration | null>(
+    (best, c) => (!best || DO_LON[c.kind] > DO_LON[best.kind] ? c : best),
+    null,
+  );
+  const others = moc.filter((c) => c !== celebration);
+  const soMoc = celebrations.length;
+  const dong = useCallback(() => dismissCelebration(soMoc), [dismissCelebration, soMoc]);
+  const dongRef = useRef(dong);
+  useEffect(() => {
+    dongRef.current = dong;
+  }, [dong]);
+
+  const tuDong = soMoc === 1 && !!celebration && TU_DONG.has(celebration.kind);
 
   useEffect(() => {
     if (!celebration) return;
@@ -45,127 +208,71 @@ export default function CelebrationLayer() {
     else if (celebration.kind === "realm-up") haptic([40, 40, 120]);
     else if (celebration.kind === "tribulation-failed") haptic(220);
     else haptic(28);
-    // Mốc nào có video thì để mở đủ 10 giây cho video chạy hết cung cảm xúc
-    // (điểm nhấn của cả hai nằm ở giây 6-8); mốc thường vẫn 5 giây.
-    const t = window.setTimeout(dismissCelebration, hasClip ? 10_000 : 5000);
+  }, [celebration]);
+
+  useEffect(() => {
+    if (!tuDong) return;
+    const t = window.setTimeout(() => dongRef.current(), 5000);
     return () => window.clearTimeout(t);
-  }, [celebration, dismissCelebration, hasClip]);
+  }, [tuDong, celebration]);
 
-  let icon: LucideIcon = Sparkles;
-  let eyebrow = "";
-  let title = "";
-  let body = "";
-  /** Sắc chủ đạo của khoảnh khắc - chỉ dùng làm hào quang trên nền tối. */
-  let tone = "var(--gold)";
-  /** Hệ ngũ hành đem ra khoe khi khai quang linh căn. */
-  let sealElement: Element | null = null;
-  /** Huy hiệu kỳ ngộ vừa mở - thứ đáng khoe nhất ở khoảnh khắc này. */
-  let badge: string | null = null;
-  /**
-   * Đoạn video ngắn chạy sau thẻ ăn mừng cho hai mốc lớn nhất. Chưa có file thì
-   * thẻ vẫn hoạt động y như cũ, chỉ mất phần động.
+  /*
+   * Hộp thoại thật chứ không chỉ là lớp phủ đẹp.
+   *
+   * Lúc thẻ ăn mừng hiện, phần app phía sau phải rời hẳn khỏi luồng Tab và cây
+   * trợ năng (`inert` trên #root - lớp này portal ra <body> nên không tự khoá
+   * mình), tiêu điểm nhảy vào nút "Tiếp tục", Esc là đóng, và đóng xong thì
+   * tiêu điểm quay về đúng chỗ cũ thay vì rơi về đầu trang.
    */
-  let clip: string | null = null;
-  /** Cảnh giới cần đóng dấu triện; null thì hiện biểu tượng tròn như cũ. */
-  let sealRealm: { name: string; tier?: number } | null = null;
-  /** Huy hiệu linh thú thay cho biểu tượng tròn khi chiêu thú. */
-  let emblemBeastId: string | null = null;
+  const open = !!celebration;
+  useEffect(() => {
+    if (!open) return;
+    const before = document.activeElement as HTMLElement | null;
+    const root = document.getElementById("root");
+    const wasInert = root?.inert ?? false;
+    if (root) root.inert = true;
+    // Chờ một nhịp cho motion gắn nút vào DOM.
+    const focusTimer = window.setTimeout(() => continueRef.current?.focus({ preventScroll: true }), 0);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      // Chặn ngay ở pha capture của window: hộp thoại Radix (nếu còn mở bên
+      // dưới) nghe Esc ở document, không chặn thì một phím đóng hai lớp.
+      e.stopPropagation();
+      e.preventDefault();
+      dongRef.current();
+    };
+    window.addEventListener("keydown", onKey, true);
+    return () => {
+      window.clearTimeout(focusTimer);
+      window.removeEventListener("keydown", onKey, true);
+      if (root) root.inert = wasInert;
+      if (before?.isConnected) before.focus({ preventScroll: true });
+    };
+  }, [open]);
 
-  switch (celebration?.kind) {
-    case "tier-up": {
-      const realm = REALMS[celebration.realmIndex];
-      icon = realm.icon;
-      eyebrow = "Đột phá";
-      title = celebration.label;
-      body = `Tu vi đạt ${celebration.xp}. Khí tức vững hơn một bậc — cứ giữ nhịp này.`;
-      tone = realm.color;
-      sealRealm = {
-        name: realm.name,
-        tier: Number(celebration.label.split(" ").at(-1)) || undefined,
-      };
-      break;
-    }
-    case "realm-up": {
-      const realm = REALMS[celebration.realmIndex];
-      icon = Zap;
-      eyebrow = "Độ kiếp thành công";
-      title = `Bước vào ${celebration.realm}`;
-      body = celebration.note;
-      tone = realm.color;
-      sealRealm = { name: celebration.realm };
-      clip = "/art/media/dot-pha.mp4";
-      break;
-    }
-    case "ascension":
-      icon = Feather;
-      eyebrow = "Phi thăng";
-      title = "Đạo lộ viên mãn";
-      body = `Tu vi ${celebration.xp}. Bạn đã đi trọn con đường từ Luyện Khí tới Phi Thăng. Đây không phải may mắn — đây là kỷ luật.`;
-      tone = "var(--gold-bright)";
-      sealRealm = { name: "Phi Thăng" };
-      clip = "/art/media/phi-thang.mp4";
-      break;
-    case "perfect-day":
-      icon = PartyPopper;
-      eyebrow = "Nhật khoá viên mãn";
-      title = "Dọn sạch danh sách!";
-      body = `${celebration.count} nhiệm vụ hôm nay đều đã xong. Hôm nay bạn thắng.`;
-      break;
-    case "achievement":
-      icon = ACHIEVEMENTS.find((a) => a.id === celebration.id)?.icon ?? Trophy;
-      eyebrow = "Kỳ ngộ mới";
-      title = celebration.title;
-      body = celebration.description;
-      badge = `/art/award/${celebration.id}.png`;
-      break;
-    case "tribulation-failed":
-      icon = CloudLightning;
-      eyebrow = "Độ kiếp thất bại";
-      title = "Thiên lôi quá mạnh";
-      body = `Khí tức hao tổn ${celebration.loss} tu vi, nhưng cảnh giới vẫn giữ nguyên. Lần sau cơ hội lên ${Math.round(celebration.nextChance * 100)}% — người bền chí rồi cũng qua ${celebration.realm}.`;
-      tone = "var(--cinnabar)";
-      break;
-    case "awaken": {
-      const grade = gradeOf(celebration.root);
-      icon = Sparkles;
-      eyebrow = "Khai quang linh căn";
-      title = grade.name;
-      body = `${rootElementLabel(celebration.root)} — ${grade.note} Hấp thu linh khí ×${grade.multiplier}.`;
-      tone = grade.tone;
-      // Hệ đầu tiên quyết định ấn ngũ hành đem ra khoe.
-      sealElement = celebration.root.elements[0];
-      break;
-    }
-    case "summon": {
-      const beast = beastById(celebration.beastId);
-      emblemBeastId = celebration.beastId;
-      icon = Trophy;
-      eyebrow = celebration.duplicate
-        ? "Thú hồn hợp nhất"
-        : `Thu phục ${RARITIES[beast?.rarity ?? "pham"].label}`;
-      title = beast?.name ?? "Linh thú";
-      body = celebration.duplicate
-        ? `${beast?.name} đã theo bạn từ trước — hồn thú nhập vào, nuôi dưỡng tăng thêm.`
-        : `${beast?.lore ?? ""} Thiên phú: +${beast?.perkPerLevel ?? 0}% ${beast ? PERK_LABEL[beast.perk] : ""} mỗi cấp.`;
-      tone = beast ? RARITIES[beast.rarity].color : tone;
-      break;
-    }
-  }
+  const { icon, eyebrow, title, body, tone, sealElement, badge, clip, sealRealm, emblemBeastId } =
+    moTa(celebration ?? { kind: "perfect-day", count: 0 });
 
   const Icon = icon;
 
-  return (
+  return createPortal(
     <AnimatePresence>
       {celebration && (
         <motion.div
           key="celebration"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={titleId}
+          aria-describedby={bodyId}
           data-celebration={celebration.kind}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.18 }}
-          onClick={dismissCelebration}
-          className="fixed inset-0 z-[70] grid place-items-center bg-black/55 p-6 backdrop-blur-sm"
+          onClick={dong}
+          // pointer-events-auto: hộp thoại Radix còn đang đóng dở thì <body> vẫn bị
+          // khoá chuột; thẻ ăn mừng không được "đơ" theo.
+          className="pointer-events-auto fixed inset-0 z-[70] grid place-items-center bg-black/55 p-6 backdrop-blur-sm"
         >
           <motion.div
             initial={{ scale: 0.82, y: 24, opacity: 0 }}
@@ -182,10 +289,13 @@ export default function CelebrationLayer() {
               {/* Video mốc lớn chạy sau ấn triện; chỉ có ở đột phá cảnh giới và phi thăng */}
               {clip && clipOk && (
                 <video
-                  src={clip}
-                  autoPlay
+                  // Máy bật "giảm chuyển động": không chạy phim, chỉ đứng ở
+                  // khung hình đẹp nhất (điểm nhấn nằm ở giây 6-8).
+                  src={reduceMotion ? `${clip}#t=6` : clip}
+                  autoPlay={!reduceMotion}
+                  preload={reduceMotion ? "metadata" : "auto"}
                   muted
-                  loop
+                  loop={!reduceMotion}
                   playsInline
                   aria-hidden
                   onError={() => setClipOk(false)}
@@ -241,19 +351,37 @@ export default function CelebrationLayer() {
               <p className="text-gold/85 font-title relative mt-4 text-[11px] font-bold tracking-[0.22em] uppercase">
                 {eyebrow}
               </p>
-              <h2 className="glow-text font-heading relative mt-1 text-[26px] font-bold tracking-wide">
+              <h2 id={titleId} className="glow-text font-heading relative mt-1 text-[26px] font-bold tracking-wide">
                 {title}
               </h2>
             </div>
             <div className="rule-gold" />
 
             <div className="p-6">
-              <p className="text-muted-foreground text-sm leading-relaxed italic">
+              <p id={bodyId} className="text-muted-foreground text-sm leading-relaxed italic">
                 {body}
               </p>
+              {others.length > 0 && (
+                <ul className="celebration-more mt-4 space-y-1.5 text-left" aria-label="Cùng lúc đó">
+                  {others.map((c, i) => {
+                    const o = moTa(c);
+                    const OIcon = o.icon;
+                    return (
+                      <li key={i} className="border-gold/25 bg-background/40 flex items-start gap-2.5 rounded-lg border px-3 py-2">
+                        <OIcon className="text-gold-bright mt-0.5 size-4 shrink-0" />
+                        <span className="min-w-0 text-xs leading-snug">
+                          <span className="text-gold/90 block text-[10px] font-bold tracking-[0.14em] uppercase">{o.eyebrow}</span>
+                          <strong className="text-foreground font-semibold">{o.title}</strong>
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
               <Button
+                ref={continueRef}
                 className="btn-game mt-5 w-full"
-                onClick={dismissCelebration}
+                onClick={dong}
               >
                 {celebration.kind === "tribulation-failed"
                   ? "Luyện lại từ đầu"
@@ -263,6 +391,7 @@ export default function CelebrationLayer() {
           </motion.div>
         </motion.div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   );
 }

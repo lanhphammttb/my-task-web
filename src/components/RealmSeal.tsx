@@ -21,7 +21,7 @@ export default function RealmSeal({
   const dims = {
     sm: {
       box: "size-11 text-[11px] leading-[1.15]",
-      tier: "text-[8.5px] -right-1 -bottom-1 size-4",
+      tier: "text-[10px] -right-1 -bottom-1 size-[18px]",
     },
     md: {
       box: "size-14 text-[13px] leading-[1.15]",

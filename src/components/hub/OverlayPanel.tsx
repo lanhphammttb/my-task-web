@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "motion/react";
 import { ArrowLeft, X } from "lucide-react";
 import ArtImage from "../ArtImage";
@@ -36,7 +36,49 @@ export default function OverlayPanel({
   children,
 }: Props) {
   const scroller = useRef<HTMLDivElement>(null);
+  const shell = useRef<HTMLElement>(null);
+  const heading = useRef<HTMLHeadingElement>(null);
   const mb = useLaDienThoai();
+  /*
+   * Điện thoại: cuộn xuống thì đầu bảng thu lại còn một dải mỏng (tiêu đề +
+   * nút về), nhường chỗ cho nội dung. Chỉ đổi state khi vượt ngưỡng nên không
+   * vẽ lại theo từng pixel cuộn.
+   */
+  const [thuGon, setThuGon] = useState(false);
+  useEffect(() => {
+    const el = scroller.current;
+    if (!mb || !el) return;
+    const onScroll = () => setThuGon(el.scrollTop > 24);
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, [mb]);
+
+  /*
+   * Tiêu điểm theo bảng: mở ra thì nhảy vào tiêu đề bảng (trình đọc màn hình
+   * đọc ngay tên bảng, Tab kế tiếp là vào nội dung), đóng lại thì trả về đúng
+   * nút đã mở nó - không thì tiêu điểm rơi về <body> và người dùng bàn phím
+   * phải Tab lại từ đầu trang.
+   *
+   * Hai ngoại lệ có chủ ý:
+   *  - Đang gõ (ô tra cứu mở ra bảng kết quả) thì KHÔNG giật tiêu điểm khỏi ô.
+   *  - Lúc đóng mà tiêu điểm đã ở chỗ khác ngoài bảng (bấm sang bảng khác trên
+   *    thanh điều hướng) thì để yên, người dùng đã tự chọn chỗ mới.
+   */
+  useEffect(() => {
+    const el = shell.current;
+    const opener = document.activeElement as HTMLElement | null;
+    const typing =
+      !!opener &&
+      (opener.tagName === "INPUT" || opener.tagName === "TEXTAREA" || opener.isContentEditable);
+    if (!typing && el && !el.contains(opener)) heading.current?.focus({ preventScroll: true });
+    return () => {
+      const active = document.activeElement;
+      const lost = !active || active === document.body || (el?.contains(active) ?? false);
+      if (lost && opener && opener !== document.body && opener.isConnected) {
+        opener.focus({ preventScroll: true });
+      }
+    };
+  }, []);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -68,9 +110,11 @@ export default function OverlayPanel({
 
   return (
     <motion.section
+      ref={shell}
       role="dialog"
       aria-modal="false"
       aria-label={title}
+      data-thu-gon={mb && thuGon ? "" : undefined}
       /*
        * Điện thoại: TRƯỢT HẲN TỪ ĐÁY LÊN, không phải nhô lên 28px.
        *
@@ -128,7 +172,11 @@ export default function OverlayPanel({
           )}
           <div className="panel-header-content relative flex items-center gap-3 px-4 py-3">
             <div className="min-w-0 flex-1">
-              <h1 className="font-title glow-text truncate text-[15px] font-black tracking-[0.14em] uppercase">
+              <h1
+                ref={heading}
+                tabIndex={-1}
+                className="font-title glow-text truncate text-[15px] font-black tracking-[0.14em] uppercase outline-none"
+              >
                 {title}
               </h1>
               {subtitle && (

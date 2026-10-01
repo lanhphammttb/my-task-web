@@ -35,22 +35,29 @@ export default function MobileNavigation({ view, searching, query, onQuery, onSe
       <button type="button" aria-label="Đóng tra cứu" onClick={() => { setSearch(false); onQuery(''); }}><X size={20} /></button>
     </div>}
     <div className="mobile-world">
-      {destinations.map(t => <button type="button" key={t.label}
-        aria-label={t.label}
-        title={t.label}
+      {destinations.map(t => {
+        // Chấm báo hòm nằm TRONG tên nút: một <span aria-label> rỗng thì trình
+        // đọc màn hình bỏ qua, người không nhìn thấy chấm vàng sẽ không biết có
+        // hòm đang chờ.
+        const coHom = t.key === 'today' && alert;
+        const ten = coHom ? `${t.label} - có hòm chờ nhận` : t.label;
+        return <button type="button" key={t.label}
+        aria-label={ten}
+        title={ten}
         aria-current={!searching && (view === t.key || (t.key === 'today' && (view === 'week' || view === 'month'))) ? 'page' : undefined}
         onClick={() => { setSearch(false); onSelect(t.key); }}>
         <span className="mobile-world-medallion">
           {t.art ? <ArtImage src={railSrc(t.art)} alt="" /> : <Mountain size={25} aria-hidden="true" />}
-          {t.key === 'today' && alert && <span className="mobile-world-alert" aria-label="Có hòm chờ nhận" />}
+          {coHom && <span className="mobile-world-alert" aria-hidden="true" />}
         </span>
-        <span>{t.label}</span>
-      </button>)}
+        <span aria-hidden="true">{t.label}</span>
+      </button>;
+      })}
       <button type="button" aria-label="Tra cứu nhiệm vụ" aria-expanded={search || searching}
         title="Tra cứu nhiệm vụ"
         onClick={() => { if (search || searching) { setSearch(false); onQuery(''); } else setSearch(true); }}>
         <span className="mobile-world-medallion"><Search size={24} aria-hidden="true" /></span>
-        <span>Tra Cứu</span>
+        <span aria-hidden="true">Tra Cứu</span>
       </button>
     </div>
   </nav>;
