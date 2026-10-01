@@ -17,6 +17,14 @@ interface Props {
   color: string;
   light?: boolean;
   intensity?: number;
+  /**
+   * Đang dựng giao diện điện thoại hay không - lấy từ `useLaDienThoai()` của
+   * App để 3D và CSS cùng một mốc, thay vì tự đo `innerWidth < 768` (điện thoại
+   * xoay ngang rộng 850 thì CSS coi là điện thoại mà 3D lại coi là màn rộng).
+   */
+  phone?: boolean;
+  /** Dừng hẳn vòng vẽ, ví dụ khi bảng phủ kín cả màn điện thoại. */
+  paused?: boolean;
   className?: string;
 }
 
@@ -37,11 +45,15 @@ export default function Scene3DBackdrop({
   color,
   light = false,
   intensity = 1,
+  phone = false,
+  paused = false,
   className,
 }: Props) {
   const host = useRef<HTMLDivElement>(null);
-  const want = useRef({ color, light, intensity });
+  const want = useRef({ color, light, intensity, phone, paused });
   const redraw = useRef<(() => void) | null>(null);
+  /** Báo cho vòng vẽ biết `phone`/`paused` vừa đổi. */
+  const nudge = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     const el = host.current;
@@ -49,7 +61,7 @@ export default function Scene3DBackdrop({
 
     const reducedMotion =
       window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
-    let small = window.innerWidth < 768;
+    let small = want.current.phone;
     let disposed = false;
 
     let renderer: THREE.WebGLRenderer;
@@ -67,7 +79,9 @@ export default function Scene3DBackdrop({
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.12;
-    renderer.setPixelRatio(Math.min(small ? 1.15 : 1.65, window.devicePixelRatio || 1));
+    // Điện thoại: DPR 1. Lớp này là sương, hạt và vòng sáng mờ - vẽ ở 1x mắt
+    // không phân biệt được, mà số điểm ảnh phải tô giảm ~25% so với 1,15x.
+    renderer.setPixelRatio(Math.min(small ? 1 : 1.65, window.devicePixelRatio || 1));
     el.appendChild(renderer.domElement);
 
     const scene = new THREE.Scene();
@@ -378,8 +392,8 @@ export default function Scene3DBackdrop({
     const resize = () => {
       const width = Math.max(1, el.clientWidth);
       const height = Math.max(1, el.clientHeight);
-      small = window.innerWidth < 768;
-      renderer.setPixelRatio(Math.min(small ? 1.15 : 1.65, window.devicePixelRatio || 1));
+      small = want.current.phone;
+      renderer.setPixelRatio(Math.min(small ? 1 : 1.65, window.devicePixelRatio || 1));
       renderer.setSize(width, height);
       skyAspect = width / height;
       camera.aspect = skyAspect;
@@ -398,7 +412,9 @@ export default function Scene3DBackdrop({
       sanctuaryY = small ? 7.8 : 8.35;
       sanctuary.scale.set(small ? 4.7 : 6.35, small ? 4.95 : 6.65, 1);
 
-      orb.position.set(formationX + (small ? 2.55 : 2.15), formationY + (small ? 1.2 : 1.75), -12.8);
+      // Điện thoại: viên ngọc nằm dưới-phải vòng trận chứ không phía trên - phía
+      // trên là dãy nút HUD (ngày/đêm, cài đặt), ngọc tối đè lên trông như vết bẩn.
+      orb.position.set(formationX + (small ? 2.55 : 2.15), formationY + (small ? -1.6 : 1.75), -12.8);
       orbOrbit.position.copy(orb.position);
       orbGlow.position.copy(orb.position);
       orbGlow.position.z -= 0.35;
@@ -522,7 +538,7 @@ export default function Scene3DBackdrop({
         glyph.rotation.y += dt * 0.42;
       });
       orb.position.x = formationX + (small ? 2.55 : 2.15) + aim.x * 0.19;
-      orb.position.y = formationY + (small ? 1.2 : 1.75) + Math.sin(t * 0.8) * 0.19 - aim.y * 0.12;
+      orb.position.y = formationY + (small ? -1.6 : 1.75) + Math.sin(t * 0.8) * 0.19 - aim.y * 0.12;
       orb.rotation.x += dt * 0.22;
       orb.rotation.y += dt * 0.31;
       orbOrbit.position.copy(orb.position);
@@ -543,8 +559,13 @@ export default function Scene3DBackdrop({
     };
     redraw.current = drawStill;
 
-    const onVisibility = () => {
-      if (document.hidden) {
+    /*
+     * Chạy hay dừng vòng vẽ theo một chỗ duy nhất: tab ẩn, hoặc bị bảng phủ
+     * kín (điện thoại) thì dừng; hiện lại thì chạy tiếp từ đúng nhịp cũ.
+     */
+    const syncLoop = () => {
+      const stop = document.hidden || want.current.paused;
+      if (stop) {
         cancelAnimationFrame(raf);
         raf = 0;
       } else if (!raf && !reducedMotion) {
@@ -552,22 +573,31 @@ export default function Scene3DBackdrop({
         raf = requestAnimationFrame(render);
       }
     };
+    let lastPhone = small;
+    nudge.current = () => {
+      if (want.current.phone !== lastPhone) {
+        lastPhone = want.current.phone;
+        resize();
+      }
+      syncLoop();
+    };
     if (reducedMotion) drawStill();
     else {
-      raf = requestAnimationFrame(render);
-      document.addEventListener("visibilitychange", onVisibility);
+      syncLoop();
+      document.addEventListener("visibilitychange", syncLoop);
     }
 
     return () => {
       cancelAnimationFrame(raf);
       redraw.current = null;
+      nudge.current = null;
       observer.disconnect();
       window.removeEventListener("resize", resize);
       window.visualViewport?.removeEventListener("resize", resize);
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onPointerEnd);
       window.removeEventListener("pointercancel", onPointerEnd);
-      document.removeEventListener("visibilitychange", onVisibility);
+      document.removeEventListener("visibilitychange", syncLoop);
       disposed = true;
       scene.traverse((object) => {
         const renderable = object as THREE.Mesh;
@@ -583,9 +613,10 @@ export default function Scene3DBackdrop({
   }, []);
 
   useEffect(() => {
-    want.current = { color, light, intensity };
+    want.current = { color, light, intensity, phone, paused };
     redraw.current?.();
-  }, [color, light, intensity]);
+    nudge.current?.();
+  }, [color, light, intensity, phone, paused]);
 
   return <div ref={host} className={className} aria-hidden="true" />;
 }

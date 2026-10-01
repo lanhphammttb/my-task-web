@@ -1,7 +1,10 @@
+import { createHash } from 'node:crypto';
+import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import path from 'node:path';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { loadEnv } from 'vite';
+import type { Plugin } from 'vite';
 // `defineConfig` lấy từ vitest để giữ được khối `test`; `loadEnv` thì chỉ vite
 // mới xuất ra.
 import { defineConfig } from 'vitest/config';
@@ -17,8 +20,53 @@ const chuyenTiep = (mode: string) => ({
   },
 });
 
+/** Chỗ giữ chỗ trong public/sw.js, thay bằng mã bản build. */
+const CHO_MA_BAN = '__DAO_TRINH_BUILD_ID__';
+
+/**
+ * Đóng dấu mã bản build vào `dist/sw.js`.
+ *
+ * Trình duyệt chỉ cài worker mới khi NỘI DUNG sw.js đổi. Trước đây tệp này
+ * đóng cứng tên kho `-v3`, deploy bao nhiêu lần nó vẫn y hệt từng byte - máy đã
+ * cài cứ chạy worker cũ, còn kho vỏ phình dần. Mã bản lấy từ mã băm của mọi
+ * tệp build ra (tên chunk đã mang mã băm nội dung), nên: mã đổi đúng khi mã
+ * nguồn đổi, build lại y nguyên thì mã giữ nguyên (không bắt người dùng tải lại
+ * vô cớ).
+ */
+function ghiMaBanSw(): Plugin {
+  let outDir = 'dist';
+  let maBan = '';
+  return {
+    name: 'dao-trinh:ma-ban-sw',
+    apply: 'build',
+    configResolved(cfg) {
+      outDir = path.resolve(cfg.root, cfg.build.outDir);
+    },
+    generateBundle(_opts, bundle) {
+      const bam = createHash('sha256');
+      for (const ten of Object.keys(bundle).sort()) {
+        const tep = bundle[ten];
+        bam.update(ten);
+        // index.html không mang mã băm trong tên - băm luôn nội dung của nó.
+        if (tep.type === 'asset' && ten.endsWith('.html')) bam.update(String(tep.source));
+      }
+      maBan = bam.digest('hex').slice(0, 12);
+    },
+    writeBundle() {
+      // public/ được chép sang dist trước bước này, nên sw.js đã nằm sẵn đó.
+      const sw = path.join(outDir, 'sw.js');
+      if (!existsSync(sw)) return;
+      const goc = readFileSync(sw, 'utf8');
+      if (!goc.includes(CHO_MA_BAN)) {
+        this.error(`public/sw.js thiếu chỗ giữ chỗ ${CHO_MA_BAN} - worker sẽ không bao giờ tự cập nhật.`);
+      }
+      writeFileSync(sw, goc.split(CHO_MA_BAN).join(maBan));
+    },
+  };
+}
+
 export default defineConfig(({ mode }) => ({
-  plugins: [react(), tailwindcss()],
+  plugins: [react(), tailwindcss(), ghiMaBanSw()],
 
   /*
    * Chuyển tiếp `/api` sang backend, thay vì để trình duyệt gọi thẳng.

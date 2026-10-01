@@ -2,7 +2,35 @@
 <html lang="vi" class="dark">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!--
+      viewport-fit=cover: app cài lên màn hình chính (status bar
+      `black-translucent`) vẽ tràn cả dưới tai thỏ và thanh home. Chỉ khi có cờ
+      này thì env(safe-area-inset-*) mới trả số thật, để HUD, bảng phủ và thanh
+      điều hướng tự chừa đúng chỗ.
+
+      KHÔNG đặt interactive-widget=resizes-content: bàn phím đã được xử lý bằng
+      visualViewport (useDialogVisualViewport); đổi sang co cả layout thì mỗi
+      lần bàn phím bật lên là sảnh, lớp 3D và thanh điều hướng co giật theo.
+    -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
+    <script>
+      /*
+       * Chọn giao diện sáng/tối TRƯỚC lượt vẽ đầu tiên.
+       *
+       * Thẻ <html> để sẵn `dark`; người dùng chọn giao diện sáng thì trước đây
+       * phải chờ React dựng xong mới đổi - chớp một màn tối rồi mới sáng. Đọc
+       * đúng khoá mà src/lib/storage.ts lưu (`settings.theme` trong
+       * `my-task-planner/v1`). Hỏng gì thì cứ để tối như cũ.
+       */
+      try {
+        var luu = JSON.parse(localStorage.getItem('my-task-planner/v1') || 'null');
+        var sang = !!(luu && luu.settings && luu.settings.theme === 'light');
+        var goc = document.documentElement;
+        if (sang) goc.classList.remove('dark');
+        goc.style.colorScheme = sang ? 'light' : 'dark';
+      } catch (e) {}
+    </script>
 
     <!-- Ấn triện chu sa khắc chữ 道 - nhận diện của app -->
     <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png" />
@@ -81,6 +109,11 @@
         0%, 100% { opacity: 0.55; transform: scale(0.97); }
         50% { opacity: 1; transform: scale(1); }
       }
+      /* Giao diện sáng: màn chờ cũng sáng, khỏi chớp một khung tối. */
+      html:not(.dark) .man-cho {
+        background: #efe4cd;
+        color: #5b4526;
+      }
       @media (prefers-reduced-motion: reduce) {
         .man-cho-an { animation: none; }
       }
@@ -113,7 +146,21 @@
        * Nuốt lỗi có chủ ý - chạy qua http:// hoặc trong tab ẩn danh là trình
        * duyệt từ chối, mà đó không phải lý do để app không mở được.
        */
-      if ('serviceWorker' in navigator) {
+      /*
+       * Chỉ đăng ký ở bản build (Vite thay chữ PROD bọc trong hai dấu phần
+       * trăm thành `true`/`false` lúc dựng HTML).
+       *
+       * Ở `npm run dev` mà có service worker thì nó giữ lại tệp cũ và giành
+       * quyền trả lời với chính dev server - sửa mã xong tải lại vẫn thấy bản
+       * cũ. Máy nào lỡ đăng ký từ trước thì gỡ luôn cho sạch.
+       */
+      if ('serviceWorker' in navigator && '%PROD%' !== 'true') {
+        navigator.serviceWorker
+          .getRegistrations()
+          .then((ds) => ds.forEach((d) => d.unregister()))
+          .catch(() => {});
+      }
+      if ('serviceWorker' in navigator && '%PROD%' === 'true') {
         addEventListener('load', () => {
           /*
            * Tự chữa khi máy còn giữ worker cũ.
@@ -137,10 +184,46 @@
           // chuyện bình thường, không phải thay bản, nên không tải lại.
           const daCoWorker = !!navigator.serviceWorker.controller;
           let daTaiLai = false;
+          /*
+           * Không tải lại ngang lúc người dùng đang gõ dở trong hộp thoại -
+           * mất nguyên đoạn đang viết thì tệ hơn chạy bản cũ thêm vài giây.
+           * Đợi tới khi không còn hộp thoại/ô nhập nào đang mở, hoặc khi app
+           * bị ẩn đi (chuyển app, khoá máy) thì tải lại.
+           */
+          const dangBan = () => {
+            const o = document.activeElement;
+            return (
+              !!document.querySelector('[role="dialog"][aria-modal="true"], [role="alertdialog"]') ||
+              !!(o && /^(INPUT|TEXTAREA|SELECT)$/.test(o.tagName))
+            );
+          };
+          const taiLai = () => {
+            if (daTaiLai) return;
+            daTaiLai = true;
+            // Chốt chặn thứ hai chống vòng lặp: vừa tải lại vì worker mới trong
+            // 10 giây qua thì thôi.
+            try {
+              const k = 'dao-trinh/sw-tai-lai';
+              if (Date.now() - Number(sessionStorage.getItem(k) || 0) < 10000) return;
+              sessionStorage.setItem(k, String(Date.now()));
+            } catch (e) {}
+            location.reload();
+          };
           navigator.serviceWorker.addEventListener('controllerchange', () => {
             if (!daCoWorker || daTaiLai) return;
-            daTaiLai = true;
-            location.reload();
+            if (!dangBan()) return taiLai();
+            const cho = setInterval(() => {
+              if (!dangBan()) {
+                clearInterval(cho);
+                taiLai();
+              }
+            }, 1500);
+            document.addEventListener('visibilitychange', () => {
+              if (document.visibilityState === 'hidden') {
+                clearInterval(cho);
+                taiLai();
+              }
+            });
           });
 
           /*

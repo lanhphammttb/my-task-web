@@ -2,22 +2,23 @@ import { exportFile, exportStoredFile, storageLoadError } from "./lib/storage";
 import { FocusTimerProvider, useFocusTimer } from "./store/FocusTimer";
 import {
   Suspense,
-  lazy,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
-import { AnimatePresence } from "motion/react";
+import { AnimatePresence, MotionConfig } from "motion/react";
 import { SearchX } from "lucide-react";
 import type { Task, ViewKey } from "./types";
 import { todayKey } from "./lib/date";
-import { dayStats, sortTasks } from "./lib/stats";
+import { sortTasks } from "./lib/stats";
 import { AppProvider, useApp } from "./store/AppStore";
 import { cultivationOf } from "./lib/cultivation";
 import { effectiveXp } from "./lib/economy";
-import { isPerfectDay } from "./lib/achievements";
-import { chestsForDay, pendingChests } from "./lib/chest";
+import { chestsOfDay, pendingChests } from "./lib/chest";
+import { timNhiemVu } from "./lib/timKiem";
 import CelebrationLayer from "./components/CelebrationLayer";
 import SettingsDialog from "./components/SettingsDialog";
 import TribulationDialog from "./components/TribulationDialog";
@@ -41,17 +42,82 @@ import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { hasKeyboardLayer } from "./lib/keyboard";
-const TodayView = lazy(() => import("./views/TodayView"));
-const WeekView = lazy(() => import("./views/WeekView"));
-const MonthView = lazy(() => import("./views/MonthView"));
-const GoalsView = lazy(() => import("./views/GoalsView"));
-const FocusView = lazy(() => import("./views/FocusView"));
-const CaveView = lazy(() => import("./views/CaveView"));
-const AwardsView = lazy(() => import("./views/AwardsView"));
-const StatsView = lazy(() => import("./views/StatsView"));
+import { OPEN_VIEW } from "./lib/section";
+import ErrorBoundary from "./components/ErrorBoundary";
+import { lazyWithRetry } from "./lazyWithRetry";
+// Nạp trễ qua `lazyWithRetry`: chunk cũ 404 sau khi deploy thì tự tải lại
+// trang một lần thay vì làm trắng cả app.
+const TodayView = lazyWithRetry(() => import("./views/TodayView"));
+const WeekView = lazyWithRetry(() => import("./views/WeekView"));
+const MonthView = lazyWithRetry(() => import("./views/MonthView"));
+const GoalsView = lazyWithRetry(() => import("./views/GoalsView"));
+const FocusView = lazyWithRetry(() => import("./views/FocusView"));
+const CaveView = lazyWithRetry(() => import("./views/CaveView"));
+const AwardsView = lazyWithRetry(() => import("./views/AwardsView"));
+const StatsView = lazyWithRetry(() => import("./views/StatsView"));
 
 // three.js khá nặng nên lớp 3D được nạp trễ; nền ảnh 2D vẫn nằm phía dưới.
-const Scene3DBackdrop = lazy(() => import("./components/Scene3DBackdrop"));
+const Scene3DBackdrop = lazyWithRetry(() => import("./components/Scene3DBackdrop"));
+
+/**
+ * Máy yếu thì bỏ hẳn lớp 3D - tranh nền 2D (HubScene) vẫn đủ đẹp.
+ *
+ * Ngưỡng cố ý rộng tay: WebGL chạy liên tục trên máy 2 GB RAM / 4 nhân là đổi
+ * pin và độ mượt của thao tác lấy chút hạt bay lấp lánh. Người bật "Tiết kiệm
+ * dữ liệu" cũng không muốn tải thêm ~550 kB three.js.
+ */
+function mayYeu(): boolean {
+  if (typeof navigator === "undefined") return false;
+  const nav = navigator as Navigator & {
+    deviceMemory?: number;
+    connection?: { saveData?: boolean };
+  };
+  if (nav.connection?.saveData) return true;
+  if (typeof nav.deviceMemory === "number" && nav.deviceMemory <= 2) return true;
+  if (typeof nav.hardwareConcurrency === "number" && nav.hardwareConcurrency <= 4) return true;
+  return false;
+}
+
+/**
+ * Chỉ dựng lớp 3D khi trình duyệt rảnh tay.
+ *
+ * Lượt vẽ đầu là lúc người dùng đang chờ thấy sảnh; chen việc nạp và dựng cảnh
+ * three.js vào đúng lúc ấy là giành CPU với chính giao diện. Đợi tới khi rảnh
+ * (tối đa 2,5 giây) thì sảnh đã lên xong, lớp 3D phủ thêm vào sau.
+ */
+function useDungKhiRanh(): boolean {
+  const [ranh, setRanh] = useState(false);
+  useEffect(() => {
+    if (mayYeu()) return;
+    const w = window as Window & {
+      requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number;
+      cancelIdleCallback?: (id: number) => void;
+    };
+    if (w.requestIdleCallback) {
+      const id = w.requestIdleCallback(() => setRanh(true), { timeout: 2500 });
+      return () => w.cancelIdleCallback?.(id);
+    }
+    const id = window.setTimeout(() => setRanh(true), 1200);
+    return () => window.clearTimeout(id);
+  }, []);
+  return ranh;
+}
+
+/**
+ * Cầu nối tới đồng hồ bế quan.
+ *
+ * `useFocusTimer()` đổi giá trị MỖI GIÂY khi đồng hồ chạy. Shell chỉ cần đúng
+ * hàm `pickTask`, vậy mà gọi hook ngay trong Shell là kéo cả cây (HUD, sảnh,
+ * bảng đang mở, mấy hộp thoại) dựng lại mỗi giây. Đẩy phần đăng ký xuống một
+ * component rỗng: nó dựng lại mỗi giây nhưng không vẽ gì, còn Shell đứng yên.
+ */
+function FocusPickBridge({ onPick }: { onPick: (pick: (taskId?: string) => void) => void }) {
+  const { pickTask } = useFocusTimer();
+  useLayoutEffect(() => {
+    onPick(pickTask);
+  });
+  return null;
+}
 
 interface PanelMeta {
   title: string;
@@ -125,7 +191,10 @@ function Shell() {
   const [editorOpen, setEditorOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [tribulationOpen, setTribulationOpen] = useState(false);
-  const { pickTask: setFocusTaskId } = useFocusTimer();
+  const pickTaskRef = useRef<(taskId?: string) => void>(() => {});
+  const nhanPickTask = useCallback((pick: (taskId?: string) => void) => {
+    pickTaskRef.current = pick;
+  }, []);
   const [query, setQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
 
@@ -162,10 +231,10 @@ function Shell() {
 
   const startFocus = useCallback(
     (t: Task) => {
-      setFocusTaskId(t.id);
+      pickTaskRef.current(t.id);
       open("focus");
     },
-    [open, setFocusTaskId],
+    [open],
   );
 
   const openDay = useCallback(
@@ -175,6 +244,16 @@ function Shell() {
     },
     [open],
   );
+
+  // Chỗ sâu bên trong một bảng (ví dụ kết quả mở hòm) xin chuyển sang bảng khác.
+  useEffect(() => {
+    const onOpenView = (e: Event) => {
+      const { view: v, at } = (e as CustomEvent<{ view: ViewKey; at?: string }>).detail;
+      open(v, at);
+    };
+    window.addEventListener(OPEN_VIEW, onOpenView);
+    return () => window.removeEventListener(OPEN_VIEW, onOpenView);
+  }, [open]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -209,17 +288,11 @@ function Shell() {
     return () => window.removeEventListener("keydown", onKey);
   }, [openNew, open, toggle]);
 
+  // Bỏ dấu cả hai phía: người Việt gõ "bao cao" vẫn phải ra "báo cáo". Tìm cả
+  // trong bước nhỏ - xem `lib/timKiem.ts`.
   const results = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return [];
-    return sortTasks(
-      data.tasks.filter(
-        (t) =>
-          t.title.toLowerCase().includes(q) ||
-          t.note.toLowerCase().includes(q) ||
-          t.tags.some((tag) => tag.toLowerCase().includes(q)),
-      ),
-    );
+    if (!query.trim()) return [];
+    return sortTasks(timNhiemVu(data.tasks, query));
   }, [query, data.tasks]);
 
   /**
@@ -238,9 +311,7 @@ function Shell() {
   const searching = query.trim().length > 0;
   const panelOpen = searching || view !== null;
   const laDienThoai = useLaDienThoai();
-
-  // Chỉ số nhỏ gắn lên icon: cho người dùng biết chỗ nào đang cần ghé.
-  const stats = dayStats(data.tasks, data.sessions, todayKey());
+  const dung3D = useDungKhiRanh();
 
   /**
    * Chấm báo trên icon Tiên Lộ.
@@ -253,25 +324,23 @@ function Shell() {
   // Hòm kỳ ngộ nằm trong Nhật Khoá. Không báo ra ngoài thì xong việc rồi vẫn
   // phải mở bảng mới biết có hòm - mà cái hay của nó nằm đúng ở chỗ biết ngay
   // là có thứ đang chờ mình.
-  const chestAlert =
-    pendingChests(
-      chestsForDay(
-        todayKey(),
-        stats.done,
-        stats.focusMin,
-        isPerfectDay(data.tasks, todayKey()),
-        data.chestsOpened,
-      ),
-    ) > 0;
+  // Đếm theo NGÀY HOÀN THÀNH, cùng lối với lệnh mở hòm (`chestsOfDay`): chấm
+  // báo mà đếm theo ngày lên lịch thì có lúc sáng lên cho một hòm không mở được.
+  const chestAlert = pendingChests(chestsOfDay(data, todayKey())) > 0;
 
 
   return (
+    <>
+    <FocusPickBridge onPick={nhanPickTask} />
     <div
       className={cn(
         "relative isolate h-full min-h-0 overflow-hidden",
         laDienThoai && "mobile-shell",
         bigMoment && "world-shake",
       )}
+      // Bảng phủ kín màn điện thoại: CSS dựa vào cờ này để dừng các hoạt ảnh
+      // của cảnh nền phía sau (không ai thấy mà vẫn tốn khung hình).
+      data-phu-kin={laDienThoai && panelOpen ? "" : undefined}
     >
       {/* Về nhà thì cả khung cảnh phía sau đổi theo căn phòng, không chỉ đổi
           nội dung trong bảng. Đi đâu cũng thấy một nền y hệt thì không có cảm
@@ -287,26 +356,27 @@ function Shell() {
         )}
       />
       {/* Three.js phủ nhẹ cả web lẫn mobile; động phủ giữ nguyên cảnh trong nhà. */}
-      {view !== "cave" && <Suspense fallback={null}>
+      {/* Lớp 3D là đồ trang trí: nạp hỏng thì im lặng bỏ đi, không kéo cả app. */}
+      {view !== "cave" && dung3D && <ErrorBoundary variant="silent"><Suspense fallback={null}>
         <Scene3DBackdrop
           color={c.realm.color}
           light={!isDark}
           // Mở bảng ra là thế giới lùi lại một bước, nhường mắt cho nội dung.
           intensity={panelOpen ? 0.38 : 1}
+          phone={laDienThoai}
+          // Trên điện thoại bảng hoặc hộp thoại phủ kín cả màn: vẽ 30 hình/giây
+          // cho một cảnh không ai nhìn thấy chỉ tốn pin - dừng hẳn vòng vẽ.
+          // Màn rộng vẫn thấy cảnh hai bên nên vẫn chạy.
+          paused={laDienThoai && (panelOpen || editorOpen || settingsOpen || tribulationOpen)}
           // Đặt scene trong stacking context ở z-0: HubScene nằm tại -z-20,
           // còn HUD/nội dung đều >= z-10, nên WebGL hiện trên tranh nền mà không phủ UI.
           className={cn("pointer-events-none fixed inset-0 z-0 game-scene-3d", laDienThoai && "mobile-scene-3d")}
         />
-      </Suspense>}
+      </Suspense></ErrorBoundary>}
 
       <div inert={laDienThoai && panelOpen} aria-hidden={laDienThoai && panelOpen}>
         <HeaderHUD onSettings={() => setSettingsOpen(true)} />
       </div>
-      {storageError && <div role="alert" className="fixed inset-x-2 top-2 z-[100] rounded-lg border bg-background p-3 text-sm shadow-lg">
-        <p>{storageError}</p>
-        <button className="mr-4 underline" onClick={() => { try { if (storageLoadError()) exportStoredFile(); else exportFile(data); } catch { /* Keep the error visible if storage is inaccessible. */ } }}>Xuất bản sao JSON</button>
-        <button className="underline" onClick={retrySave}>Thử lưu lại</button>
-      </div>}
 
       {/* --------------------------------------------------- khu trung tâm */}
       <div
@@ -318,11 +388,13 @@ function Shell() {
           bottom: "calc(var(--footer-h, 86px) + 10px)",
         }}
         className={cn(
-          "hub-scroll absolute inset-x-0 z-10 flex flex-col items-center overscroll-contain transition-opacity duration-300",
+          "hub-scroll absolute inset-x-0 z-10 flex flex-col items-center overscroll-contain transition-[opacity,visibility] duration-300",
           // Sảnh điện thoại tự vừa màn, không có gì để cuộn; bật cuộn ở đó chỉ
           // tạo ra cái thanh nảy lên nảy xuống khi chạm.
           "overflow-x-hidden overflow-y-auto",
-          panelOpen && "pointer-events-none opacity-0",
+          // `invisible` (đổi ở CUỐI lượt mờ dần): sảnh đã khuất sau bảng thì
+          // trình duyệt thôi vẽ nó - kể cả mấy lớp kính mờ và hoạt ảnh bên trong.
+          panelOpen && "pointer-events-none invisible opacity-0",
         )}
       >
         {/* Hai sảnh khác hẳn nhau, không phải một sảnh co giãn.
@@ -401,6 +473,9 @@ function Shell() {
             onClose={closePanel}
           >
             <WorkSanctuary view={view} onSelect={open}>
+            {/* Mỗi bảng một lưới đỡ riêng (key theo bảng): một bảng hỏng thì chỉ
+                bảng ấy báo lỗi, bấm sang bảng khác là thoát ra được. */}
+            <ErrorBoundary key={view} variant="panel">
             <Suspense fallback={
               <div className="game-loading" role="status">
                 <span className="game-loading-seal" aria-hidden="true">✧</span>
@@ -438,7 +513,7 @@ function Shell() {
             {view === "focus" && (
               <FocusView onNew={openNew} />
             )}
-            {view === "cave" && <CaveView onMeditate={() => open("focus")} />}
+            {view === "cave" && <CaveView onMeditate={() => open("focus")} initialTab={anchor} />}
             {view === "awards" && (
               <AwardsView onTribulation={() => setTribulationOpen(true)} />
             )}
@@ -446,6 +521,7 @@ function Shell() {
               <StatsView onOpenDay={openDay} onOpenGoals={() => open("goals")} />
             )}
             </Suspense>
+            </ErrorBoundary>
             </WorkSanctuary>
           </OverlayPanel>
         ) : null}
@@ -484,18 +560,46 @@ function Shell() {
       />
       <EncounterDialog />
       <CelebrationLayer />
-      {/* Không dùng richColors: xanh lá/đỏ tươi của sonner chọi hẳn với tông vàng kim. */}
-      <Toaster position="top-center" theme={isDark ? "dark" : "light"} />
     </div>
+    {/*
+      Thông báo lỗi lưu và toast nằm NGOÀI khối `isolate` phía trên.
+
+      `isolate` dựng một stacking context riêng, nên z-index bên trong chỉ so
+      với nhau: z-[100] hay z-[999999] trong đó vẫn nằm DƯỚI hộp thoại Radix
+      (portal ra <body>, z-50). Toast "đã lưu" hiện sau lớp nền mờ của hộp
+      thoại là toast không ai đọc được. Ra ngoài thì chúng so thẳng với hộp
+      thoại và nổi lên trên.
+
+      `pointer-events-auto`: lúc hộp thoại modal mở, Radix khoá chuột cả <body>;
+      nút "Thử lưu lại" vẫn phải bấm được.
+    */}
+    {storageError && <div role="alert" className="pointer-events-auto fixed inset-x-2 top-[max(0.5rem,env(safe-area-inset-top))] z-100 rounded-lg border bg-background p-3 text-sm shadow-lg">
+      <p>{storageError}</p>
+      <button className="mr-4 underline" onClick={() => { try { if (storageLoadError()) exportStoredFile(); else exportFile(data); } catch { /* Keep the error visible if storage is inaccessible. */ } }}>Xuất bản sao JSON</button>
+      <button className="underline" onClick={retrySave}>Thử lưu lại</button>
+    </div>}
+    {/* Không dùng richColors: xanh lá/đỏ tươi của sonner chọi hẳn với tông vàng kim. */}
+    {/* Chừa safe-area trên: app cài lên màn hình chính vẽ tràn dưới thanh trạng thái. */}
+    <Toaster
+      position="top-center"
+      theme={isDark ? "dark" : "light"}
+      offset={{ top: "calc(env(safe-area-inset-top, 0px) + 24px)" }}
+      mobileOffset={{ top: "calc(env(safe-area-inset-top, 0px) + 12px)" }}
+    />
+    </>
   );
 }
 
 export default function App() {
   return (
-    <AppProvider>
-      <TooltipProvider delayDuration={300}>
-        <FocusTimerProvider><Shell /></FocusTimerProvider>
-      </TooltipProvider>
-    </AppProvider>
+    // reducedMotion="user": máy bật "giảm chuyển động" thì motion bỏ các hoạt
+    // ảnh dịch chuyển/phóng to, chỉ giữ đổi độ mờ - áp cho MỌI motion.* trong app.
+    <MotionConfig reducedMotion="user">
+      <AppProvider>
+        <TooltipProvider delayDuration={300}>
+          <FocusTimerProvider><Shell /></FocusTimerProvider>
+        </TooltipProvider>
+      </AppProvider>
+    </MotionConfig>
   );
 }

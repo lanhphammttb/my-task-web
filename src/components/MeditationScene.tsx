@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useReducedMotion } from "motion/react";
 import { cn } from "@/lib/utils";
 import { startAmbient } from "../lib/celebrate";
 import CultivationProp3D from "./CultivationProp3D";
@@ -23,14 +24,18 @@ export default function MeditationScene({
   className,
 }: Props) {
   const c = resting ? "var(--success)" : "var(--jade)";
-  const showVideo = running && ambient;
+  // Máy bật "giảm chuyển động" thì giữ ảnh tĩnh, không chạy phim nền.
+  const reduceMotion = useReducedMotion();
+  const playAmbient = running && ambient;
+  const showVideo = playAmbient && !reduceMotion;
   /** Video tải lỗi thì lùi về ảnh tĩnh động phủ, không lùi sang video khác. */
   const [videoOk, setVideoOk] = useState(true);
 
   useEffect(() => {
-    if (!showVideo) return;
+    // Âm nền không phải chuyển động: vẫn phát dù video bị tắt.
+    if (!playAmbient) return;
     return startAmbient("cave");
-  }, [showVideo]);
+  }, [playAmbient]);
 
   return (
     <div className={cn("relative h-full w-full overflow-hidden", className)}>

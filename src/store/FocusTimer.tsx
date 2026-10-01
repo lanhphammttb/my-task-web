@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { useApp } from "./AppStore";
 import { clockLabel } from "../lib/date";
+import { MIN_REWARD_SESSION_MIN } from "../lib/validation";
 import { soundComplete, soundFocusStart } from "../lib/celebrate";
 
 type Mode = "work" | "break";
@@ -74,6 +75,12 @@ function useTimer() {
     if (s.mode === "work" && s.started && minutes >= 1) {
       logSession(minutes, s.taskId);
       setLastSession({ minutes, taskId: s.taskId });
+    } else if (s.mode === "work" && s.started) {
+      // Trước đây đồng hồ lặng lẽ quay về 25:00 - người dùng tưởng app nuốt mất phiên.
+      notify(
+        `Phiên chưa đủ 1 phút nên không được ghi nhận. Phiên dưới ${MIN_REWARD_SESSION_MIN} phút vẫn được ghi nhưng không có linh thạch phiên và không gặp kỳ ngộ.`,
+        "warn",
+      );
     }
   };
 

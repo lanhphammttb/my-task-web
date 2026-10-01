@@ -485,8 +485,16 @@ export default function CultivationProp3D({
       if (fireLight) fireLight.intensity = (state.current.active ? 1.75 : 1.0) + Math.sin(time * 3.2) * 0.28;
       renderer.render(scene, camera);
     };
+    /*
+     * Chỉ vẽ khi thật sự nhìn thấy.
+     *
+     * Vật phẩm 3D nằm giữa những bảng dài (Đan Đường, Tiên Lộ): cuộn qua rồi
+     * mà nó vẫn quay 30 hình/giây ngoài màn hình là tốn pin vô ích. Không có
+     * IntersectionObserver (máy cũ, jsdom) thì coi như luôn thấy.
+     */
+    let onScreen = true;
     const onVisibility = () => {
-      if (document.hidden) {
+      if (document.hidden || !onScreen) {
         cancelAnimationFrame(raf);
         raf = 0;
       } else if (!raf && !reducedMotion) {
@@ -494,15 +502,24 @@ export default function CultivationProp3D({
         raf = requestAnimationFrame(render);
       }
     };
+    const seen =
+      typeof IntersectionObserver === "undefined"
+        ? null
+        : new IntersectionObserver((entries) => {
+            onScreen = entries.some((entry) => entry.isIntersecting);
+            onVisibility();
+          });
     if (reducedMotion) renderer.render(scene, camera);
     else {
       raf = requestAnimationFrame(render);
       document.addEventListener("visibilitychange", onVisibility);
+      seen?.observe(el);
     }
 
     return () => {
       cancelAnimationFrame(raf);
       document.removeEventListener("visibilitychange", onVisibility);
+      seen?.disconnect();
       observer.disconnect();
       scene.traverse((object) => {
         const drawable = object as THREE.Mesh;

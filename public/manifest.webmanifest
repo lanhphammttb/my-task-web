@@ -2,6 +2,7 @@
   "name": "Đạo Trình · Kế hoạch & tu luyện",
   "short_name": "Đạo Trình",
   "description": "Mỗi việc hoàn thành là một phần tu vi — đi từ Luyện Khí tới Phi Thăng.",
+  "id": "/",
   "lang": "vi",
   "start_url": "/",
   "scope": "/",
