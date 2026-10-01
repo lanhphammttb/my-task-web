@@ -98,47 +98,68 @@ function dropDeadIds(d: AppData): AppData {
   };
 }
 
+/**
+ * Dựng hồ sơ đầy đủ từ một bản đã đọc, điền mặc định cho mọi trường còn thiếu.
+ *
+ * Dùng chung cho ba đường vào: bản lưu trong trình duyệt, tệp người dùng nhập,
+ * và bản sao lưu trước khi đăng nhập. Ba đường mà ba cách dựng thì sớm muộn
+ * sẽ có một đường quên mất một trường mới.
+ *
+ * `verified` cố tình không được chép sang: đó là con số server tính, chỉ tin
+ * khi biết chắc nó thuộc tài khoản nào - xem `khoiPhucVerified`.
+ */
+function chuanHoa(parsed: Partial<AppData>): AppData {
+  validateData(parsed);
+  return dropDeadIds({
+    version: 1,
+    // Việc cũ chưa có `firstDoneAt` giữ nguyên: nơi cần mốc ấy tự lùi về
+    // `completedAt` (xem `lanDauXong` trong economy), nên sao lưu vẫn khứ hồi y hệt.
+    tasks: parsed.tasks ?? [],
+    goals: parsed.goals ?? [],
+    sessions: parsed.sessions ?? [],
+    settings: { ...DEFAULT_SETTINGS, ...(parsed.settings ?? {}) },
+    root: parsed.root,
+    beasts: parsed.beasts ?? [],
+    activeBeastId: parsed.activeBeastId,
+    technique: parsed.technique,
+    techniqueSwaps: parsed.techniqueSwaps ?? 0,
+    // Hồ sơ cũ chưa có động phủ thì coi như đang ở bậc đầu, không phải bậc 0.
+    caveLevel: parsed.caveLevel ?? 1,
+    field: parsed.field ?? [],
+    herbs: { ...emptyHerbs(), ...(parsed.herbs ?? {}) },
+    expedition: parsed.expedition,
+    contribution: parsed.contribution ?? 0,
+    mission: parsed.mission,
+    chestsOpened: parsed.chestsOpened ?? [],
+    stonesSpent: parsed.stonesSpent ?? 0,
+    pills: { ha: 0, trung: 0, thuong: 0, ...(parsed.pills ?? {}) },
+    tuViPenalty: parsed.tuViPenalty ?? 0,
+    gateRealm: parsed.gateRealm ?? 0,
+    failStreak: parsed.failStreak ?? 0,
+    encounterXp: parsed.encounterXp ?? 0,
+    stonesBonus: parsed.stonesBonus ?? 0,
+    // Kỳ ngộ đang chờ chỉ có nghĩa khi server giữ nó; giữ lại để mở lại trang
+    // lúc mất mạng vẫn thấy hộp thoại.
+    pendingEncounter: parsed.pendingEncounter,
+    ledger: parsed.ledger ?? [],
+    lastSeenAt: parsed.lastSeenAt ?? new Date().toISOString(),
+  });
+}
+
 export function loadData(): AppData {
   loadFailure = null;
   try {
     const raw = localStorage.getItem(KEY);
     if (!raw) return emptyData();
-    const parsed = JSON.parse(raw) as Partial<AppData>;
-    validateData(parsed);
-    return dropDeadIds({
-      version: 1,
-      tasks: parsed.tasks ?? [],
-      goals: parsed.goals ?? [],
-      sessions: parsed.sessions ?? [],
-      settings: { ...DEFAULT_SETTINGS, ...(parsed.settings ?? {}) },
-      root: parsed.root,
-      beasts: parsed.beasts ?? [],
-      activeBeastId: parsed.activeBeastId,
-      technique: parsed.technique,
-      techniqueSwaps: parsed.techniqueSwaps ?? 0,
-      // Hồ sơ cũ chưa có động phủ thì coi như đang ở bậc đầu, không phải bậc 0.
-      caveLevel: parsed.caveLevel ?? 1,
-      field: parsed.field ?? [],
-      herbs: { ...emptyHerbs(), ...(parsed.herbs ?? {}) },
-      expedition: parsed.expedition,
-      contribution: parsed.contribution ?? 0,
-      mission: parsed.mission,
-      chestsOpened: parsed.chestsOpened ?? [],
-      stonesSpent: parsed.stonesSpent ?? 0,
-      pills: { ha: 0, trung: 0, thuong: 0, ...(parsed.pills ?? {}) },
-      tuViPenalty: parsed.tuViPenalty ?? 0,
-      gateRealm: parsed.gateRealm ?? 0,
-      failStreak: parsed.failStreak ?? 0,
-      encounterXp: parsed.encounterXp ?? 0,
-      stonesBonus: parsed.stonesBonus ?? 0,
-      ledger: parsed.ledger ?? [],
-      lastSeenAt: parsed.lastSeenAt ?? new Date().toISOString(),
-    });
+    return chuanHoa(JSON.parse(raw) as Partial<AppData>);
   } catch {
     loadFailure = "Không đọc được dữ liệu đã lưu. Bản gốc được giữ nguyên; hãy xuất bản sao trước khi khôi phục.";
     return emptyData();
   }
 }
+
+/** Khoá của bản lưu chính - để tab khác nghe sự kiện `storage` đúng khoá này. */
+export const STORAGE_KEY = KEY;
 
 export function saveData(data: AppData) {
   try {
@@ -165,38 +186,7 @@ export function readFile(file: File): Promise<AppData> {
     const reader = new FileReader();
     reader.onload = () => {
       try {
-        const parsed = JSON.parse(String(reader.result)) as Partial<AppData>;
-        validateData(parsed);
-        resolve(
-          dropDeadIds({
-            version: 1,
-          tasks: parsed.tasks,
-          goals: parsed.goals ?? [],
-          sessions: parsed.sessions ?? [],
-          settings: { ...DEFAULT_SETTINGS, ...(parsed.settings ?? {}) },
-          root: parsed.root,
-          beasts: parsed.beasts ?? [],
-          activeBeastId: parsed.activeBeastId,
-          technique: parsed.technique,
-          techniqueSwaps: parsed.techniqueSwaps ?? 0,
-          caveLevel: parsed.caveLevel ?? 1,
-          field: parsed.field ?? [],
-          herbs: { ...emptyHerbs(), ...(parsed.herbs ?? {}) },
-          expedition: parsed.expedition,
-          contribution: parsed.contribution ?? 0,
-          mission: parsed.mission,
-          chestsOpened: parsed.chestsOpened ?? [],
-          stonesSpent: parsed.stonesSpent ?? 0,
-          pills: { ha: 0, trung: 0, thuong: 0, ...(parsed.pills ?? {}) },
-          tuViPenalty: parsed.tuViPenalty ?? 0,
-          gateRealm: parsed.gateRealm ?? 0,
-          failStreak: parsed.failStreak ?? 0,
-          encounterXp: parsed.encounterXp ?? 0,
-          stonesBonus: parsed.stonesBonus ?? 0,
-          ledger: parsed.ledger ?? [],
-          lastSeenAt: parsed.lastSeenAt ?? new Date().toISOString(),
-          }),
-        );
+        resolve(chuanHoa(JSON.parse(String(reader.result)) as Partial<AppData>));
       } catch (err) {
         reject(err);
       }
@@ -223,4 +213,95 @@ export function exportStoredFile() {
   const url = URL.createObjectURL(new Blob([raw], { type: 'application/json' }));
   const a = document.createElement('a'); a.href = url; a.download = 'dao-trinh-recovery.json'; a.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+/* ------------------------------------------------------------- sao lưu */
+
+/*
+ * Bản sao lưu trước khi hồ sơ trên máy bị thay.
+ *
+ * Đăng nhập vào một tài khoản đã có dữ liệu là thay trắng hồ sơ đang nằm trong
+ * trình duyệt bằng hồ sơ trên máy chủ. Nếu hồ sơ ở máy chưa từng được đưa lên
+ * đâu thì đó là mất dữ liệu thật - nên trước lúc thay luôn chép ra một khoá
+ * riêng. Giữ ba bản gần nhất: đủ để cứu một lần bấm nhầm, không đủ để lấp đầy
+ * hạn mức của localStorage.
+ */
+const SAO_LUU = 'my-task/sao-luu/';
+const GIU_SAO_LUU = 3;
+
+export interface BanSaoLuu {
+  key: string;
+  /** Lúc chép, ISO */
+  luc: string;
+  /** Vì sao chép - hiện lại cho người dùng nhận ra bản nào là bản nào */
+  lyDo: string;
+  soNhiemVu: number;
+  soPhien: number;
+}
+
+/** Hồ sơ có gì do chính người dùng làm ra không (khác hồ sơ trắng). */
+export const coDuLieu = (d: Pick<AppData, 'tasks' | 'sessions' | 'goals'>) =>
+  d.tasks.length > 0 || d.sessions.length > 0 || d.goals.length > 0;
+
+function khoaSaoLuu(): string[] {
+  const keys: string[] = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k?.startsWith(SAO_LUU)) keys.push(k);
+  }
+  // Tên khoá là mốc thời gian đệm số 0, nên sắp chữ cũng là sắp theo giờ.
+  return keys.sort();
+}
+
+/** Chép hồ sơ ra một khoá riêng. Trả về khoá, hoặc `null` nếu không chép được. */
+export function saoLuuHoSo(data: AppData, lyDo: string): string | null {
+  const now = new Date();
+  const key = SAO_LUU + String(now.getTime()).padStart(15, '0');
+  const { verified: _bo, ...hoSo } = data;
+  const raw = JSON.stringify({ luc: now.toISOString(), lyDo, data: hoSo });
+  for (let lan = 0; lan < 2; lan++) {
+    try {
+      localStorage.setItem(key, raw);
+      const cu = khoaSaoLuu();
+      for (const k of cu.slice(0, Math.max(0, cu.length - GIU_SAO_LUU))) localStorage.removeItem(k);
+      return key;
+    } catch {
+      // Đầy bộ nhớ: bỏ bản cũ nhất rồi thử lại đúng một lần.
+      const cu = khoaSaoLuu();
+      if (!cu.length) return null;
+      try { localStorage.removeItem(cu[0]!); } catch { return null; }
+    }
+  }
+  return null;
+}
+
+export function danhSachSaoLuu(): BanSaoLuu[] {
+  const out: BanSaoLuu[] = [];
+  for (const key of khoaSaoLuu().reverse()) {
+    try {
+      const v = JSON.parse(localStorage.getItem(key) ?? 'null') as { luc?: string; lyDo?: string; data?: Partial<AppData> } | null;
+      if (!v?.data) continue;
+      out.push({
+        key,
+        luc: typeof v.luc === 'string' ? v.luc : '',
+        lyDo: typeof v.lyDo === 'string' ? v.lyDo : '',
+        soNhiemVu: Array.isArray(v.data.tasks) ? v.data.tasks.length : 0,
+        soPhien: Array.isArray(v.data.sessions) ? v.data.sessions.length : 0,
+      });
+    } catch {
+      // Bản hỏng thì thôi không liệt kê - không đáng để làm hỏng cả danh sách.
+    }
+  }
+  return out;
+}
+
+/** Đọc lại một bản sao lưu thành hồ sơ đầy đủ, hoặc `null` nếu hỏng. */
+export function docSaoLuu(key: string): AppData | null {
+  if (!key.startsWith(SAO_LUU)) return null;
+  try {
+    const v = JSON.parse(localStorage.getItem(key) ?? 'null') as { data?: Partial<AppData> } | null;
+    return v?.data ? chuanHoa(v.data) : null;
+  } catch {
+    return null;
+  }
 }

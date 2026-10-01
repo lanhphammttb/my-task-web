@@ -81,8 +81,10 @@ describe("lớp đồng bộ với server", () => {
       "lastVisitAt",
       "audit",
       "celebration",
+      "celebrations",
       "dismissCelebration",
       "encounter",
+      "encounterResult", // Kết quả kỳ ngộ server gửi về - chỉ để hiện.
       "dismissEncounter",
       "notify",
     ]);

@@ -79,7 +79,9 @@ describe('server snapshots and durable outbox', () => {
     const h = mount(); await waitFor(() => expect(h.result.current.status).toBe('da-noi'));
     mock.command.mockRejectedValue(new ApiError(503, 'unavailable'));
     act(() => { h.result.current.gui('updateSettings', { soundEnabled: false }); h.result.current.gui('updateSettings', { daoName: 'later' }); });
-    await waitFor(() => expect(h.result.current.status).toBe('mat-mang'));
+    // 5xx là lỗi máy chủ, không phải mất mạng - huy hiệu phải nói đúng.
+    await waitFor(() => expect(h.result.current.status).toBe('loi-may-chu'));
+    expect(h.result.current.loi).toContain('503');
     expect(h.result.current.pending).toBe(2); expect(outbox()).toHaveLength(2);
   });
   it('refreshes rather than reapplying a replayed delta', async () => {
@@ -133,12 +135,16 @@ describe('server snapshots and durable outbox', () => {
     await waitFor(() => expect(h.result.current.status).toBe('da-noi'));
     mock.command.mockRejectedValueOnce(new ApiError(401, 'expired'));
     act(() => h.result.current.gui('updateSettings', { daoName: 'pending' }));
-    await waitFor(() => expect(h.result.current.status).toBe('chua-dang-nhap'));
+    await waitFor(() => expect(h.result.current.status).toBe('het-phien'));
     expect(outbox()).toHaveLength(1);
+    // Hết phiên vẫn giữ chủ hồ sơ: thao tác mới tiếp tục xếp hàng dưới tên người ấy.
+    expect(h.result.current.chu?.id).toBe(user.id);
+    act(() => h.result.current.gui('updateSettings', { soundEnabled: false }));
+    expect(outbox()).toHaveLength(2);
     mock.login.mockResolvedValue({ user });
     await act(() => h.result.current.dangNhap(user.email, 'password'));
     expect(h.result.current.pending).toBe(0);
     expect(outbox()).toHaveLength(0);
-    expect(mock.command).toHaveBeenCalledTimes(2);
+    expect(mock.command).toHaveBeenCalledTimes(3);
   });
 });

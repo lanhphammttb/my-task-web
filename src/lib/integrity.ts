@@ -264,6 +264,16 @@ export function verifiedTotals(data: Pick<AppData, 'ledger'> & Partial<Pick<AppD
   // đây không có khoá ấy nên kiểm bao nhiêu cũng ra số không.
   if (data.verified) return data.verified;
 
+  /*
+   * Nhớ kết quả theo đúng mảng sổ ghi. Hàm này bị gọi mỗi lần vẽ ở chục chỗ
+   * (tu vi, linh thạch, linh điền...), mà mỗi lần là băm lại cả sổ - vài
+   * nghìn bản ghi sau một năm. Sổ chỉ đổi bằng cách thay mảng mới, nên cùng
+   * mảng là cùng kết quả; kèm độ dài và băm cuối cho chắc.
+   */
+  const nho = DA_TINH.get(data.ledger);
+  const cuoi = data.ledger[data.ledger.length - 1]?.hash;
+  if (nho && nho.n === data.ledger.length && nho.cuoi === cuoi) return nho.ra;
+
   let prevHash = SALT;
   let taskXp = 0;
   let sessionMinutes = 0;
@@ -287,5 +297,12 @@ export function verifiedTotals(data: Pick<AppData, 'ledger'> & Partial<Pick<AppD
     verified++;
   }
 
-  return { taskXp, sessionMinutes, taskCount, sessionCount, verified };
+  const ra = { taskXp, sessionMinutes, taskCount, sessionCount, verified };
+  DA_TINH.set(data.ledger, { n: data.ledger.length, cuoi, ra });
+  return ra;
 }
+
+const DA_TINH = new WeakMap<
+  readonly LedgerEntry[],
+  { n: number; cuoi: string | undefined; ra: { taskXp: number; sessionMinutes: number; taskCount: number; sessionCount: number; verified: number } }
+>();

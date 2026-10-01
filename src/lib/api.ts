@@ -1,4 +1,5 @@
 import { todayKey } from './date';
+import { DEFAULT_SETTINGS } from './storage';
 import type { AppData, FocusSession, Goal, Task } from '../types';
 import type { LedgerEntry } from './integrity';
 
@@ -122,8 +123,8 @@ export interface ThayDoi {
   sessions?: DanhSachDoi<FocusSession>;
   /** Sổ ghi: thường nối thêm, nhưng lúc bị ký lại toàn bộ thì gửi `tatCa` */
   ledger?: { them: LedgerEntry[] } | { tatCa: LedgerEntry[] };
-  /** Mọi trường còn lại đã đổi, gửi nguyên */
-  truong?: Partial<AppData>;
+  /** Mọi trường còn lại đã đổi, gửi nguyên. `null` nghĩa là trường ấy đã bị gỡ. */
+  truong?: { [K in keyof AppData]?: AppData[K] | null };
 }
 
 /** Mấy con số để client tự kiểm xem vá xong có khớp với server không. */
@@ -148,26 +149,87 @@ export interface CommandReply {
   celebrations?: unknown[];
 }
 
+/**
+ * Lỗi thuộc loại nào - quyết định lớp đồng bộ làm gì với lệnh đang gửi.
+ *
+ *  - `mang`: không tới được máy chủ. Giữ lệnh, thử lại sau.
+ *  - `may-chu`: 5xx. Giữ lệnh, lùi dần rồi thử lại.
+ *  - `qua-tai`: 429. Như trên, nhưng nghe theo `Retry-After`.
+ *  - `phien`: 401. Giữ lệnh, chờ đăng nhập lại.
+ *  - `xung-dot`: 409. Tải lại rồi gửi lại đúng lệnh ấy.
+ *  - `tu-choi`: 422 kèm mã luật. Chỉ lệnh này bị bỏ.
+ *  - `lech-ngay`: `bad-today`. Ngày ghi trên lệnh quá xa giờ máy chủ.
+ *  - `khong-tuong-thich`: 400/404/405/413/415, hay trả về không phải JSON.
+ *    Máy chủ và web đang nói hai thứ tiếng - KHÔNG được bỏ lệnh, vì lỗi nằm ở
+ *    cấu hình hoặc phiên bản chứ không phải ở việc người dùng đã làm.
+ */
+export type LoaiLoi =
+  | 'mang'
+  | 'may-chu'
+  | 'qua-tai'
+  | 'phien'
+  | 'xung-dot'
+  | 'tu-choi'
+  | 'lech-ngay'
+  | 'khong-tuong-thich';
+
 /** Lỗi có mã, để chỗ gọi phân biệt được "sai luật" với "mất mạng". */
 export class ApiError extends Error {
   readonly status: number;
   readonly code: string | undefined;
   /** Số hiệu trạng thái server đang giữ, có khi bị 409 */
   readonly version: number | undefined;
+  /** Server bảo chờ bao lâu (`Retry-After`), tính bằng mili giây */
+  readonly retryAfterMs: number | undefined;
 
-  constructor(status: number, message: string, code?: string, version?: number) {
+  constructor(status: number, message: string, code?: string, version?: number, retryAfterMs?: number) {
     super(message);
     this.name = 'ApiError';
     this.status = status;
     this.code = code;
     this.version = version;
+    this.retryAfterMs = retryAfterMs;
   }
 
   /** Mất mạng, server tắt, DNS hỏng... - khác hẳn với "server bảo không được". */
   get offline(): boolean {
     return this.status === 0;
   }
+
+  get loai(): LoaiLoi {
+    const s = this.status;
+    if (s === 0) return 'mang';
+    if (this.code === 'bad-today') return 'lech-ngay';
+    if (s === 401) return 'phien';
+    if (s === 409) return 'xung-dot';
+    if (s === 429) return 'qua-tai';
+    if (s >= 500) return 'may-chu';
+    // Hết giờ chờ ở giữa đường (proxy, cân tải) thì cũng chỉ là chuyện tạm thời.
+    if (s === 408) return 'mang';
+    if (s === 422) return 'tu-choi';
+    return 'khong-tuong-thich';
+  }
 }
+
+/**
+ * Câu lỗi chung chung mà Fastify hay proxy tự điền vào `error`.
+ *
+ * Gặp mấy câu này thì `message` mới là chỗ có nội dung thật - "Bad Request"
+ * thì chẳng nói được với người dùng điều gì.
+ */
+const CAU_CHUNG = /^(bad request|not found|method not allowed|unsupported media type|payload too large|request entity too large|internal server error|service unavailable|bad gateway|gateway timeout|too many requests|unprocessable entity|conflict|unauthorized|forbidden)$/i;
+
+/** `Retry-After` có thể là số giây hoặc một mốc giờ HTTP. */
+function docRetryAfter(res: Response): number | undefined {
+  const v = res.headers.get('retry-after');
+  if (!v) return undefined;
+  const giay = Number(v);
+  if (Number.isFinite(giay)) return Math.max(0, giay * 1000);
+  const luc = Date.parse(v);
+  return Number.isNaN(luc) ? undefined : Math.max(0, luc - Date.now());
+}
+
+const laJson = (res: Response) => /\bjson\b/i.test(res.headers.get('content-type') ?? '');
 
 async function goi<T>(path: string, init?: RequestInit): Promise<T> {
   let res: Response;
@@ -177,23 +239,50 @@ async function goi<T>(path: string, init?: RequestInit): Promise<T> {
       // Thẻ phiên nằm trong cookie httpOnly nên bắt buộc phải gửi kèm.
       signal: AbortSignal.timeout(20_000),
       credentials: 'include',
-      headers: { 'content-type': 'application/json', ...init?.headers },
+      // Chỉ khai `content-type` khi thật sự có thân. Fastify gặp
+      // `application/json` với thân rỗng (đăng xuất) là trả 400 ngay.
+      headers: { ...(init?.body !== undefined ? { 'content-type': 'application/json' } : {}), ...init?.headers },
     });
   } catch {
     throw new ApiError(0, 'Không nối được tới máy chủ');
   }
 
-  const body = (await res.json().catch(() => null)) as
-    | (Partial<CommandReply> & { error?: string; code?: string; chiTiet?: string; version?: number })
-    | null;
+  /*
+   * Trả về không phải JSON - thường là trang HTML của chính web vì sai tiền tố
+   * API, hoặc trang lỗi của proxy. Coi là KHÔNG TƯƠNG THÍCH chứ không để nó nổ
+   * thành `TypeError` ở chỗ đọc `res.version` rồi bị hiểu nhầm là mất mạng.
+   */
+  if (res.status !== 204 && !laJson(res)) {
+    if (res.ok) {
+      throw new ApiError(res.status, `Máy chủ trả về dữ liệu không phải JSON (${res.headers.get('content-type') || 'không rõ loại'}) - có thể sai địa chỉ API`, 'not-json');
+    }
+    // 5xx/429 bằng HTML (trang lỗi của proxy) vẫn là lỗi tạm thời như thường.
+    throw new ApiError(res.status, `Máy chủ trả về ${res.status}`, undefined, undefined, docRetryAfter(res));
+  }
+
+  let body: (Partial<CommandReply> & { error?: string; message?: string; code?: string; chiTiet?: string; version?: number }) | null = null;
+  if (res.status !== 204) {
+    try {
+      body = await res.json();
+    } catch {
+      if (res.ok) throw new ApiError(res.status, 'Máy chủ trả về JSON hỏng', 'not-json');
+    }
+  }
 
   if (!res.ok) {
+    const rieng = body?.error && !CAU_CHUNG.test(body.error.trim()) ? body.error : undefined;
+    const chinh = rieng ?? body?.message ?? body?.error;
+    const phu = body?.chiTiet && body.chiTiet !== chinh ? body.chiTiet : undefined;
     throw new ApiError(
       res.status,
-      body?.error ?? body?.chiTiet ?? `Máy chủ trả về ${res.status}`,
+      [chinh, phu].filter(Boolean).join(': ') || `Máy chủ trả về ${res.status}`,
       body?.code,
       body?.version,
+      docRetryAfter(res),
     );
+  }
+  if (res.status !== 204 && (body === null || typeof body !== 'object')) {
+    throw new ApiError(res.status, 'Máy chủ trả về dữ liệu không đúng dạng', 'not-json');
   }
   return body as T;
 }
@@ -241,6 +330,31 @@ export const api = {
 };
 
 /**
+ * Gỡ các khoá mang giá trị `null` ở một tầng của một object thuần.
+ *
+ * Chỉ một tầng là đủ: các trường tuỳ chọn có thể bị gỡ (`goalId`, `deadline`,
+ * `activeBeastId`, từng mục trong `settings`...) đều nằm ngay tầng đầu của bản
+ * ghi chứa chúng. Mảng và giá trị nguyên thuỷ đi qua nguyên vẹn.
+ */
+export function boNull<T>(x: T): T {
+  if (!x || typeof x !== 'object' || Array.isArray(x)) return x;
+  if (!Object.values(x).includes(null)) return x;
+  return Object.fromEntries(Object.entries(x).filter(([, v]) => v !== null)) as T;
+}
+
+/** Hồ sơ đầy đủ từ server cũng theo đúng quy ước `null` là không có. */
+export function boNullHoSo(d: AppData): AppData {
+  const ra = boNull(d);
+  return {
+    ...ra,
+    settings: { ...DEFAULT_SETTINGS, ...boNull(ra.settings) },
+    tasks: ra.tasks.map(boNull),
+    goals: ra.goals.map(boNull),
+    sessions: ra.sessions.map(boNull),
+  };
+}
+
+/**
  * Vá phần thay đổi vào hồ sơ đang giữ.
  *
  * Dựng lại bằng `Map` theo `id` thay vì `map`/`filter` chồng nhau: một lệnh có
@@ -252,13 +366,22 @@ export const api = {
  * đã tính ra bản vá ấy.
  */
 export function apThayDoi(goc: AppData, doi: ThayDoi): AppData {
-  const ra: AppData = { ...goc, ...(doi.truong ?? {}) };
+  const ra: AppData = { ...goc };
+  // `null` trong bản vá nghĩa là "trường này đã bị gỡ" - JSON không chở được
+  // `undefined`, nên thiếu quy ước này thì gỡ sứ mệnh hay linh thú đang theo
+  // ở server xong, bản ở máy vẫn giữ nguyên cái cũ.
+  for (const [khoa, giaTri] of Object.entries(doi.truong ?? {})) {
+    if (giaTri === null) delete (ra as unknown as Record<string, unknown>)[khoa];
+    else (ra as unknown as Record<string, unknown>)[khoa] = boNull(giaTri);
+  }
+  // Cài đặt thì không có mục nào được phép vắng: mục bị gỡ quay về mặc định.
+  if (doi.truong?.settings) ra.settings = { ...DEFAULT_SETTINGS, ...ra.settings };
 
   const vaDanhSach = <T extends { id: string }>(cu: T[], d?: DanhSachDoi<T>): T[] => {
     if (!d) return cu;
     const theo = new Map(cu.map((x) => [x.id, x]));
-    for (const x of d.sua ?? []) theo.set(x.id, x);
-    for (const x of d.them ?? []) theo.set(x.id, x);
+    for (const x of d.sua ?? []) theo.set(x.id, boNull(x));
+    for (const x of d.them ?? []) theo.set(x.id, boNull(x));
     for (const id of d.xoa ?? []) theo.delete(id);
     return [...theo.values()];
   };
