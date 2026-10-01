@@ -119,10 +119,11 @@ export default function TaskCard({ task, onEdit, onFocus, showDate }: Props) {
           <button
             ref={checkRef}
             onClick={handleToggle}
-            aria-label={done ? "Bỏ đánh dấu hoàn thành" : "Đánh dấu hoàn thành"}
-            aria-description={task.title}
-            aria-pressed={done}
+            // Nhãn mang tên việc: trình đọc màn hình đọc "Đánh dấu hoàn thành:
+            // Viết báo cáo" thay vì mười nút giống hệt nhau.
+            aria-label={`${done ? "Bỏ đánh dấu hoàn thành" : "Đánh dấu hoàn thành"}: ${task.title}`}
             className={cn(
+              // Vòng tick vẽ 22px; vùng chạm 44×44 do .o-tick::before lo (index.css).
               "o-tick mt-0.5 grid size-[22px] place-items-center rounded-full border-2 transition-all",
               "focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
               done
@@ -327,19 +328,23 @@ export default function TaskCard({ task, onEdit, onFocus, showDate }: Props) {
                     >
                       <Pencil className="size-3.5" /> Sửa
                     </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-7 gap-1.5 px-2.5 text-xs"
-                      onClick={() =>
-                        moveTask(
-                          task.id,
-                          dateKey(addDays(parseKey(task.date), 1)),
-                        )
-                      }
-                    >
-                      <CornerDownRight className="size-3.5" /> Dời sang mai
-                    </Button>
+                    {/* Việc đã xong thì ngày đã khoá - dời đi là tự tạo thêm
+                        "việc xong" cho ngày khác. Store và server cũng chặn. */}
+                    {!done && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 gap-1.5 px-2.5 text-xs"
+                        onClick={() =>
+                          moveTask(
+                            task.id,
+                            dateKey(addDays(parseKey(task.date), 1)),
+                          )
+                        }
+                      >
+                        <CornerDownRight className="size-3.5" /> Dời sang mai
+                      </Button>
+                    )}
                     <Button
                       size="sm"
                       variant="outline"
@@ -352,6 +357,8 @@ export default function TaskCard({ task, onEdit, onFocus, showDate }: Props) {
                       size="sm"
                       variant="outline"
                       className="text-destructive hover:text-destructive hover:border-destructive/50 h-7 gap-1.5 px-2.5 text-xs"
+                      // Xoá ngay, kèm nút "Hoàn tác" vài giây trên thông báo -
+                      // xem `removeTask` trong AppStore.
                       onClick={() => removeTask(task.id)}
                     >
                       <Trash2 className="size-3.5" /> Xoá

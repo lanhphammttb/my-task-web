@@ -11,7 +11,6 @@ import {
   MISSIONS,
   MISSION_ORDER,
   RANKS,
-  missionState,
   nextRank,
   rankOf,
   rankRatio,
@@ -19,11 +18,7 @@ import {
 } from "../lib/sect";
 import type { Mission } from "../lib/sect";
 import { formatDuration } from "../lib/date";
-import {
-  stoneBalance,
-  verifiedFocusMinutes,
-  verifiedTaskCount,
-} from "../lib/economy";
+import { missionStateOf, stoneBalance } from "../lib/economy";
 import { useApp } from "../store/AppStore";
 import { Meter, MetaChip, Section } from "./primitives";
 import SectionArt from "./SectionArt";
@@ -76,13 +71,7 @@ export default function SectSection() {
   const balance = stoneBalance(data);
   const rank = rankOf(data.contribution);
   const next = nextRank(data.contribution);
-  const state = data.mission
-    ? missionState(
-        data.mission,
-        verifiedTaskCount(data),
-        verifiedFocusMinutes(data),
-      )
-    : null;
+  const state = missionStateOf(data);
 
   return (
     <Section

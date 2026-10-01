@@ -10,6 +10,14 @@
  */
 export const OPEN_SECTION = 'section:open';
 
+/** Sự kiện xin mở một bảng (khu) từ chỗ sâu bên trong, ví dụ kết quả mở hòm. */
+export const OPEN_VIEW = 'view:open';
+
+/** Mở bảng `view`, neo tới mục `at` (ví dụ Động Phủ → "cave-field"). */
+export function requestOpenView(view: string, at?: string) {
+  window.dispatchEvent(new CustomEvent(OPEN_VIEW, { detail: { view, at } }));
+}
+
 /** Bảo mục có id này bung ra, nếu nó đang gập. */
 export function requestOpenSection(id: string) {
   window.dispatchEvent(new CustomEvent(OPEN_SECTION, { detail: id }));

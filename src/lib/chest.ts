@@ -1,5 +1,8 @@
+import type { AppData, Task } from '../types';
 import type { HerbId } from './field';
 import type { PillGrade } from './pills';
+import { completedDay } from './date';
+import { isPerfectDay } from './achievements';
 
 /**
  * Hòm kỳ ngộ - phần thưởng bất ngờ, nhưng phải làm việc mới có.
@@ -46,7 +49,7 @@ export const CHEST_GRADES: Record<ChestGrade, ChestGradeMeta> = {
     name: 'Hòm Kim',
     tone: '#e0a83c',
     image: '/art/chest/kim.png',
-    note: 'Hòm bọc vàng, khắc phù văn cổ. Cả tháng chưa chắc mở được một cái.',
+    note: 'Hòm bọc vàng, khắc phù văn cổ. Chỉ mở được vào ngày dọn sạch mọi việc đã lên kế hoạch.',
   },
 };
 
@@ -250,6 +253,30 @@ export function chestsForDay(
     opened: opened.has(chestKey(dateKey, rule.id)),
     ratio: rule.ratio(done, focusMin, perfect),
   }));
+}
+
+/**
+ * Số việc XONG trong ngày `key` - tính theo ngày hoàn thành (`completedDay`),
+ * không theo ngày đã lên kế hoạch.
+ *
+ * Hòm thưởng công việc làm trong ngày. Đếm theo `task.date` thì dời năm việc
+ * đã xong từ tuần trước sang hôm nay là "xong năm việc hôm nay" - lặp ba ngày
+ * mở được chín hòm mà không làm thêm gì. Đếm theo ngày xong thì việc cũ dời
+ * đi đâu cũng vẫn là việc của ngày nó được làm.
+ */
+export const doneOnDay = (tasks: readonly Task[], key: string) =>
+  tasks.filter((t) => t.status === 'done' && completedDay(t) === key).length;
+
+/**
+ * Trạng thái mọi hòm của một ngày, dựng thẳng từ hồ sơ. Web và server gọi
+ * cùng một hàm này để hai bên không bao giờ lệch nhau về "đã có hòm chưa".
+ */
+export function chestsOfDay(
+  data: Pick<AppData, 'tasks' | 'sessions' | 'chestsOpened'>,
+  key: string,
+): ChestState[] {
+  const focusMin = data.sessions.filter((s) => s.date === key).reduce((sum, s) => sum + s.minutes, 0);
+  return chestsForDay(key, doneOnDay(data.tasks, key), focusMin, isPerfectDay(data.tasks, key), data.chestsOpened);
 }
 
 /** Số hòm đang chờ mở - dùng cho chấm báo trên icon. */

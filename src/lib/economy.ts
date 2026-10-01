@@ -6,11 +6,16 @@ import { beastById, beastLevel } from './beasts';
 import type { OwnedBeast } from './beasts';
 import { gradeOf } from './spirit';
 import { techniqueMuls } from './techniques';
-import { rankOf } from './sect';
+import { missionState, rankOf } from './sect';
+import type { MissionState } from './sect';
+import { expeditionState } from './expedition';
+import type { ExpeditionState } from './expedition';
 import { FAIL_LOSS_RATIO } from './pills';
 import { questStones } from './quests';
 import { ASCENSION_INDEX, realmStart } from './cultivation';
 import { verifiedTotals } from './integrity';
+import { xongTruocHan } from './date';
+import { rewardsSession } from './validation';
 
 /**
  * Quy đổi công sức thành tu vi và linh thạch, có tính thiên phú linh căn và
@@ -20,7 +25,8 @@ import { verifiedTotals } from './integrity';
 
 const taskXp = (t: Task) => 10 * PRIORITY_META[t.priority].weight;
 
-const beatDeadline = (t: Task) => !!t.deadline && !!t.completedAt && t.completedAt <= t.deadline;
+// So mốc thời gian chứ không so chuỗi - xem `xongTruocHan`.
+const beatDeadline = (t: Task) => xongTruocHan(t);
 
 export interface XpBreakdown {
   /** Tu vi gốc từ nhiệm vụ và bế quan, chưa đổi tỷ giá theo công pháp */
@@ -71,6 +77,112 @@ export function verifiedFocusMinutes(data: AppData): number {
     data.sessions.reduce((s, x) => s + x.minutes, 0),
     verifiedTotals(data).sessionMinutes,
   );
+}
+
+/**
+ * Đoạn đầu sổ ghi còn nguyên chuỗi băm - chỉ những bản ghi này mới được tính.
+ * `verifiedTotals().verified` chính là độ dài đoạn ấy, ở cả web lẫn server.
+ */
+function verifiedEntries(data: AppData) {
+  return data.ledger.slice(0, verifiedTotals(data).verified);
+}
+
+const mocThoiGian = (iso: string): number => {
+  const t = Date.parse(iso);
+  // Mốc hỏng thì coi như "từ cuối trời": không bản ghi nào lọt, an toàn hơn là
+  // coi như "từ thuở nào" rồi tính luôn cả sổ.
+  return Number.isNaN(t) ? Number.POSITIVE_INFINITY : t;
+};
+
+/** Mốc xong lần đầu; không có mốc nào thì coi như "từ thuở nào" - không lọt vào đếm "từ lúc nhận". */
+const lanDauXong = (t: Task): number => {
+  const ms = Date.parse(t.firstDoneAt ?? t.completedAt ?? '');
+  return Number.isNaN(ms) ? Number.NEGATIVE_INFINITY : ms;
+};
+
+/**
+ * Số nhiệm vụ KHÁC NHAU được ghi sổ từ một mốc trở đi, và hiện vẫn đang xong.
+ *
+ * Mỗi việc chỉ được đếm một lần dù tick đi tick lại, và việc xong TRƯỚC mốc
+ * thì không đếm. Một mình con số này thì lại hở theo chiều khác: bỏ tick một
+ * việc cũ rồi tick lại SAU mốc là nó có bản ghi mới, và được đếm như việc mới
+ * làm. Nên `missionStateOf` / `expeditionStateOf` lấy số NHỎ hơn giữa con số
+ * này và hiệu "số việc xong bây giờ trừ số lúc nhận" - hiệu ấy không nhích khi
+ * bỏ tick rồi tick lại, còn con số này không nhích khi việc được đếm hai lần.
+ */
+export function verifiedTasksSince(data: AppData, since: string): number {
+  const from = mocThoiGian(since);
+  /*
+   * Chỉ việc xong LẦN ĐẦU từ mốc trở đi (`firstDoneAt`). Bản ghi sổ thì đổi
+   * mỗi lần tick lại, nên chỉ nhìn sổ là bỏ tick tám việc cũ, nhận sứ mệnh rồi
+   * tick lại được tính như tám việc mới làm. `firstDoneAt` thì không lệnh nào
+   * gỡ được. Hồ sơ cũ chưa có trường ấy thì lấy `completedAt` - vẫn là mốc
+   * thật của lần xong đang giữ.
+   */
+  const done = new Set(
+    data.tasks
+      .filter((t) => t.status === 'done' && lanDauXong(t) >= from)
+      .map((t) => t.id),
+  );
+  const seen = new Set<string>();
+  for (const e of verifiedEntries(data)) {
+    if (e.kind === 'task' && done.has(e.ref) && Date.parse(e.at) >= from) seen.add(e.ref);
+  }
+  return seen.size;
+}
+
+/** Tổng phút bế quan đã ghi sổ từ một mốc trở đi. Cùng lý do với `verifiedTasksSince`. */
+export function verifiedFocusSince(data: AppData, since: string): number {
+  const from = mocThoiGian(since);
+  const live = new Set(data.sessions.map((s) => s.id));
+  const seen = new Set<string>();
+  let total = 0;
+  for (const e of verifiedEntries(data)) {
+    if (e.kind !== 'session' || !live.has(e.ref) || seen.has(e.ref) || Date.parse(e.at) < from) continue;
+    seen.add(e.ref);
+    total += e.value;
+  }
+  return total;
+}
+
+/**
+ * Tiến độ sứ mệnh đang gánh.
+ *
+ * Lấy số nhỏ hơn giữa hai cách đo (xem `verifiedTasksSince`), nên bỏ tick rồi
+ * tick lại việc cũ - trước hay sau lúc nhận - không cho thêm tiến độ so với
+ * làm thật. Kẽ từng còn lại - bỏ tick việc cũ TRƯỚC khi nhận để hạ mốc rồi
+ * tick lại - giờ bị chặn bằng `firstDoneAt`: việc đã từng xong trước lúc nhận
+ * thì tick lại bao nhiêu lần cũng không phải việc mới. Còn lại chỉ là thêm một
+ * việc bịa rồi tick, mà việc do người dùng tự khai thì vốn không kiểm được.
+ *
+ * Giữ nguyên `missionState` và mốc `startTasks` trong hồ sơ để hồ sơ cũ vẫn
+ * đọc được. Nên gọi hàm này thay cho `missionState(m, verifiedTaskCount(data), ...)`.
+ */
+export function missionStateOf(data: AppData, now: Date = new Date()): MissionState | null {
+  const m = data.mission;
+  if (!m) return null;
+  const tasks = Math.min(
+    verifiedTasksSince(data, m.acceptedAt),
+    Math.max(0, verifiedTaskCount(data) - m.startTasks),
+  );
+  const focus = Math.min(
+    verifiedFocusSince(data, m.acceptedAt),
+    Math.max(0, verifiedFocusMinutes(data) - m.startFocus),
+  );
+  const s = missionState({ ...m, startTasks: 0, startFocus: 0 }, tasks, focus, now);
+  return s && { ...s, active: m };
+}
+
+/** Tiến độ chuyến thám hiểm đang đi, cùng lối đo với `missionStateOf`. */
+export function expeditionStateOf(data: AppData): ExpeditionState | null {
+  const e = data.expedition;
+  if (!e) return null;
+  const tasks = Math.min(
+    verifiedTasksSince(data, e.startedAt),
+    Math.max(0, verifiedTaskCount(data) - e.startedAtTasks),
+  );
+  const s = expeditionState({ ...e, startedAtTasks: 0 }, tasks);
+  return s && { ...s, expedition: e };
 }
 
 export function xpBreakdown(data: AppData, today?: string): XpBreakdown {
@@ -215,7 +327,8 @@ export function stoneBreakdown(data: AppData): StoneBreakdown {
   // Linh thạch cũng phải theo sổ ghi, kẻo nhồi nhiệm vụ giả vẫn kiếm được đá.
   const verified = verifiedTotals(data);
   const fromTasks = Math.min(data.tasks.filter((t) => t.status === 'done').length, verified.taskCount);
-  const fromSessions = Math.min(data.sessions.length, verified.sessionCount) * 2;
+  // Phiên quá ngắn không có đá "mỗi phiên" - xem `MIN_REWARD_SESSION_MIN`.
+  const fromSessions = Math.min(data.sessions.filter((s) => rewardsSession(s.minutes)).length, verified.sessionCount) * 2;
   const fromPerfectDays = perfectDays(data.tasks).length * 5;
   const fromQuests = questStones(data);
   const pct = beastPercent(data, 'stonePct');

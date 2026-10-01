@@ -17,7 +17,7 @@ const date: Check = v => text(v) && /^\d{4}-\d{2}-\d{2}$/.test(v as string) && !
 const timestamp: Check = v => text(v) && !Number.isNaN(Date.parse(v as string));
 const duration: Check = v => positive(v) && (v as number) >= 1 && (v as number) <= 240;
 const unique = (check: Check): Check => v => array(check)(v) && new Set((v as { id: string }[]).map(x => x.id)).size === (v as unknown[]).length;
-const task = object({ id: text, title: text, note: text, date, priority: oneOf('low', 'medium', 'high', 'urgent'), status: oneOf('todo', 'doing', 'done'), tags: array(text), estimateMin: positive, focusMin: positive, subtasks: unique(object({ id: text, title: text, done: bool })), recurrence: oneOf('none', 'daily', 'weekdays', 'weekly', 'monthly'), createdAt: timestamp }, { goalId: text, startTime: v => text(v) && /^([01]\d|2[0-3]):[0-5]\d$/.test(v as string), deadline: timestamp, completedAt: timestamp, completedOn: date });
+const task = object({ id: text, title: text, note: text, date, priority: oneOf('low', 'medium', 'high', 'urgent'), status: oneOf('todo', 'doing', 'done'), tags: array(text), estimateMin: positive, focusMin: positive, subtasks: unique(object({ id: text, title: text, done: bool })), recurrence: oneOf('none', 'daily', 'weekdays', 'weekly', 'monthly'), createdAt: timestamp }, { goalId: text, startTime: v => text(v) && /^([01]\d|2[0-3]):[0-5]\d$/.test(v as string), deadline: timestamp, completedAt: timestamp, completedOn: date, firstDoneAt: timestamp, recurDay: v => number(v) && Number.isInteger(v) && (v as number) >= 1 && (v as number) <= 31 });
 const settings = object({}, { theme: oneOf('dark', 'light'), daoName: text, soundEnabled: bool, ambientEnabled: bool, dailyTarget: positive, dailyFocusTarget: positive, focusLength: duration, breakLength: duration, weekStartsOn: oneOf(0, 1) });
 const numericFields = Object.fromEntries(['techniqueSwaps', 'caveLevel', 'contribution', 'stonesSpent', 'tuViPenalty', 'gateRealm', 'failStreak'].map(k => [k, positive]));
 const schema = object({ tasks: unique(task) }, {
@@ -32,6 +32,7 @@ const schema = object({ tasks: unique(task) }, {
   expedition: object({ site: text, startedAtTasks: positive, startedAt: timestamp }),
   mission: object({ id: text, startTasks: positive, startFocus: positive, acceptedAt: timestamp, dueAt: timestamp, stake: positive }),
   ledger: array(object({ seq: positive, kind: oneOf('task', 'session'), ref: text, at: timestamp, value: number, hash: text })),
+  pendingEncounter: object({ id: text, sessionId: text, at: timestamp }),
   activeBeastId: text, technique: text, chestsOpened: array(text), lastSeenAt: timestamp, encounterXp: number, stonesBonus: number,
   ...numericFields,
 });

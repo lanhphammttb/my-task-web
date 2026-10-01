@@ -23,7 +23,6 @@ import {
   bestStreak,
   currentStreak,
   groupByGoal,
-  statsRange,
 } from "../lib/stats";
 import { effectiveXp } from "../lib/economy";
 import { cultivationOf, realmShort } from "../lib/cultivation";
@@ -41,9 +40,28 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
-const WEEKDAY_LABELS = ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ nhật"];
-const WEEKDAY_SHORT = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"];
+/** Nhãn theo đúng chỉ số `Date.getDay()`: 0 là Chủ nhật. */
+const WEEKDAY_LABELS = ["Chủ nhật", "Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7"];
+const WEEKDAY_SHORT = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
 const PERIODS = [7, 30, 90] as const;
+
+/**
+ * Một cột của biểu đồ: một ngày, hoặc một tuần khi xem 90 ngày.
+ *
+ * Vì sao gom tuần: 90 cột trên màn 375 thì riêng khe `gap-1` giữa các cột đã
+ * ngốn 356px - cột bị ép về bề ngang 0 và biểu đồ trống trơn. Mà 90 cột mảnh
+ * như sợi chỉ cũng chẳng chạm trúng được. 13 cột tuần thì đọc được nhịp, bấm
+ * được, và chỉ dựng 13 tooltip thay vì 90.
+ */
+interface ChartBar {
+  key: string;
+  endKey: string;
+  total: number;
+  done: number;
+  focusMin: number;
+}
+
+const barSize = (days: number) => (days > 30 ? 7 : 1);
 
 interface StatsViewProps {
   onOpenDay?: (date: string) => void;
@@ -59,27 +77,65 @@ export default function StatsView({ onOpenDay, onOpenGoals }: StatsViewProps) {
 
   const today = todayKey();
   const from = useMemo(() => addDays(parseKey(today), -(days - 1)), [today, days]);
-  const series = useMemo(
-    () => statsRange(data.tasks, data.sessions, from, days),
-    [data.tasks, data.sessions, from, days],
-  );
+
+  // Lập chỉ mục theo ngày MỘT lần. Cách cũ gọi `dayStats` cho từng ngày, mỗi
+  // lần lọc lại cả danh sách việc: 90 ngày x vài nghìn việc là cả trăm nghìn
+  // phép so trên mỗi lần bấm - chính là cái khựng hơn một giây trên điện thoại.
+  const byDay = useMemo(() => {
+    const tasks = new Map<string, { total: number; done: number }>();
+    for (const task of data.tasks) {
+      const cur = tasks.get(task.date) ?? { total: 0, done: 0 };
+      cur.total += 1;
+      if (task.status === "done") cur.done += 1;
+      tasks.set(task.date, cur);
+    }
+    const focus = new Map<string, number>();
+    for (const session of data.sessions) {
+      focus.set(session.date, (focus.get(session.date) ?? 0) + session.minutes);
+    }
+    return { tasks, focus };
+  }, [data.tasks, data.sessions]);
+
+  const bars = useMemo(() => {
+    const size = barSize(days);
+    const out: ChartBar[] = [];
+    for (let i = 0; i < days; i += size) {
+      const bar: ChartBar = { key: dateKey(addDays(from, i)), endKey: "", total: 0, done: 0, focusMin: 0 };
+      for (let j = i; j < Math.min(days, i + size); j++) {
+        const key = dateKey(addDays(from, j));
+        const tasks = byDay.tasks.get(key);
+        bar.endKey = key;
+        bar.total += tasks?.total ?? 0;
+        bar.done += tasks?.done ?? 0;
+        bar.focusMin += byDay.focus.get(key) ?? 0;
+      }
+      out.push(bar);
+    }
+    return out;
+  }, [byDay, from, days]);
+
   const inRange = useMemo(() => {
     const start = dateKey(from);
     return data.tasks.filter((task) => task.date >= start && task.date <= today);
   }, [data.tasks, from, today]);
 
-  const done = inRange.filter((task) => task.status === "done").length;
+  const done = useMemo(() => inRange.filter((task) => task.status === "done").length, [inRange]);
   const rate = inRange.length ? done / inRange.length : 0;
-  const focusMin = series.reduce((sum, day) => sum + day.focusMin, 0);
-  const maxDone = Math.max(1, ...series.map((day) => day.done));
-  const maxFocus = Math.max(60, ...series.map((day) => day.focusMin));
-  const hasPracticeMarks = series.some((day) => day.done > 0 || day.focusMin > 0);
+  const focusMin = bars.reduce((sum, bar) => sum + bar.focusMin, 0);
+  const maxDone = Math.max(1, ...bars.map((bar) => bar.done));
+  const maxFocus = Math.max(60, ...bars.map((bar) => bar.focusMin));
+  const hasPracticeMarks = bars.some((bar) => bar.done > 0 || bar.focusMin > 0);
+  const weekly = barSize(days) > 1;
+  const streak = useMemo(() => currentStreak(data.tasks), [data.tasks]);
+  const best = useMemo(() => bestStreak(data.tasks), [data.tasks]);
   const xp = effectiveXp(data);
   const cultivation = cultivationOf(xp);
 
+  // Hai tab kia chỉ tính khi đang mở: đổi khoảng ngày ở tab Đạo hạnh không phải
+  // trả giá cho bảng mức khẩn, nhịp tuần hay dấu ấn mà màn hình không hiện.
   const byPriority = useMemo(
     () =>
-      PRIORITY_ORDER.map((priority: Priority) => {
+      tab !== "tu-thoi-quen" ? [] : PRIORITY_ORDER.map((priority: Priority) => {
         const list = inRange.filter((task) => task.priority === priority);
         return {
           priority,
@@ -87,28 +143,38 @@ export default function StatsView({ onOpenDay, onOpenGoals }: StatsViewProps) {
           done: list.filter((task) => task.status === "done").length,
         };
       }),
-    [inRange],
+    [inRange, tab],
   );
 
+  /*
+   * Lưới theo thứ trong tuần, bắt đầu từ ngày người dùng chọn trong cài đặt
+   * (`weekStartsOn`) - trước đây luôn bắt đầu Thứ 2 dù đã chọn Chủ nhật, lệch
+   * với tuần ở mọi màn khác. Ô thứ `i` là thứ `(weekStartsOn + i) % 7`.
+   */
+  const weekStartsOn = data.settings.weekStartsOn;
   const byWeekday = useMemo(() => {
     const buckets = Array.from({ length: 7 }, () => ({ total: 0, done: 0 }));
+    if (tab !== "tu-thoi-quen") return [];
     for (const task of inRange) {
-      const index = (parseKey(task.date).getDay() + 6) % 7;
+      const index = (parseKey(task.date).getDay() - weekStartsOn + 7) % 7;
+      // Ngày hỏng (ví dụ hồ sơ nhập từ bản cũ) cho `NaN`: bỏ qua việc ấy chứ
+      // đừng để `buckets[NaN].total` ném lỗi làm sập cả màn thống kê.
+      if (!Number.isInteger(index)) continue;
       buckets[index].total += 1;
       if (task.status === "done") buckets[index].done += 1;
     }
     return buckets.map((bucket, index) => ({
-      label: WEEKDAY_LABELS[index],
-      shortLabel: WEEKDAY_SHORT[index],
+      label: WEEKDAY_LABELS[(weekStartsOn + index) % 7],
+      shortLabel: WEEKDAY_SHORT[(weekStartsOn + index) % 7],
       ...bucket,
       rate: bucket.total ? bucket.done / bucket.total : 0,
     }));
-  }, [inRange]);
+  }, [inRange, tab, weekStartsOn]);
 
-  const goalStats = useMemo(() => groupByGoal(inRange), [inRange]);
+  const goalStats = useMemo(() => groupByGoal(tab === "tu-nguyen" ? inRange : []), [inRange, tab]);
   const tagRows = useMemo(
     () =>
-      allTags(inRange)
+      (tab === "tu-nguyen" ? allTags(inRange) : [])
         .map((tag) => {
           const list = inRange.filter((task) => task.tags.includes(tag));
           return {
@@ -118,7 +184,7 @@ export default function StatsView({ onOpenDay, onOpenGoals }: StatsViewProps) {
           };
         })
         .sort((a, b) => b.total - a.total),
-    [inRange],
+    [inRange, tab],
   );
 
   const bestWeekday = [...byWeekday]
@@ -155,8 +221,8 @@ export default function StatsView({ onOpenDay, onOpenGoals }: StatsViewProps) {
             <StatTile
               className="stats-compact-tile"
               label="Chuỗi tu luyện"
-              value={currentStreak(data.tasks)}
-              hint={`Kỷ lục ${bestStreak(data.tasks)} ngày`}
+              value={streak}
+              hint={`Kỷ lục ${best} ngày`}
               icon={Flame}
             />
             <StatTile
@@ -189,15 +255,19 @@ export default function StatsView({ onOpenDay, onOpenGoals }: StatsViewProps) {
                   <span>Hoàn thành việc hoặc nhập định để khai mở dấu ấn.</span>
                 </div>
               )}
-              <div className="stats-bars flex h-full items-end gap-1">
-                {series.map((day) => {
+              <div className={cn("stats-bars flex h-full items-end", bars.length > 16 ? "gap-[2px]" : "gap-1")}>
+                {bars.map((day) => {
                   const parsed = parseKey(day.key);
-                  const dateLabel = format(parsed, "dd/MM");
-                  const fullDate = parsed.toLocaleDateString("vi-VN", {
-                    weekday: "long",
-                    day: "numeric",
-                    month: "long",
-                  });
+                  const dateLabel = weekly
+                    ? `${format(parsed, "dd/MM")} – ${format(parseKey(day.endKey), "dd/MM")}`
+                    : format(parsed, "dd/MM");
+                  const fullDate = weekly
+                    ? `tuần ${dateLabel}`
+                    : parsed.toLocaleDateString("vi-VN", {
+                        weekday: "long",
+                        day: "numeric",
+                        month: "long",
+                      });
 
                   return (
                     <Tooltip key={day.key}>
@@ -219,9 +289,9 @@ export default function StatsView({ onOpenDay, onOpenGoals }: StatsViewProps) {
                               style={{ height: `${Math.min(100, (day.done / maxDone) * 100)}%` }}
                             />
                           </span>
-                          {days <= 7 && (
-                            <span className="text-muted-foreground tabular text-[9px] leading-3">
-                              {parsed.getDate()}
+                          {(days <= 7 || weekly) && (
+                            <span className="text-muted-foreground tabular text-[10px] leading-3">
+                              {weekly ? `${parsed.getDate()}/${parsed.getMonth() + 1}` : parsed.getDate()}
                             </span>
                           )}
                         </button>
@@ -229,7 +299,9 @@ export default function StatsView({ onOpenDay, onOpenGoals }: StatsViewProps) {
                       <TooltipContent>
                         <strong className="block">{fullDate}</strong>
                         {day.done}/{day.total} việc xong · {formatDuration(day.focusMin)} nhập định
-                        <span className="block text-[10px] opacity-70">Chạm để mở nhật ký ngày này</span>
+                        <span className="block text-[10px] opacity-70">
+                          {weekly ? "Chạm để mở nhật ký ngày đầu tuần" : "Chạm để mở nhật ký ngày này"}
+                        </span>
                       </TooltipContent>
                     </Tooltip>
                   );
@@ -241,7 +313,9 @@ export default function StatsView({ onOpenDay, onOpenGoals }: StatsViewProps) {
                 <LegendMark tone="gold" label="Việc hoàn thành" />
                 <LegendMark tone="jade" label="Phút nhập định" />
               </div>
-              <span className="text-muted-foreground text-[10px]">Chạm một ngày để xem sổ việc</span>
+              <span className="text-muted-foreground text-[10px]">
+                {weekly ? "Mỗi cột là một tuần · chạm để xem sổ việc" : "Chạm một ngày để xem sổ việc"}
+              </span>
             </div>
           </Section>
         </div>

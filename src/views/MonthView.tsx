@@ -199,7 +199,8 @@ export default function MonthView({
                         {list.slice(0, 4).map((t) => (
                           <i
                             key={t.id}
-                            draggable
+                            // Việc đã xong không dời ngày được.
+                            draggable={t.status !== "done"}
                             onDragStart={(e) => {
                               e.stopPropagation();
                               setDragId(t.id);
@@ -214,7 +215,7 @@ export default function MonthView({
                           />
                         ))}
                         {list.length > 4 && (
-                          <span className="text-muted-foreground text-[9px] leading-none">
+                          <span className="text-muted-foreground text-[10px] leading-none">
                             +{list.length - 4}
                           </span>
                         )}

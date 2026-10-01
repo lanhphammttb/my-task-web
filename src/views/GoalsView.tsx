@@ -15,6 +15,18 @@ import {
 } from "lucide-react";
 import type { Goal, Task } from "../types";
 import { GOAL_COLORS } from "../types";
+
+/** Tên đọc được cho trình đọc màn hình - "Chọn màu #3fa796" không nói gì cả. */
+const TEN_MAU: Record<string, string> = {
+  "#3fa796": "thanh ngọc",
+  "#d4a24c": "kim hoàng",
+  "#c9482f": "chu sa",
+  "#4f7a52": "tùng lục",
+  "#4a6b8a": "đại lam",
+  "#8a6aa3": "tử đàn",
+  "#a3603a": "giả thạch",
+  "#5aa9c9": "thiên thanh",
+};
 import { differenceInCalendarDays, longDate, parseKey } from "../lib/date";
 import { sortTasks } from "../lib/stats";
 import { useApp } from "../store/AppStore";
@@ -51,6 +63,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { useLaDienThoai } from "../lib/thietBi";
 import { useDialogVisualViewport } from "../hooks/useDialogVisualViewport";
+import { kiemGioiHanMucTieu } from "../store/lenh";
 
 interface Props {
   onEdit: (t: Task) => void;
@@ -59,7 +72,7 @@ interface Props {
 }
 
 export default function GoalsView({ onEdit, onFocus, onAddTask }: Props) {
-  const { data, addGoal, updateGoal, removeGoal } = useApp();
+  const { data, addGoal, updateGoal, removeGoal, notify } = useApp();
   const mobile = useLaDienThoai();
   const [editing, setEditing] = useState<Goal | null>(null);
   const [formOpen, setFormOpen] = useState(false);
@@ -106,16 +119,24 @@ export default function GoalsView({ onEdit, onFocus, onAddTask }: Props) {
     setFormOpen(true);
   };
 
+  // Giới hạn độ dài của server - vượt thì chặn ngay ở form.
+  const vuot = kiemGioiHanMucTieu(draft);
+
   const submit = () => {
-    if (!draft.title.trim()) return;
+    if (!draft.title.trim() || vuot.length) return;
     const payload = {
       title: draft.title.trim(),
       description: draft.description.trim(),
       targetDate: draft.targetDate || undefined,
       color: draft.color,
     };
-    if (editing) updateGoal(editing.id, payload);
-    else addGoal(payload);
+    if (editing) {
+      updateGoal(editing.id, payload);
+      notify("Đã lưu");
+    } else {
+      addGoal(payload);
+      notify(`Đã gửi đại nguyện: ${payload.title}`);
+    }
     setFormOpen(false);
     setEditing(null);
   };
@@ -167,9 +188,12 @@ export default function GoalsView({ onEdit, onFocus, onAddTask }: Props) {
             <div className="min-w-0 flex-1">
               <div className="vow-title-row">
                 <strong className="block text-sm font-semibold">{g.title}</strong>
-                <span className="vow-state-stamp" data-vow-stamp={vowState}>
-                  {vowState === "archived" ? "Đã cất giữ" : complete ? "Viên mãn" : overdue ? "Quá hạn" : list.length ? "Đang thực hiện" : "Chưa lập bước"}
-                </span>
+                {/* Chưa có bước nào thì nút "Thêm bước đầu tiên" bên dưới đã nói đủ. */}
+                {(list.length > 0 || g.archived) && (
+                  <span className="vow-state-stamp" data-vow-stamp={vowState}>
+                    {vowState === "archived" ? "Đã cất giữ" : complete ? "Viên mãn" : overdue ? "Quá hạn" : "Đang thực hiện"}
+                  </span>
+                )}
               </div>
               {g.description && (
                 <p className="vow-description text-muted-foreground mt-0.5 text-xs">
@@ -212,9 +236,11 @@ export default function GoalsView({ onEdit, onFocus, onAddTask }: Props) {
             </DropdownMenu>
           </div>
 
-          {!g.archived && <button className="btn-game vow-add-step px-3 py-2 text-xs" onClick={() => onAddTask(g.id)}><Plus className="size-3.5" /> Thêm bước nhỏ cho đại nguyện</button>}
+          {!g.archived && <button className="btn-game vow-add-step px-3 py-2 text-xs" onClick={() => onAddTask(g.id)}><Plus className="size-3.5" /> {list.length ? "Thêm bước nhỏ cho đại nguyện" : "Thêm bước đầu tiên"}</button>}
 
-          {/* Đạo lộ chỉ bắt đầu khi có ít nhất một bước; không giả 0% khi chưa lập gì. */}
+          {/* Đạo lộ chỉ bắt đầu khi có ít nhất một bước; chưa lập gì thì không
+              bày thanh 0%, "0/0" hay nút "Xem chặng" - chỉ một lời mời ở trên. */}
+          {list.length > 0 && (
           <div className="vow-progress-row flex items-center gap-3">
             <div
               className="vow-progress-track bg-muted h-2 flex-1 overflow-hidden rounded-full"
@@ -231,11 +257,13 @@ export default function GoalsView({ onEdit, onFocus, onAddTask }: Props) {
               />
             </div>
             <span className="vow-progress-value tabular text-right text-xs font-bold">
-              {list.length ? `${Math.round(ratio * 100)}%` : "Chưa lập bước"}
+              {Math.round(ratio * 100)}%
             </span>
           </div>
+          )}
 
           <div className="flex flex-wrap items-center gap-2">
+            {list.length > 0 && (
             <MetaChip
               icon={ListChecks}
               className={
@@ -246,6 +274,7 @@ export default function GoalsView({ onEdit, onFocus, onAddTask }: Props) {
             >
               {done}/{list.length} nhiệm vụ
             </MetaChip>
+            )}
             {daysLeft !== null && !complete && (
               <MetaChip
                 icon={CalendarClock}
@@ -265,15 +294,17 @@ export default function GoalsView({ onEdit, onFocus, onAddTask }: Props) {
             {g.targetDate && (
               <MetaChip>{longDate(parseKey(g.targetDate))}</MetaChip>
             )}
+            {list.length > 0 && (
             <button
               onClick={() => setExpanded(isOpen ? null : g.id)}
               aria-expanded={isOpen}
               aria-controls={`goal-steps-${g.id}`}
               className="vow-expand-button text-primary ml-auto text-xs font-semibold hover:underline"
             >
-              <span>{isOpen ? "Thu gọn đạo lộ" : list.length ? `Xem ${list.length} bước` : "Xem chặng đầu tiên"}</span>
+              <span>{isOpen ? "Thu gọn đạo lộ" : `Xem ${list.length} bước`}</span>
               <ChevronDown className={cn("size-3.5 transition-transform", isOpen && "rotate-180")} />
             </button>
+            )}
           </div>
 
           {isOpen && (
@@ -416,7 +447,7 @@ export default function GoalsView({ onEdit, onFocus, onAddTask }: Props) {
                     key={c}
                     type="button"
                     onClick={() => setDraft({ ...draft, color: c })}
-                    aria-label={`Chọn màu ${c}`}
+                    aria-label={`Màu ${TEN_MAU[c] ?? c}`}
                     aria-pressed={draft.color === c}
                     className={cn(
                       "vow-color-choice grid size-11 place-items-center rounded-xl border-2 transition-transform",
@@ -434,11 +465,20 @@ export default function GoalsView({ onEdit, onFocus, onAddTask }: Props) {
               </div>
             </fieldset>
           </div>
+          {vuot.length > 0 && (
+            <ul role="alert" className="space-y-1.5">
+              {vuot.map((v) => (
+                <li key={v.code} className="border-destructive/40 bg-destructive/10 text-destructive rounded-lg border px-3 py-2 text-xs">
+                  {v.message}
+                </li>
+              ))}
+            </ul>
+          )}
           <DialogFooter className="sticky bottom-0 z-10 -mx-4 -mb-4 mt-2 border-t border-border bg-popover px-4 pt-3 pb-4">
             <Button variant="outline" onClick={() => setFormOpen(false)}>
               Huỷ
             </Button>
-            <Button onClick={submit} disabled={!draft.title.trim()}>
+            <Button onClick={submit} disabled={!draft.title.trim() || vuot.length > 0}>
               Lưu mục tiêu
             </Button>
           </DialogFooter>

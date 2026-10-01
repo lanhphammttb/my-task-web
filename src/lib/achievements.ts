@@ -5,7 +5,7 @@ import {
 import type { LucideIcon } from 'lucide-react';
 import type { AppData, FocusSession, Task } from '../types';
 import { bestStreak } from './stats';
-import { dateKey, parseKey } from './date';
+import { dateKey, parseKey, xongTruocHan } from './date';
 
 export interface Achievement {
   id: string;
@@ -132,7 +132,7 @@ export const ACHIEVEMENTS: Achievement[] = [
     target: 10,
     tone: 'brand',
     measure: ({ tasks }) =>
-      doneTasks(tasks).filter((t) => t.deadline && t.completedAt && t.completedAt <= t.deadline).length,
+      doneTasks(tasks).filter(xongTruocHan).length,
   },
   {
     id: 'bomb-squad',

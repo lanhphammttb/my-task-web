@@ -17,6 +17,12 @@ function openPanel(label: string) {
   fireEvent.click(nut ?? screen.getByRole('button', { name: label }));
 }
 
+/** Ô tick của các thẻ việc trong bảng Hành Sự (nhãn mang tên việc). */
+async function tickTrongBang() {
+  const bang = await screen.findByRole('dialog', { name: 'Hành Sự Đường' });
+  return within(bang).findAllByRole('button', { name: /^Đánh dấu hoàn thành: / });
+}
+
 describe('Ứng dụng web', () => {
   beforeEach(() => {
     localStorage.clear();
@@ -131,7 +137,7 @@ describe('Ứng dụng web', () => {
     render(<App />);
     openPanel('Hành Sự Đường');
 
-    const input = await screen.findByPlaceholderText(/Thêm nhanh nhiệm vụ/);
+    const input = await screen.findByPlaceholderText(/Thêm việc/);
     fireEvent.change(input, { target: { value: 'Nhiệm vụ kiểm thử !cao @08:15 ~45 #test' } });
     fireEvent.keyDown(input, { key: 'Enter' });
 
@@ -149,7 +155,7 @@ describe('Ứng dụng web', () => {
     const before = JSON.parse(localStorage.getItem('my-task-planner/v1') ?? '{"tasks":[]}');
     const doneBefore = before.tasks.filter((t: { status: string }) => t.status === 'done').length;
 
-    fireEvent.click((await screen.findAllByLabelText('Đánh dấu hoàn thành'))[0]);
+    fireEvent.click((await tickTrongBang())[0]);
 
     const after = JSON.parse(localStorage.getItem('my-task-planner/v1') ?? '{"tasks":[]}');
     const doneAfter = after.tasks.filter((t: { status: string }) => t.status === 'done').length;
@@ -171,6 +177,22 @@ describe('Ứng dụng web', () => {
     openPanel('Tu Hành Lục');
     expect(await screen.findByRole('heading', { name: 'Tu Hành Lục' })).toBeDefined();
     expect(await screen.findByText('Đạo tâm')).toBeDefined();
+  });
+
+  // 90 cột ngày trên màn điện thoại bị ép về bề ngang 0 và biểu đồ trống trơn;
+  // giờ gom thành cột tuần, và hai tab còn lại vẫn bấm được sau khi đổi khoảng.
+  it('xem 90 ngày thì biểu đồ gom theo tuần, rồi chuyển được sang tab Thói quen', async () => {
+    render(<App />);
+    openPanel('Tu Hành Lục');
+    await screen.findByText('Đạo tâm');
+
+    fireEvent.click(screen.getByRole('radio', { name: '90 ngày' }));
+    expect(await screen.findByText(/Mỗi cột là một tuần/)).toBeDefined();
+    expect(screen.getAllByRole('button', { name: /^Mở nhật ký tuần/ })).toHaveLength(13);
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Thói quen' }));
+    expect(await screen.findByText('Mạch tu hành')).toBeDefined();
+    expect(screen.getByText('Theo mức khẩn')).toBeDefined();
   });
 
   it('mở được bảng Tiên Lộ với bậc thang cảnh giới và kỳ ngộ', async () => {
@@ -302,7 +324,7 @@ describe('Ứng dụng web', () => {
 
     // Sang ngày mai rồi thử tick một nhiệm vụ ở đó.
     fireEvent.click(await screen.findByRole('button', { name: 'Ngày sau' }));
-    const boxes = await screen.findAllByLabelText('Đánh dấu hoàn thành');
+    const boxes = await tickTrongBang();
     fireEvent.click(boxes[0]);
 
     const saved = JSON.parse(localStorage.getItem('my-task-planner/v1') ?? '{}');
@@ -330,7 +352,7 @@ describe('Ứng dụng web', () => {
     const before = JSON.parse(localStorage.getItem('my-task-planner/v1') ?? '{}');
     const beforeLedger = before.ledger.length;
 
-    fireEvent.click((await screen.findAllByLabelText('Đánh dấu hoàn thành'))[0]);
+    fireEvent.click((await tickTrongBang())[0]);
 
     const after = JSON.parse(localStorage.getItem('my-task-planner/v1') ?? '{}');
     expect(after.ledger.length).toBe(beforeLedger + 1);

@@ -335,12 +335,12 @@ describe('tông môn', () => {
     });
     const afterAccept = stones(r);
 
-    // Mốc đo là số việc đã xong tại lúc nhận, nên phải xong thêm `m.tasks` việc
-    // nữa mới đạt. Lùi mốc về 0 để giả lập đã làm đủ.
+    // Mốc đo là số việc đã xong tại lúc nhận, và việc phải xong SAU lúc nhận
+    // (chặn lối bỏ tick rồi tick lại việc cũ). Lùi cả hai mốc để giả lập đã làm đủ.
     act(() => {
       r.result.current.replaceAll({
         ...r.result.current.data,
-        mission: { ...r.result.current.data.mission!, startTasks: 0 },
+        mission: { ...r.result.current.data.mission!, startTasks: 0, acceptedAt: new Date(0).toISOString() },
       });
     });
 
@@ -420,7 +420,8 @@ describe('thám hiểm', () => {
       expedition: {
         site: 'linh_thao_coc',
         startedAtTasks: 0,
-        startedAt: new Date().toISOString(),
+        // Việc phải xong sau lúc lên đường mới được tính - lùi mốc để giả lập đã đi đủ.
+        startedAt: new Date(0).toISOString(),
       },
     });
     const r = mount();

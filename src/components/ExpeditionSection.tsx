@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { Compass, Footprints, PackageOpen } from "lucide-react";
-import { SITES, SITE_ORDER, expeditionState } from "../lib/expedition";
+import { SITES, SITE_ORDER } from "../lib/expedition";
 import type { Risk, Site, SiteOutcome } from "../lib/expedition";
 import { HERBS } from "../lib/field";
 import { PILLS } from "../lib/pills";
-import { stoneBalance, verifiedTaskCount } from "../lib/economy";
+import { expeditionStateOf, stoneBalance } from "../lib/economy";
 import { useApp } from "../store/AppStore";
 import ArtImage from "./ArtImage";
 import { Meter, MetaChip, Section } from "./primitives";
@@ -57,9 +57,7 @@ export default function ExpeditionSection() {
   const [result, setResult] = useState<SiteOutcome | null>(null);
 
   const balance = stoneBalance(data);
-  const state = data.expedition
-    ? expeditionState(data.expedition, verifiedTaskCount(data))
-    : null;
+  const state = expeditionStateOf(data);
 
   const claim = () => {
     const outcome = resolveExpedition();

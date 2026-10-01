@@ -261,7 +261,6 @@ export default function FocusView({ onNew }: { onNew: () => void }) {
                 title={running ? "Tạm dừng phiên bế quan" : inSession ? "Tiếp tục phiên bế quan" : "Bắt đầu phiên bế quan"}
                 data-game-state={running ? "active" : inSession ? "paused" : "available"}
                 data-game-action="focus-toggle"
-                aria-pressed={running}
               >
                 {running ? (
                   <Pause className="size-4" />

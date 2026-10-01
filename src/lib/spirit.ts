@@ -28,7 +28,9 @@ export const ELEMENTS: Record<Element, ElementMeta> = {
     label: 'Mộc',
     color: '#6fbf73',
     perk: 'Mộc Trưởng Bất Tức',
-    perkNote: 'Mỗi ngày trong chuỗi tu luyện cho thêm 3 tu vi',
+    // Đúng với `xpBreakdown`: cộng `chuỗi hiện tại × 3`, tính lại mỗi lần -
+    // không tích luỹ, nên đứt chuỗi là phần cộng này về 0.
+    perkNote: 'Cộng 3 tu vi cho mỗi ngày của chuỗi hiện tại (chuỗi 10 ngày = +30); đứt chuỗi thì phần này về 0',
   },
   thuy: {
     label: 'Thuỷ',

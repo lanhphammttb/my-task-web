@@ -1,12 +1,11 @@
 import { todayKey } from "../lib/date";
 import { useMemo, useState } from "react";
-import { Gift, Lock, PackageOpen, Sparkles } from "lucide-react";
-import { chestsForDay } from "../lib/chest";
+import { ArrowRight, Gift, Lock, PackageOpen, Sparkles } from "lucide-react";
+import { requestOpenView } from "../lib/section";
+import { chestsOfDay } from "../lib/chest";
 import type { ChestState, Loot } from "../lib/chest";
 import { HERBS } from "../lib/field";
 import { PILLS } from "../lib/pills";
-import { dayStats } from "../lib/stats";
-import { isPerfectDay } from "../lib/achievements";
 import { burstBig, burstTier, soundAchievement } from "../lib/celebrate";
 import { useApp } from "../store/AppStore";
 import { Meter, MetaChip, Section } from "./primitives";
@@ -14,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
   AlertDialogAction,
+  AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
@@ -32,6 +32,24 @@ function spoils(loot: Loot): string[] {
   }
   if (loot.pill) out.push(`+1 ${PILLS[loot.pill].short}`);
   return out;
+}
+
+/**
+ * "+2 Thanh Diệp" mà không nói để làm gì thì người mới không biết đi đâu dùng.
+ * Trả về một dòng giải thích và mục trong Động Phủ để nhảy tới.
+ */
+function huongDung(loot: Loot): { text: string; at: string; nut: string } | null {
+  if (Object.values(loot.herbs ?? {}).some((n) => n)) {
+    return {
+      text: "Linh thảo vào Túi linh thảo ở Động Phủ, dùng để luyện đan.",
+      at: "cave-field",
+      nut: "Tới Linh điền",
+    };
+  }
+  if (loot.pill) {
+    return { text: "Đan dược cất ở Đan đường trong Động Phủ.", at: "cave-pill", nut: "Tới Đan đường" };
+  }
+  return null;
 }
 
 /** Một cái hòm: ảnh nếu có, không thì icon nét. */
@@ -76,16 +94,11 @@ export default function ChestRow({ date }: { date: string }) {
   const isToday = date === todayKey();
   const [revealed, setRevealed] = useState<{ loot: Loot; chest: ChestState } | null>(null);
 
-  const list = useMemo(() => {
-    const s = dayStats(data.tasks, data.sessions, date);
-    return chestsForDay(
-      date,
-      s.done,
-      s.focusMin,
-      isPerfectDay(data.tasks, date),
-      data.chestsOpened,
-    );
-  }, [data.tasks, data.sessions, data.chestsOpened, date]);
+  // Cùng hàm với lệnh mở hòm ở máy và ở server: việc tính theo ngày XONG.
+  const list = useMemo(
+    () => chestsOfDay({ tasks: data.tasks, sessions: data.sessions, chestsOpened: data.chestsOpened }, date),
+    [data.tasks, data.sessions, data.chestsOpened, date],
+  );
 
   const ready = list.filter((c) => c.earned && !c.opened).length;
 
@@ -93,7 +106,7 @@ export default function ChestRow({ date }: { date: string }) {
     if (!isToday) return;
     const res = openChest(chest.rule.id);
     if (!res) return;
-    // Hòm kim hiếm tới mức cả tháng chưa chắc được một cái - ăn mừng to hơn.
+    // Hòm kim chỉ có vào ngày dọn sạch nhật khoá - ăn mừng to hơn.
     if (chest.rule.grade === "kim") burstBig();
     else burstTier();
     soundAchievement();
@@ -149,7 +162,7 @@ export default function ChestRow({ date }: { date: string }) {
                 {c.opened ? (
                   <MetaChip>đã mở</MetaChip>
                 ) : c.earned ? (
-                  <Button size="sm" className="gap-1.5" onClick={() => open(c)} disabled={!isToday}>
+                  <Button size="sm" className="btn-game gap-1.5" onClick={() => open(c)} disabled={!isToday}>
                     <PackageOpen className="size-3.5" /> Mở
                   </Button>
                 ) : (
@@ -185,8 +198,26 @@ export default function ChestRow({ date }: { date: string }) {
             </div>
           )}
 
+          {revealed && huongDung(revealed.loot) && (
+            <p className="text-muted-foreground text-xs leading-relaxed">
+              {huongDung(revealed.loot)!.text}
+            </p>
+          )}
+
           <AlertDialogFooter>
-            <AlertDialogAction onClick={() => setRevealed(null)}>Nhận</AlertDialogAction>
+            {revealed && huongDung(revealed.loot) && (
+              <AlertDialogCancel
+                className="gap-1.5"
+                onClick={() => {
+                  const h = huongDung(revealed.loot)!;
+                  setRevealed(null);
+                  requestOpenView("cave", h.at);
+                }}
+              >
+                {huongDung(revealed.loot)!.nut} <ArrowRight className="size-3.5" />
+              </AlertDialogCancel>
+            )}
+            <AlertDialogAction className="btn-game" onClick={() => setRevealed(null)}>Nhận</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

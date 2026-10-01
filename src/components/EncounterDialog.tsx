@@ -26,22 +26,29 @@ const RISK_STYLE = {
 } as const;
 
 export default function EncounterDialog() {
-  const { encounter, resolveEncounter, dismissEncounter } = useApp();
-  const [result, setResult] = useState<Outcome | null>(null);
+  const { encounter, encounterResult, resolveEncounter, dismissEncounter } = useApp();
+  const [local, setLocal] = useState<Outcome | null>(null);
+  /** Đã gửi lựa chọn lên máy chủ, đang chờ nó bốc kết quả */
+  const [waiting, setWaiting] = useState(false);
+  // Kết quả do máy chủ bốc tới sau, qua `encounterResult`.
+  const result = local ?? encounterResult;
 
   const close = () => {
-    setResult(null);
+    setLocal(null);
+    setWaiting(false);
     dismissEncounter();
   };
 
   const choose = (i: number) => {
     const outcome = resolveEncounter(i);
-    if (outcome) setResult(outcome);
+    if (outcome === "cho") setWaiting(true);
+    else if (outcome) setLocal(outcome);
   };
 
   return (
     <Dialog open={!!encounter} onOpenChange={(v) => !v && close()}>
-      <DialogContent className="overflow-hidden p-0 sm:max-w-[560px]">
+      {/* Tự cuộn trong 90dvh: màn thấp vẫn với tới các nút lựa chọn ở cuối. */}
+      <DialogContent className="max-h-[90dvh] overflow-y-auto overscroll-contain p-0 sm:max-w-[560px]">
         <div className="relative h-40">
           {/* Mỗi kỳ ngộ có thể có tranh riêng trong public/art/encounter/ */}
           <ArtImage
@@ -120,6 +127,19 @@ export default function EncounterDialog() {
               </div>
 
               <Button className="mt-5 w-full" onClick={close}>
+                Về động phủ
+              </Button>
+            </div>
+          ) : waiting ? (
+            <div className="mt-5 space-y-3">
+              <p
+                role="status"
+                className="border-border bg-surface/60 text-muted-foreground rounded-lg border p-4 text-sm leading-relaxed"
+              >
+                Đang chờ thiên cơ định đoạt… Mất mạng thì lựa chọn vẫn nằm chờ và
+                kết quả sẽ báo khi máy chủ nhận được.
+              </p>
+              <Button variant="outline" className="w-full" onClick={close}>
                 Về động phủ
               </Button>
             </div>

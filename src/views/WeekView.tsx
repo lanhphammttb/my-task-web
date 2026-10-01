@@ -143,7 +143,7 @@ export default function WeekView({
                   "border-primary bg-primary/12 ring-primary/25 ring-2",
               )}
             >
-              <span className="mb-3 text-[9px] tracking-widest text-gold">CHẶNG {String(index + 1).padStart(2, "0")}</span>
+              <span className="mb-3 text-[10px] tracking-widest text-gold">CHẶNG {String(index + 1).padStart(2, "0")}</span>
               <button
                 onClick={() => onOpenDay(key)}
                 className="mb-2 flex w-full items-start justify-between text-left"
@@ -185,7 +185,8 @@ export default function WeekView({
                 {list.map((t) => (
                   <div
                     key={t.id}
-                    draggable
+                    // Việc đã xong không dời ngày được (store và server đều chặn).
+                    draggable={t.status !== "done"}
                     onDragStart={() => setDragId(t.id)}
                     onDragEnd={() => setDragId(null)}
                     onDoubleClick={() => onEdit(t)}
@@ -205,8 +206,9 @@ export default function WeekView({
                         e.stopPropagation();
                         toggleDone(t.id);
                       }}
-                      aria-label="Đánh dấu hoàn thành"
-                      className="hover:text-success mt-px shrink-0"
+                      aria-label={`${t.status === "done" ? "Bỏ đánh dấu hoàn thành" : "Đánh dấu hoàn thành"}: ${t.title}`}
+                      // Biểu tượng 14px nhưng vùng chạm 44×44 cho ngón tay.
+                      className="hover:text-success relative mt-px shrink-0 after:absolute after:-inset-[15px]"
                     >
                       {t.status === "done" ? (
                         <CircleCheck className="text-success size-3.5" />

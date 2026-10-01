@@ -33,7 +33,7 @@ export default function TodayView({ date, onDateChange, onEdit, onFocus }: Props
   const [portraitOk, setPortraitOk] = useState(true);
   const showPortrait = !!portrait && portraitOk;
 
-  return <div className="mx-auto flex w-full max-w-5xl flex-col gap-4">
+  return <div className="journal-today mx-auto flex w-full max-w-5xl flex-col gap-4">
     <div className="journal-date-ribbon">
       <Button className="journal-date-seal" variant="outline" size="icon" aria-label="Ngày trước" title="Ngày trước" onClick={() => onDateChange(dateKey(addDays(parseKey(date), -1)))}><ChevronLeft className="size-4" /></Button>
       <div className="journal-date-copy"><h2 className="font-title chi-man-rong text-lg font-bold">{isToday ? 'Sổ hành sự hôm nay' : relativeDay(date)}</h2><p className="text-muted-foreground text-xs">{longDate(parseKey(date))}</p></div>

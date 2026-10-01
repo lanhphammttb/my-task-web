@@ -1,6 +1,7 @@
 /** Kiểu dữ liệu dùng chung cho toàn bộ ứng dụng. */
 
 import type { OwnedBeast } from './lib/beasts';
+import type { PendingEncounter } from './lib/encounters';
 import type { Expedition } from './lib/expedition';
 import type { FieldPlot, HerbId } from './lib/field';
 import type { LedgerEntry } from './lib/integrity';
@@ -44,6 +45,23 @@ export interface Task {
   completedAt?: string;
   /** Calendar day at completion, independent of the current device timezone. */
   completedOn?: string;
+  /**
+   * Lần ĐẦU TIÊN việc này được đánh dấu xong, dạng ISO. Đặt một lần rồi thôi:
+   * bỏ tick không xoá, tick lại không đổi.
+   *
+   * Sứ mệnh và thám hiểm chỉ đếm việc xong lần đầu SAU lúc nhận/lên đường.
+   * Không có mốc bất biến này thì bỏ tick tám việc cũ, nhận sứ mệnh rồi tick
+   * lại là "hoàn thành" ngay mà chẳng làm thêm gì.
+   */
+  firstDoneAt?: string;
+  /**
+   * Ngày trong tháng (1..31) mà việc lặp hằng tháng neo vào.
+   *
+   * Không có neo thì 31/01 sang tháng hai bị kẹp thành 28/02, rồi từ 28/02 cứ
+   * thế là 28/03 - mất hẳn ngày 31. Giữ neo thì 31/01 → 28/02 → 31/03. Thiếu
+   * trường này thì neo là ngày của chính `date`.
+   */
+  recurDay?: number;
 }
 
 export interface Goal {
@@ -135,6 +153,12 @@ export interface AppData {
   encounterXp: number;
   /** Linh thạch thưởng từ kỳ ngộ */
   stonesBonus: number;
+  /**
+   * Kỳ ngộ đang chờ người tu chọn hướng xử lý. Chỉ server đặt trường này
+   * (khi ghi một phiên bế quan) và chỉ lệnh `resolveEncounter` gỡ nó - nhờ vậy
+   * kết quả do server bốc, không phải xúc xắc ở máy rồi bị bản sau ghi đè.
+   */
+  pendingEncounter?: PendingEncounter;
   /** Sổ ghi chuỗi băm cho mọi nguồn tu vi - dùng để phát hiện sửa dữ liệu */
   ledger: LedgerEntry[];
   /** Lần cuối mở app, để phát hiện đồng hồ bị đẩy lùi */

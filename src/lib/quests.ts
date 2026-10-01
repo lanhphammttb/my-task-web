@@ -1,5 +1,5 @@
 import type { AppData, Task } from '../types';
-import { dateKey, parseKey, completedDay } from './date';
+import { dateKey, parseKey, completedDay, xongTruocHan } from './date';
 
 /**
  * Nhật khoá tông môn: mỗi ngày ba nhiệm vụ phụ, thưởng linh thạch.
@@ -35,7 +35,8 @@ export interface DayRecord {
   focusMin: number;
 }
 
-const beatDeadline = (t: Task) => !!t.deadline && !!t.completedAt && t.completedAt <= t.deadline;
+// So mốc thời gian chứ không so chuỗi - xem `xongTruocHan`.
+const beatDeadline = (t: Task) => xongTruocHan(t);
 
 export const QUESTS: QuestDef[] = [
   { id: 'slay3', label: 'Trảm 3 nhiệm vụ', target: 3, reward: 6, measure: (d) => d.completed.length },
@@ -112,7 +113,11 @@ export interface QuestState extends QuestDef {
 }
 
 export function questStates(data: AppData, key: string): QuestState[] {
-  const record = dayRecord(data, key);
+  return statesOf(dayRecord(data, key));
+}
+
+function statesOf(record: DayRecord): QuestState[] {
+  const key = record.key;
   return questsFor(key).map((q) => {
     const current = q.measure(record);
     return {
@@ -124,22 +129,41 @@ export function questStates(data: AppData, key: string): QuestState[] {
   });
 }
 
-/** Những ngày có hoạt động - chỉ các ngày này mới xét nhật khoá. */
-function activeDays(data: AppData): string[] {
-  const set = new Set<string>();
+/**
+ * Sổ ghi của MỌI ngày có hoạt động, dựng trong một lượt duyệt.
+ *
+ * Chỉ những ngày này mới xét nhật khoá. Gọi `dayRecord` cho từng ngày thì mỗi
+ * ngày lại lọc cả danh sách việc: 120 ngày x vài nghìn việc là cả trăm nghìn
+ * lượt `completedDay` - hàm này chạy mỗi lần tính linh thạch, tức mỗi lần vẽ.
+ * Kết quả y hệt `dayRecord` (cùng thứ tự việc trong từng ngày).
+ */
+function activeRecords(data: AppData): DayRecord[] {
+  const records = new Map<string, DayRecord>();
+  const at = (key: string) => {
+    let r = records.get(key);
+    if (!r) records.set(key, (r = { key, completed: [], scheduled: [], focusMin: 0 }));
+    return r;
+  };
+  const done: [string, Task][] = [];
   for (const t of data.tasks) {
-    set.add(t.date);
-    if (t.completedAt) set.add(completedDay(t));
+    at(t.date).scheduled.push(t);
+    const day = t.completedAt || t.status === 'done' ? completedDay(t) : undefined;
+    // Mốc hoàn thành chỉ làm một ngày "có hoạt động" khi việc có `completedAt`,
+    // đúng như cách đếm cũ.
+    if (t.completedAt) at(day!);
+    if (t.status === 'done') done.push([day!, t]);
   }
-  for (const s of data.sessions) set.add(s.date);
-  return [...set].sort();
+  for (const s of data.sessions) at(s.date).focusMin += s.minutes;
+  // Việc xong chỉ được tính vào ngày đã có hoạt động - ngày khác không xét nhật khoá.
+  for (const [day, t] of done) records.get(day)?.completed.push(t);
+  return [...records.values()].sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
 }
 
 /** Tổng linh thạch kiếm được từ nhật khoá tông môn, tính lại từ lịch sử. */
 export function questStones(data: AppData): number {
   let total = 0;
-  for (const key of activeDays(data)) {
-    for (const q of questStates(data, key)) {
+  for (const record of activeRecords(data)) {
+    for (const q of statesOf(record)) {
       if (q.done) total += q.reward;
     }
   }

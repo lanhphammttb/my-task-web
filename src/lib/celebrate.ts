@@ -133,8 +133,23 @@ export function haptic(pattern: number | number[]) {
   }
 }
 
+/**
+ * Đang có hộp thoại Radix mở (soạn việc, cài đặt, kết quả hòm...)? Confetti
+ * vẽ trên một canvas phủ cả màn, bắn lúc ấy là rắc giấy lên chính chỗ người
+ * dùng đang đọc/gõ.
+ */
+function hopThoaiDangMo() {
+  return (
+    typeof document !== "undefined" &&
+    !!document.querySelector(
+      '[data-slot="dialog-content"][data-state="open"], [data-slot="alert-dialog-content"][data-state="open"], [data-slot="sheet-content"][data-state="open"]',
+    )
+  );
+}
+
 /** Bắn confetti an toàn - bỏ qua nếu môi trường không vẽ được canvas. */
 function fire(options: confetti.Options) {
+  if (hopThoaiDangMo()) return;
   try {
     void confetti(options);
   } catch {

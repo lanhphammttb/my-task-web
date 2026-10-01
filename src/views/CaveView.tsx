@@ -35,11 +35,19 @@ import type { KhuTab } from '../components/KhuTabs';
  * Động Phủ: nơi ở của người tu. Chứa linh căn, túi linh thạch và đàn linh thú.
  * Đây là phần "chơi" của app - nhưng mọi nguồn lực đều đến từ việc làm thật.
  */
-export default function CaveView({ onMeditate }: { onMeditate: () => void }) {
+export default function CaveView({ onMeditate, initialTab }: { onMeditate: () => void; initialTab?: string }) {
   const { data, awaken, rerollRoot, summon, feedBeast, setActiveBeast } = useApp();
   const [revealed, setRevealed] = useState<Beast | null>(null);
   // Mở Động Phủ ra là đứng ở túi linh thạch - chỗ trả lời câu "tôi đang có gì".
-  const [tab, setTab] = useState('cave-stone');
+  // Mở từ chỗ khác với một mục cụ thể (ví dụ "Tới Linh điền" sau khi mở hòm).
+  const [tab, setTab] = useState(initialTab?.startsWith('cave-') ? initialTab : 'cave-stone');
+  /* Điện thoại: chọn một mục là gập căn phòng lại (ảnh cao ~250px) để nội dung
+     mục đó lên ngay tầm mắt; muốn ngắm phòng thì mở lại. */
+  const [thuPhong, setThuPhong] = useState(!!initialTab?.startsWith('cave-'));
+  const chonMuc = (id: string) => {
+    setTab(id);
+    setThuPhong(true);
+  };
 
   const stones = useMemo(() => stoneBreakdown(data), [data]);
   const stonesShown = useCountUp(stones.balance);
@@ -76,9 +84,16 @@ export default function CaveView({ onMeditate }: { onMeditate: () => void }) {
           đoạn giải thích cơ chế. Đoạn văn cũ nói linh căn/công pháp/linh điền
           dùng để làm gì - mà ngay dưới đây mỗi mục đều đã tự giới thiệu, nên
           nó chỉ là một lớp chữ chắn giữa người chơi và nhà của họ. */}
-      <CaveRoom onGo={(anchor) => anchor === 'focus' ? onMeditate() : setTab(anchor)} tab={tab} />
+      <div className="cave-room-wrap" data-thu-gon={thuPhong ? '' : undefined}>
+        <CaveRoom onGo={(anchor) => anchor === 'focus' ? onMeditate() : chonMuc(anchor)} tab={tab} />
+        {thuPhong && (
+          <button type="button" className="cave-room-mo" onClick={() => setThuPhong(false)}>
+            <Mountain className="size-4" /> Xem căn phòng
+          </button>
+        )}
+      </div>
 
-      <KhuTabs tabs={tabs} dang={tab} onChon={setTab} nhan="Các mục trong Động Phủ" />
+      <KhuTabs tabs={tabs} dang={tab} onChon={chonMuc} nhan="Các mục trong Động Phủ" />
 
       {/* ------------------------------------------------------ túi linh thạch */}
       {tab === 'cave-stone' && (

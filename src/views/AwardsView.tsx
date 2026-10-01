@@ -3,7 +3,7 @@ import { Check, ChevronDown, Flame, Lock, Route, Sparkles, Trophy, Zap } from 'l
 import { formatDuration } from '../lib/date';
 import { bestStreak, currentStreak } from '../lib/stats';
 import { effectiveXp, progressOf, xpBreakdown } from '../lib/economy';
-import { ascensionRatio, cultivationOf, realmLadder, TOTAL_TO_ASCEND } from '../lib/cultivation';
+import { cultivationOf, realmLadder, realmStart, REALMS } from '../lib/cultivation';
 import type { RealmProgress } from '../lib/cultivation';
 import { achievementStates } from '../lib/achievements';
 import type { AchievementState } from '../lib/achievements';
@@ -167,14 +167,22 @@ export default function AwardsView({ onTribulation }: { onTribulation: () => voi
               </p>
             )}
 
-            <div>
-              <p className="text-muted-foreground mb-1.5 text-[11px]">
-                Tiến độ phi thăng: <span className="tabular">{xp}</span> /{' '}
-                <span className="tabular">{TOTAL_TO_ASCEND}</span> tu vi (
-                {Math.round(ascensionRatio(xp) * 100)}%)
-              </p>
-              <Meter value={ascensionRatio(xp)} height={5} barClassName="bg-warning" />
-            </div>
+            {/* Mốc gần thay cho "130 / 139770 (0%)": thanh phi thăng cả đời đứng
+                yên ở 0% suốt nhiều tháng, nhìn chỉ thấy nản. */}
+            {!c.ascended && (() => {
+              const tong = c.realm.tiers * c.realm.perTier;
+              const da = Math.max(0, Math.min(tong, xp - realmStart(c.realmIndex)));
+              return (
+                <div>
+                  <p className="text-muted-foreground mb-1.5 text-[11px]">
+                    Tới đại cảnh giới {REALMS[c.realmIndex + 1].name}:{' '}
+                    <span className="tabular">{da}</span> / <span className="tabular">{tong}</span> tu vi (
+                    {Math.floor((da / tong) * 100)}%)
+                  </p>
+                  <Meter value={da / tong} height={5} barClassName="bg-warning" />
+                </div>
+              );
+            })()}
           </div>
         </div>
 

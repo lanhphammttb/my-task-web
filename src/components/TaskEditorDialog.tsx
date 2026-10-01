@@ -6,6 +6,7 @@ import { uid } from "../lib/storage";
 import { blocking, checkTaskDraft, clampEstimate } from "../lib/validation";
 import { PRIORITY_ORDER, PRIORITY_UI, RECURRENCE_UI } from "../lib/ui";
 import { useApp } from "../store/AppStore";
+import { GIOI_HAN, kiemGioiHanNhiemVu } from "../store/lenh";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -51,6 +52,29 @@ interface Draft {
   subtasks: Subtask[];
 }
 
+/**
+ * Hạn chót lưu dạng ISO có múi (UTC, đuôi `Z`) để máy ở múi giờ khác - và
+ * server - hiểu đúng một thời điểm. Ô `datetime-local` thì chỉ nói giờ địa
+ * phương, nên phải đổi qua đổi lại ở hai đầu.
+ *
+ * Bản cũ lưu giờ địa phương không kèm múi (`2026-09-30T17:00:00`): cắt lấy
+ * phần ngày giờ là đúng luôn, không được đổi múi thêm lần nữa.
+ */
+const coMui = (iso: string) => /(Z|[+-]\d{2}:?\d{2})$/i.test(iso);
+function sangONhap(deadline: string): string {
+  if (!coMui(deadline)) return deadline.slice(0, 16);
+  const d = new Date(deadline);
+  if (Number.isNaN(d.getTime())) return deadline.slice(0, 16);
+  const hai = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${hai(d.getMonth() + 1)}-${hai(d.getDate())}T${hai(d.getHours())}:${hai(d.getMinutes())}`;
+}
+/** Giờ địa phương trong ô nhập → ISO UTC. `new Date("YYYY-MM-DDTHH:mm")` đọc theo giờ máy. */
+function tuONhap(local: string): string | undefined {
+  if (!local) return undefined;
+  const d = new Date(local);
+  return Number.isNaN(d.getTime()) ? `${local}:00` : d.toISOString();
+}
+
 const blank = (date: string): Draft => ({
   title: "",
   note: "",
@@ -72,7 +96,7 @@ export default function TaskEditorDialog({
   defaultGoalId,
   onOpenChange,
 }: Props) {
-  const { addTask, updateTask, removeTask, data } = useApp();
+  const { addTask, updateTask, removeTask, data, notify } = useApp();
   const mobile = useLaDienThoai();
   const viewportStyle = useDialogVisualViewport(open, mobile);
   const [draft, setDraft] = useState<Draft>(blank(defaultDate ?? todayKey()));
@@ -80,6 +104,12 @@ export default function TaskEditorDialog({
   const [advancedOpen, setAdvancedOpen] = useState(true);
   /** Đã bấm lưu ít nhất một lần - trước đó không báo lỗi "chưa có tên". */
   const [tried, setTried] = useState(false);
+  /**
+   * Việc đã xong: ngày và mức ưu tiên bị khoá theo lúc hoàn thành (store và
+   * server đều chặn). Khoá luôn ở ô nhập để người dùng thấy ngay, khỏi bấm lưu
+   * rồi mới bị từ chối.
+   */
+  const khoaXong = task?.status === "done";
 
   useEffect(() => {
     if (!open) return;
@@ -97,7 +127,7 @@ export default function TaskEditorDialog({
             note: task.note,
             date: task.date,
             startTime: task.startTime ?? "",
-            deadline: task.deadline ? task.deadline.slice(0, 16) : "",
+            deadline: task.deadline ? sangONhap(task.deadline) : "",
             priority: task.priority,
             estimateMin: String(task.estimateMin),
             goalId: task.goalId ?? "none",
@@ -114,18 +144,29 @@ export default function TaskEditorDialog({
 
   const addSub = () => {
     const title = subInput.trim();
-    if (!title) return;
+    if (!title || draft.subtasks.length >= GIOI_HAN.soBuoc) return;
     set("subtasks", [...draft.subtasks, { id: uid(), title, done: false }]);
     setSubInput("");
   };
 
-  const allIssues = checkTaskDraft({
-    title: draft.title,
-    date: draft.date,
-    startTime: draft.startTime || undefined,
-    deadline: draft.deadline ? `${draft.deadline}:00` : undefined,
-    estimateMin: Number(draft.estimateMin) || 0,
-  });
+  const tags = draft.tags
+    .split(",")
+    .map((t) => t.trim())
+    .filter(Boolean);
+  const allIssues = [
+    ...checkTaskDraft({
+      title: draft.title,
+      date: draft.date,
+      startTime: draft.startTime || undefined,
+      deadline: tuONhap(draft.deadline),
+      estimateMin: Number(draft.estimateMin) || 0,
+    }),
+    // Giới hạn của server: vượt là bị chặn ngay ở đây, đừng để tới lúc đồng
+    // bộ mới thấy máy chủ từ chối.
+    ...kiemGioiHanNhiemVu({ title: draft.title, note: draft.note, tags, subtasks: draft.subtasks }).map(
+      (v) => ({ ...v, level: "block" as const }),
+    ),
+  ];
   const blockers = blocking(allIssues);
 
   /**
@@ -145,19 +186,21 @@ export default function TaskEditorDialog({
       note: draft.note.trim(),
       date: draft.date,
       startTime: draft.startTime || undefined,
-      deadline: draft.deadline ? `${draft.deadline}:00` : undefined,
+      deadline: tuONhap(draft.deadline),
       priority: draft.priority,
       estimateMin: clampEstimate(Number(draft.estimateMin) || 0),
       goalId: draft.goalId === "none" ? undefined : draft.goalId,
-      tags: draft.tags
-        .split(",")
-        .map((t) => t.trim())
-        .filter(Boolean),
+      tags,
       recurrence: draft.recurrence,
       subtasks: draft.subtasks,
     };
-    if (task) updateTask(task.id, payload);
-    else addTask(payload);
+    // Hộp thoại đóng lại mà không một lời thì người dùng không chắc đã lưu chưa.
+    if (task) {
+      if (updateTask(task.id, payload)) notify("Đã lưu");
+    } else {
+      addTask(payload);
+      notify(`Đã thêm: ${payload.title}`);
+    }
     onOpenChange(false);
   };
 
@@ -172,8 +215,8 @@ export default function TaskEditorDialog({
           <p className="task-editor-eyebrow"><ScrollText className="size-3.5" /> {task ? "HIỆU CHỈNH NHIỆM VỤ" : "KHẮC LỆNH HÀNH SỰ"}</p>
           <DialogTitle>{task ? "Sửa nhiệm vụ" : "Nhiệm vụ mới"}</DialogTitle>
           <DialogDescription>
-            Càng cụ thể càng dễ bắt tay vào làm. Đặt hạn chót để app nhắc bạn
-            đúng lúc.
+            Càng cụ thể càng dễ bắt tay vào làm. Hạn chót hiện thành nhãn đếm
+            ngược trên thẻ việc để bạn thấy việc nào sắp tới hạn.
           </DialogDescription>
         </DialogHeader>
 
@@ -195,6 +238,12 @@ export default function TaskEditorDialog({
 
           <fieldset className="grid gap-2 sm:col-span-2">
             <legend className="text-sm leading-none font-medium">Mức ưu tiên</legend>
+            {khoaXong && (
+              <p className="text-muted-foreground text-xs">
+                Việc đã xong: mức ưu tiên và ngày được khoá theo lúc hoàn thành.
+                Bỏ đánh dấu hoàn thành nếu muốn đổi.
+              </p>
+            )}
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               {PRIORITY_ORDER.map((p) => {
                 const meta = PRIORITY_UI[p];
@@ -205,6 +254,7 @@ export default function TaskEditorDialog({
                     type="button"
                     data-task-priority={p}
                     aria-pressed={active}
+                    disabled={khoaXong}
                     onClick={() => set("priority", p)}
                     className={cn(
                       "flex items-center justify-center gap-1.5 rounded-lg border px-2 py-2 text-xs font-medium transition-all",
@@ -228,6 +278,7 @@ export default function TaskEditorDialog({
               id="task-date"
               type="date"
               value={draft.date}
+              disabled={khoaXong}
               onChange={(e) => set("date", e.target.value)}
             />
           </div>

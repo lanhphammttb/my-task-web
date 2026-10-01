@@ -22,6 +22,79 @@ export const MAX_ESTIMATE_MIN = 24 * 60;
 export const MIN_SESSION_MIN = 1;
 export const MAX_SESSION_MIN = 4 * 60;
 
+/**
+ * Phiên ngắn hơn ngần này vẫn được ghi phút (tu vi tính theo phút nên vẫn có
+ * phần của nó), nhưng KHÔNG có linh thạch "mỗi phiên" và không được bốc kỳ ngộ.
+ *
+ * Hai phần thưởng ấy tính theo SỐ phiên chứ không theo số phút. Không có ngưỡng
+ * thì bấm bắt đầu rồi "kết thúc sớm" sau một phút, lặp lại hai mươi lần, là có
+ * bốn mươi viên đá và bảy lần gieo kỳ ngộ - trong khi một phiên 25 phút thật
+ * chỉ được hai viên và một lần gieo.
+ */
+export const MIN_REWARD_SESSION_MIN = 5;
+export const rewardsSession = (minutes: number) => minutes >= MIN_REWARD_SESSION_MIN;
+
+/** Đồng hồ máy khách được chạy nhanh hơn máy chủ chừng này mà không bị coi là phiên ở tương lai. */
+export const SESSION_FUTURE_TOLERANCE_MS = 2 * 60_000;
+/**
+ * Phiên gửi muộn được lùi về quá khứ tối đa chừng này. Bằng đúng độ lệch mà
+ * máy chủ cho phép với `today` của lệnh: lệnh xếp hàng lúc mất mạng lâu hơn thế
+ * thì cũng đã bị chặn vì ngày cũ, người dùng phải tự quyết gửi lại.
+ */
+export const SESSION_MAX_BACKDATE_MS = 30 * 60 * 60_000;
+/** Hai phiên chạm nhau dưới một phút thì bỏ qua - làm tròn phút và trễ mạng, không phải gian lận. */
+const SESSION_OVERLAP_TOLERANCE_MS = 60_000;
+/** Cửa sổ soát "tổng phút không vượt thời gian thực" */
+const SESSION_CLOCK_WINDOW_MS = 24 * 60 * 60_000;
+
+/**
+ * Phiên bế quan có khớp với đồng hồ không - chốt của máy chủ.
+ *
+ * Phiên là thứ người dùng tự khai nên không kiểm được "có ngồi thật không".
+ * Kiểm được là nó không phá vỡ thời gian: không kết thúc ở tương lai, không
+ * chồng lên phiên khác, và tổng phút trong một ngày không vượt số phút đã
+ * thực sự trôi qua. Trước đây máy chủ nhận sáu phiên 240 phút trong một giây -
+ * 1440 phút bế quan mà đồng hồ mới nhích một giây.
+ *
+ * `endMs` là lúc phiên kết thúc. Lệnh xếp hàng lúc mất mạng mang giờ của chính
+ * nó nên gửi muộn vẫn không chồng lên nhau; lệnh không mang giờ thì máy chủ
+ * lấy "bây giờ".
+ */
+export function checkSessionTiming(
+  minutes: number,
+  endMs: number,
+  sessions: readonly { startedAt: string; minutes: number }[],
+  nowMs: number,
+): Violation | null {
+  const startMs = endMs - minutes * 60_000;
+  if (!Number.isFinite(endMs) || endMs > nowMs + SESSION_FUTURE_TOLERANCE_MS) {
+    return { code: 'session-future', level: 'block', message: 'Phiên bế quan kết thúc ở tương lai - kiểm tra lại đồng hồ máy.' };
+  }
+  if (startMs < nowMs - SESSION_MAX_BACKDATE_MS) {
+    return { code: 'session-too-old', level: 'block', message: 'Phiên bế quan này đã quá cũ để ghi nhận.' };
+  }
+  let earliest = startMs;
+  let total = minutes;
+  for (const s of sessions) {
+    const sStart = Date.parse(s.startedAt);
+    if (Number.isNaN(sStart)) continue;
+    const sEnd = sStart + s.minutes * 60_000;
+    if (Math.min(endMs, sEnd) - Math.max(startMs, sStart) > SESSION_OVERLAP_TOLERANCE_MS) {
+      return { code: 'session-overlap', level: 'block', message: 'Phiên bế quan này trùng giờ với một phiên đã ghi.' };
+    }
+    if (sEnd >= nowMs - SESSION_CLOCK_WINDOW_MS) {
+      total += s.minutes;
+      earliest = Math.min(earliest, sStart);
+    }
+  }
+  // Không chồng nhau thì gần như chắc chắn đã thoả; soát riêng cho chắc với
+  // những phiên cũ có mốc bắt đầu ghi sai (bản web cũ ghi giờ KẾT THÚC).
+  if (total * 60_000 > nowMs - earliest + SESSION_FUTURE_TOLERANCE_MS) {
+    return { code: 'session-exceeds-clock', level: 'block', message: 'Tổng thời gian bế quan vượt quá thời gian thực đã trôi qua.' };
+  }
+  return null;
+}
+
 export const clampEstimate = (v: number) =>
   Number.isFinite(v) ? Math.max(0, Math.min(MAX_ESTIMATE_MIN, Math.round(v))) : 0;
 

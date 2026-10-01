@@ -196,6 +196,45 @@ export const ENCOUNTERS: Encounter[] = [
 /** Xác suất gặp kỳ ngộ sau một phiên bế quan hoàn tất. */
 export const ENCOUNTER_CHANCE = 0.35;
 
+/**
+ * Kỳ ngộ đang chờ quyết định, do server bốc lúc ghi phiên bế quan.
+ *
+ * Chỉ lưu MÃ kỳ ngộ, không lưu cả nội dung: lựa chọn và trọng số nằm trong
+ * bảng `ENCOUNTERS` dùng chung, nên máy khách không thể tự khai một lựa chọn
+ * "toàn thắng". `sessionId` để mỗi kỳ ngộ gắn với đúng một phiên, hộp thoại
+ * nhận ra đâu là kỳ ngộ mới.
+ */
+export interface PendingEncounter {
+  id: string;
+  sessionId: string;
+  at: string;
+}
+
+/**
+ * Áp một kết quả kỳ ngộ vào hồ sơ. Dùng chung cho web (chạy một mình) và
+ * server (trọng tài), để hai bên cộng trừ theo đúng một luật.
+ *
+ * Chỉ chạm vào ba kênh "trời cho" - linh thạch thưởng, tu vi cơ duyên, đan
+ * dược - không bao giờ sửa hồ sơ công việc.
+ */
+export function applyEncounterOutcome<T extends { stonesBonus: number; encounterXp: number; pills: Record<PillGrade, number> }>(
+  d: T,
+  outcome: Outcome,
+): T {
+  switch (outcome.kind) {
+    case 'stones':
+      return { ...d, stonesBonus: d.stonesBonus + (outcome.amount ?? 0) };
+    case 'encounterXp':
+      return { ...d, encounterXp: d.encounterXp + (outcome.amount ?? 0) };
+    case 'pill':
+      return outcome.pill ? { ...d, pills: { ...d.pills, [outcome.pill]: d.pills[outcome.pill] + 1 } } : d;
+    default:
+      return d;
+  }
+}
+
+export const encounterById = (id: string): Encounter | undefined => ENCOUNTERS.find((e) => e.id === id);
+
 export function pickEncounter(rand: () => number = Math.random): Encounter {
   return ENCOUNTERS[Math.floor(rand() * ENCOUNTERS.length) % ENCOUNTERS.length];
 }

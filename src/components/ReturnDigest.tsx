@@ -1,13 +1,11 @@
 import { useMemo, useState } from "react";
 import { AlarmClock, Compass, Gift, Sprout, Sunrise, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { chestsForDay, pendingChests } from "../lib/chest";
+import { chestsOfDay, pendingChests } from "../lib/chest";
 import { plotState } from "../lib/field";
-import { expeditionState } from "../lib/expedition";
-import { missionState, timeLeftLabel } from "../lib/sect";
-import { verifiedFocusMinutes, verifiedTaskCount } from "../lib/economy";
-import { dayStats, isOverdue } from "../lib/stats";
-import { isPerfectDay } from "../lib/achievements";
+import { timeLeftLabel } from "../lib/sect";
+import { expeditionStateOf, missionStateOf, verifiedFocusMinutes } from "../lib/economy";
+import { isOverdue } from "../lib/stats";
 import { todayKey } from "../lib/date";
 import { useApp } from "../store/AppStore";
 import { Section } from "./primitives";
@@ -48,16 +46,7 @@ export default function ReturnDigest() {
     const out: Line[] = [];
     const key = todayKey();
 
-    const s = dayStats(data.tasks, data.sessions, key);
-    const chests = pendingChests(
-      chestsForDay(
-        key,
-        s.done,
-        s.focusMin,
-        isPerfectDay(data.tasks, key),
-        data.chestsOpened,
-      ),
-    );
+    const chests = pendingChests(chestsOfDay(data, key));
     if (chests > 0) {
       out.push({ icon: Gift, text: `${chests} hòm kỳ ngộ đang chờ mở` });
     }
@@ -72,7 +61,7 @@ export default function ReturnDigest() {
     }
 
     if (data.expedition) {
-      const trip = expeditionState(data.expedition, verifiedTaskCount(data));
+      const trip = expeditionStateOf(data);
       if (trip?.ready) {
         out.push({
           icon: Compass,
@@ -82,7 +71,7 @@ export default function ReturnDigest() {
     }
 
     if (data.mission) {
-      const m = missionState(data.mission, verifiedTaskCount(data), focus);
+      const m = missionStateOf(data);
       if (m?.met) {
         out.push({
           icon: AlarmClock,
