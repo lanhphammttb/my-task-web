@@ -45,6 +45,10 @@ import { hasKeyboardLayer } from "./lib/keyboard";
 import { OPEN_VIEW } from "./lib/section";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { lazyWithRetry } from "./lazyWithRetry";
+import { useDungKhiRanh } from "./hooks/useDungKhiRanh";
+import { useNhacViec } from "./hooks/useNhacViec";
+import { SU_KIEN_MO_VIEC } from "./lib/nhacViec";
+import { tenRoBang } from "./lib/thuatNgu";
 // Nạp trễ qua `lazyWithRetry`: chunk cũ 404 sau khi deploy thì tự tải lại
 // trang một lần thay vì làm trắng cả app.
 const TodayView = lazyWithRetry(() => import("./views/TodayView"));
@@ -58,50 +62,6 @@ const StatsView = lazyWithRetry(() => import("./views/StatsView"));
 
 // three.js khá nặng nên lớp 3D được nạp trễ; nền ảnh 2D vẫn nằm phía dưới.
 const Scene3DBackdrop = lazyWithRetry(() => import("./components/Scene3DBackdrop"));
-
-/**
- * Máy yếu thì bỏ hẳn lớp 3D - tranh nền 2D (HubScene) vẫn đủ đẹp.
- *
- * Ngưỡng cố ý rộng tay: WebGL chạy liên tục trên máy 2 GB RAM / 4 nhân là đổi
- * pin và độ mượt của thao tác lấy chút hạt bay lấp lánh. Người bật "Tiết kiệm
- * dữ liệu" cũng không muốn tải thêm ~550 kB three.js.
- */
-function mayYeu(): boolean {
-  if (typeof navigator === "undefined") return false;
-  const nav = navigator as Navigator & {
-    deviceMemory?: number;
-    connection?: { saveData?: boolean };
-  };
-  if (nav.connection?.saveData) return true;
-  if (typeof nav.deviceMemory === "number" && nav.deviceMemory <= 2) return true;
-  if (typeof nav.hardwareConcurrency === "number" && nav.hardwareConcurrency <= 4) return true;
-  return false;
-}
-
-/**
- * Chỉ dựng lớp 3D khi trình duyệt rảnh tay.
- *
- * Lượt vẽ đầu là lúc người dùng đang chờ thấy sảnh; chen việc nạp và dựng cảnh
- * three.js vào đúng lúc ấy là giành CPU với chính giao diện. Đợi tới khi rảnh
- * (tối đa 2,5 giây) thì sảnh đã lên xong, lớp 3D phủ thêm vào sau.
- */
-function useDungKhiRanh(): boolean {
-  const [ranh, setRanh] = useState(false);
-  useEffect(() => {
-    if (mayYeu()) return;
-    const w = window as Window & {
-      requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number;
-      cancelIdleCallback?: (id: number) => void;
-    };
-    if (w.requestIdleCallback) {
-      const id = w.requestIdleCallback(() => setRanh(true), { timeout: 2500 });
-      return () => w.cancelIdleCallback?.(id);
-    }
-    const id = window.setTimeout(() => setRanh(true), 1200);
-    return () => window.clearTimeout(id);
-  }, []);
-  return ranh;
-}
 
 /**
  * Cầu nối tới đồng hồ bế quan.
@@ -119,8 +79,15 @@ function FocusPickBridge({ onPick }: { onPick: (pick: (taskId?: string) => void)
   return null;
 }
 
+/** Hẹn giờ nhắc việc - tách ra cho Shell không phải dựng lại theo hẹn giờ. */
+function NhacViecBridge({ tasks }: { tasks: Task[] }) {
+  useNhacViec(tasks);
+  return null;
+}
+
 interface PanelMeta {
   title: string;
+  /** Câu văn vẻ dưới tiêu đề - chỉ màn rộng mới có chỗ. */
   subtitle: string;
   /** Ảnh riêng của bảng - thả vào public/art/banner/ theo đúng tên này. */
   banner: string;
@@ -245,6 +212,52 @@ function Shell() {
     [open],
   );
 
+  /*
+   * Mở đúng một việc - khi bấm vào thông báo nhắc việc.
+   *
+   * Ba đường tới: app chưa mở thì service worker mở trang kèm `?viec=`; app
+   * đang mở thì worker gửi `postMessage`; còn thông báo dựng bằng
+   * `new Notification` (không qua worker) thì phát sự kiện ngay trong trang.
+   * Việc đã bị xoá thì chỉ mở Hành Sự Đường hôm nay.
+   */
+  const tasksRef = useRef(data.tasks);
+  useEffect(() => {
+    tasksRef.current = data.tasks;
+  });
+  const moViec = useCallback(
+    (taskId: string) => {
+      const t = tasksRef.current.find((x) => x.id === taskId);
+      setDate(t?.date ?? todayKey());
+      open("today");
+      if (t) openEdit(t);
+    },
+    [open, openEdit],
+  );
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search);
+    const id = q.get("viec");
+    if (id) {
+      q.delete("viec");
+      const con = q.toString();
+      window.history.replaceState(null, "", window.location.pathname + (con ? `?${con}` : "") + window.location.hash);
+      moViec(id);
+    }
+    const tuTrang = (e: Event) => {
+      const id2 = (e as CustomEvent<{ taskId?: string }>).detail?.taskId;
+      if (id2) moViec(id2);
+    };
+    const tuWorker = (e: MessageEvent) => {
+      if (e.data?.kieu === "mo-viec" && typeof e.data.taskId === "string") moViec(e.data.taskId);
+    };
+    window.addEventListener(SU_KIEN_MO_VIEC, tuTrang);
+    const sw = "serviceWorker" in navigator ? navigator.serviceWorker : undefined;
+    sw?.addEventListener("message", tuWorker);
+    return () => {
+      window.removeEventListener(SU_KIEN_MO_VIEC, tuTrang);
+      sw?.removeEventListener("message", tuWorker);
+    };
+  }, [moViec]);
+
   // Chỗ sâu bên trong một bảng (ví dụ kết quả mở hòm) xin chuyển sang bảng khác.
   useEffect(() => {
     const onOpenView = (e: Event) => {
@@ -332,6 +345,7 @@ function Shell() {
   return (
     <>
     <FocusPickBridge onPick={nhanPickTask} />
+    <NhacViecBridge tasks={data.tasks} />
     <div
       className={cn(
         "relative isolate h-full min-h-0 overflow-hidden",
@@ -433,7 +447,7 @@ function Shell() {
           <OverlayPanel
             key="search"
             title={`Tra cứu “${query}”`}
-            subtitle={`${results.length} nhiệm vụ khớp`}
+            plain={`${results.length} việc khớp`}
             banner="/art/banner/today.jpg"
             bannerFallback={SCENE_FALLBACK}
             onClose={() => setQuery("")}
@@ -442,7 +456,7 @@ function Shell() {
               <EmptyState
                 icon={SearchX}
                 art="no-result"
-                title="Không tìm thấy nhiệm vụ nào"
+                title="Không tìm thấy việc nào"
                 hint="Thử từ khoá ngắn hơn, hoặc tìm theo nhãn."
               />
             ) : (
@@ -466,7 +480,9 @@ function Shell() {
           <OverlayPanel
             key={view}
             title={PANEL[view].title}
+            plain={tenRoBang(view)}
             subtitle={PANEL[view].subtitle}
+            wide={view === "today"}
             banner={PANEL[view].banner}
             bannerFallback={SCENE_FALLBACK}
             anchor={anchor}

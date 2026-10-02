@@ -135,7 +135,9 @@ describe('tu vi và linh thạch', () => {
     const xp = xpBreakdown(data);
     expect(xp.elementBonus).toBe(8); // 40 * 0.2
     expect(xp.multiplier).toBe(1.25);
-    expect(xp.total).toBe(Math.floor(58 * 1.25)); // 72
+    // 58 × 1,25 = 72,5 nhưng trần thiên phú là +40% của tu vi gốc 50 = 70.
+    expect(xp.total).toBe(70);
+    expect(xp.talentCut).toBe(3);
   });
 
   it('hệ Thuỷ cộng 25% tu vi từ bế quan', () => {
@@ -149,11 +151,11 @@ describe('tu vi và linh thạch', () => {
   });
 
   it('linh thú đang mang mới được tính thiên phú', () => {
-    const base = appData({ tasks: [doneUrgent], beasts: [{ id: 'thanh-xa', fed: 0, obtainedAt: '' }] });
+    const base = appData({ tasks: [doneUrgent], beasts: [{ id: 'phuong-hoang', fed: 0, obtainedAt: '' }] });
     expect(xpBreakdown(base).beastBonus).toBe(0);
 
-    const withActive = { ...base, activeBeastId: 'thanh-xa' };
-    // Thanh Xà: +2% tu vi mỗi cấp, cấp 1 -> 2% của 40 = 0.8 -> làm tròn 1
+    const withActive = { ...base, activeBeastId: 'phuong-hoang' };
+    // Phượng Hoàng: +3% tu vi mỗi cấp, cấp 1 -> 3% của 40 = 1.2 -> làm tròn 1
     expect(xpBreakdown(withActive).beastBonus).toBe(1);
   });
 
@@ -238,10 +240,10 @@ describe('đan dược và độ kiếp', () => {
     expect(p.held).toBe(0);
   });
 
-  it('tổn thất khi thất bại là một nửa phần tích trong cảnh giới hiện tại', () => {
+  it('tổn thất khi thất bại là 15% phần tích trong cảnh giới hiện tại', () => {
     // gateRealm 1 (Trúc Cơ, mốc 450), tu vi 650 -> đã tích 200 trong cảnh giới.
     const data = appData({ gateRealm: 1, encounterXp: 650 });
-    expect(tribulationLoss(data)).toBe(100);
+    expect(tribulationLoss(data)).toBe(30);
   });
 
   it('tổn thất không bao giờ âm khi tu vi còn dưới mốc cảnh giới', () => {

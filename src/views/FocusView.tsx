@@ -202,7 +202,7 @@ export default function FocusView({ onNew }: { onNew: () => void }) {
                     ))}
                   </SelectContent>
                 </Select>
-                <p>{task ? "Gắn phiên nhập định với nhiệm vụ này để theo dõi đường tu." : "Chọn một nhiệm vụ, hoặc nhập định tự do để tĩnh tâm."}</p>
+                <p>{task ? "Gắn phiên nhập định với việc này để theo dõi đường tu." : "Chọn một việc, hoặc nhập định tự do để tĩnh tâm."}</p>
               </div>
               <CultivationProp3D
                 kind="quest-scroll"
@@ -267,7 +267,7 @@ export default function FocusView({ onNew }: { onNew: () => void }) {
                 ) : (
                   <Play className="size-4" />
                 )}
-                {running ? "Tạm dừng" : inSession ? "Tiếp tục" : "Bắt đầu"}
+                {running ? "Tạm dừng" : inSession ? "Tiếp tục" : "Bắt đầu tập trung"}
               </Button>
               <Button
                 variant="outline"
@@ -353,7 +353,7 @@ export default function FocusView({ onNew }: { onNew: () => void }) {
               art="all-done"
               title={
                 data.tasks.length
-                  ? "Không còn nhiệm vụ nào đang chờ"
+                  ? "Không còn việc nào đang chờ"
                   : "Chưa có việc để chọn"
               }
               hint={

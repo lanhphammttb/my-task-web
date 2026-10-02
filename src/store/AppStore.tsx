@@ -33,9 +33,9 @@ import type { Mission, MissionId } from '../lib/sect';
 import type { SiteId, SiteOutcome } from '../lib/expedition';
 import { progressOf, tribulationLoss } from '../lib/economy';
 import { ASCENSION_INDEX, REALMS } from '../lib/cultivation';
-import { ENCOUNTER_CHANCE, applyEncounterOutcome, encounterById, pickEncounter, rollOutcome } from '../lib/encounters';
+import { ENCOUNTER_MIN_SESSION_MIN, applyEncounterOutcome, encounterChance, encounterById, pickEncounter, rollOutcome } from '../lib/encounters';
 import type { Encounter, Outcome } from '../lib/encounters';
-import { MIN_REWARD_SESSION_MIN, checkComplete, checkSession, clampEstimate, rewardsSession } from '../lib/validation';
+import { STONE_BLOCK_MIN, checkComplete, checkSession, clampEstimate } from '../lib/validation';
 import { appendEntry, auditData, dropEntries, rebuildLedger, taskValue } from '../lib/integrity';
 import type { Audit, LedgerEntry } from '../lib/integrity';
 import { beastLevel, MAX_BEAST_LEVEL } from '../lib/beasts';
@@ -970,9 +970,9 @@ export function AppProvider({ children, treLuuMs = TRE_LUU_MAC_DINH }: { childre
       }));
       // Nói rõ luật phiên ngắn ngay lúc nó áp vào, kẻo người dùng tưởng mất đá.
       notify(
-        rewardsSession(minutes)
+        minutes >= STONE_BLOCK_MIN
           ? `Đã ghi nhận ${minutes} phút tập trung`
-          : `Đã ghi nhận ${minutes} phút tập trung. Phiên dưới ${MIN_REWARD_SESSION_MIN} phút không có linh thạch phiên và không gặp kỳ ngộ.`,
+          : `Đã ghi nhận ${minutes} phút tập trung. Linh thạch bế quan tính theo mỗi ${STONE_BLOCK_MIN} phút trọn${minutes < ENCOUNTER_MIN_SESSION_MIN ? `, và phiên dưới ${ENCOUNTER_MIN_SESSION_MIN} phút không gặp kỳ ngộ` : ''}.`,
       );
       /*
        * Xuất định là lúc dễ gặp biến cố nhất - đúng mô-típ tu tiên.
@@ -982,7 +982,8 @@ export function AppProvider({ children, treLuuMs = TRE_LUU_MAC_DINH }: { childre
        * thì phần thưởng chỉ sống tới lần đồng bộ sau - bản của server không hề
        * có nó. Phiên quá ngắn thì không gieo kỳ ngộ, ở cả hai phía.
        */
-      if (!syncRef.current && rewardsSession(minutes) && Math.random() < ENCOUNTER_CHANCE) {
+      // Cơ hội theo số phút, dưới 15 phút không gieo - cùng luật với server.
+      if (!syncRef.current && Math.random() < encounterChance(minutes)) {
         setEncounterResult(null);
         setEncounter(pickEncounter());
       }
@@ -1542,6 +1543,11 @@ export function AppProvider({ children, treLuuMs = TRE_LUU_MAC_DINH }: { childre
       const p = progressOf(data);
       if (!p.readyForTribulation) {
         notify('Chưa đủ tu vi để độ kiếp', 'warn');
+        return null;
+      }
+      // Căn cơ (`REALM_MIN_DAYS`): chặn trước khi đụng tới viên đan, như server.
+      if (!p.daysReady) {
+        notify(`Căn cơ chưa vững: cần ${p.daysNeeded} ngày tu luyện, mới có ${p.activeDays} ngày`, 'warn');
         return null;
       }
       if (data.pills[grade] < 1) {

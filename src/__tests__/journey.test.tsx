@@ -14,10 +14,30 @@ beforeEach(() => localStorage.clear());
 describe('personal cultivation journey', () => {
   it('starts with the user’s own work instead of awarding sample progress', () => {
     render(<App />);
-    expect(screen.getByRole('button', {name:'Thêm việc'})).toBeDefined();
+    // Người mới: thẻ nhập môn ba bước, nút chính là thêm việc - chưa có nút khai quang.
+    expect(screen.getByRole('heading', {name:'Bắt đầu trong ba bước'})).toBeDefined();
+    expect(screen.getByRole('button', {name:'Thêm việc đầu tiên'})).toBeDefined();
+    expect(screen.queryByRole('button', {name:/Khai quang linh căn/})).toBeNull();
     const saved = JSON.parse(localStorage.getItem('my-task-planner/v1')!);
     expect(saved.tasks).toEqual([]);
     expect(saved.ledger).toEqual([]);
+  });
+  it('nhập môn: ẩn được, và khai quang chỉ mở sau việc đầu tiên', () => {
+    render(<App />);
+    fireEvent.click(screen.getByRole('button', {name:'Ẩn hướng dẫn'}));
+    expect(screen.queryByRole('heading', {name:'Bắt đầu trong ba bước'})).toBeNull();
+    expect(localStorage.getItem('my-task/nhap-mon')).toBe('xong');
+  });
+  it('người dùng cũ đã xong việc vẫn thấy khai quang, chưa xong thì chưa', () => {
+    const data = emptyData();
+    const t = {...seedData().tasks[0], date: todayKey(), status: 'todo' as const};
+    data.tasks = [t];
+    localStorage.setItem('my-task-planner/v1', JSON.stringify(data));
+    render(<App />);
+    expect(screen.queryByRole('heading', {name:'Bắt đầu trong ba bước'})).toBeNull();
+    expect(screen.queryByRole('button', {name:/Khai quang linh căn/})).toBeNull();
+    fireEvent.click(screen.getAllByRole('button', {name:`Đánh dấu hoàn thành: ${t.title}`})[0]);
+    expect(screen.getByRole('button', {name:/Khai quang linh căn/})).toBeDefined();
   });
   it('does not replace an empty task list that still has focus history', () => {
     const data = emptyData();

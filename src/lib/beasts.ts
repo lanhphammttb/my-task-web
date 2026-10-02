@@ -54,39 +54,48 @@ export interface Beast {
   /** Ảnh chân dung trong public/art/beast */
   image: string;
   perk: PerkKind;
-  /** Phần trăm cộng thêm cho mỗi cấp linh thú */
+  /**
+   * Phần trăm cộng thêm cho mỗi cấp linh thú - tối đa 3%/cấp, tức +30% ở cấp 10.
+   *
+   * Trước đây lên tới 10%/cấp: Phượng Hoàng cấp 10 nhân đôi toàn bộ tu vi, một
+   * mình nó lớn bằng cả phần việc thật. Hạ xuống và đặt chung một trần với
+   * linh căn, công pháp (`TALENT_CAP` trong economy.ts) để linh thú là thứ đáng
+   * nuôi chứ không phải thứ quyết định ai tu nhanh. Thiên phú hẹp (chỉ việc
+   * Khẩn cấp, chỉ bế quan...) được mức cao hơn thiên phú "tu vi" chung, vì nó
+   * chỉ nhân lên một phần công việc.
+   */
   perkPerLevel: number;
   lore: string;
 }
 
 export const BEASTS: Beast[] = [
   // ----------------------------------------------------------- phàm phẩm
-  { id: 'hoa-thu', name: 'Hoả Thử', rarity: 'pham', element: 'hoa', image: '/art/beast/hoa-thu.png', perk: 'urgentPct', perkPerLevel: 3, lore: 'Chuột lửa nhỏ mà nhanh, chuyên rúc vào chỗ gấp nhất.' },
-  { id: 'linh-mieu', name: 'Linh Miêu', rarity: 'pham', element: 'kim', image: '/art/beast/linh-mieu.png', perk: 'stonePct', perkPerLevel: 3, lore: 'Mèo linh ngủ cả ngày, nhưng chưa bao giờ để sót một viên linh thạch.' },
-  { id: 'thiet-quy', name: 'Thiết Giáp Quy', rarity: 'pham', element: 'tho', image: '/art/beast/thiet-quy.png', perk: 'stonePct', perkPerLevel: 4, lore: 'Mai dày, đi chậm, nhưng chưa từng bỏ dở đường nào.' },
-  { id: 'thanh-xa', name: 'Thanh Xà', rarity: 'pham', element: 'moc', image: '/art/beast/thanh-xa.png', perk: 'xpPct', perkPerLevel: 2, lore: 'Rắn xanh lặng lẽ, mỗi ngày dài thêm một tấc.' },
+  { id: 'hoa-thu', name: 'Hoả Thử', rarity: 'pham', element: 'hoa', image: '/art/beast/hoa-thu.png', perk: 'urgentPct', perkPerLevel: 2, lore: 'Chuột lửa nhỏ mà nhanh, chuyên rúc vào chỗ gấp nhất.' },
+  { id: 'linh-mieu', name: 'Linh Miêu', rarity: 'pham', element: 'kim', image: '/art/beast/linh-mieu.png', perk: 'stonePct', perkPerLevel: 2, lore: 'Mèo linh ngủ cả ngày, nhưng chưa bao giờ để sót một viên linh thạch.' },
+  { id: 'thiet-quy', name: 'Thiết Giáp Quy', rarity: 'pham', element: 'tho', image: '/art/beast/thiet-quy.png', perk: 'stonePct', perkPerLevel: 2, lore: 'Mai dày, đi chậm, nhưng chưa từng bỏ dở đường nào.' },
+  { id: 'thanh-xa', name: 'Thanh Xà', rarity: 'pham', element: 'moc', image: '/art/beast/thanh-xa.png', perk: 'xpPct', perkPerLevel: 1, lore: 'Rắn xanh lặng lẽ, mỗi ngày dài thêm một tấc.' },
 
   // ----------------------------------------------------------- linh phẩm
-  { id: 'hac-bao', name: 'Hắc Báo', rarity: 'linh', element: 'kim', image: '/art/beast/hac-bao.png', perk: 'urgentPct', perkPerLevel: 4, lore: 'Rình cả đêm chỉ để chồm một nhát. Việc gấp không thoát được nó.' },
-  { id: 'bach-lang', name: 'Bạch Lang', rarity: 'linh', element: 'thuy', image: '/art/beast/bach-lang.png', perk: 'focusPct', perkPerLevel: 4, lore: 'Sói trắng chạy đường dài trong tuyết, không cần ai cổ vũ.' },
-  { id: 'linh-hau', name: 'Linh Hầu', rarity: 'linh', element: 'moc', image: '/art/beast/linh-hau.png', perk: 'xpPct', perkPerLevel: 3, lore: 'Khỉ linh cầm thiết bổng, nghịch mà tinh, học gì cũng nhanh.' },
-  { id: 'hoa-ho', name: 'Hoả Hồ', rarity: 'linh', element: 'hoa', image: '/art/beast/hoa-ho.png', perk: 'deadlinePct', perkPerLevel: 4, lore: 'Cáo lửa băng qua khe hẹp, tới trước khi chuông điểm.' },
+  { id: 'hac-bao', name: 'Hắc Báo', rarity: 'linh', element: 'kim', image: '/art/beast/hac-bao.png', perk: 'urgentPct', perkPerLevel: 2, lore: 'Rình cả đêm chỉ để chồm một nhát. Việc gấp không thoát được nó.' },
+  { id: 'bach-lang', name: 'Bạch Lang', rarity: 'linh', element: 'thuy', image: '/art/beast/bach-lang.png', perk: 'focusPct', perkPerLevel: 2, lore: 'Sói trắng chạy đường dài trong tuyết, không cần ai cổ vũ.' },
+  { id: 'linh-hau', name: 'Linh Hầu', rarity: 'linh', element: 'moc', image: '/art/beast/linh-hau.png', perk: 'xpPct', perkPerLevel: 1, lore: 'Khỉ linh cầm thiết bổng, nghịch mà tinh, học gì cũng nhanh.' },
+  { id: 'hoa-ho', name: 'Hoả Hồ', rarity: 'linh', element: 'hoa', image: '/art/beast/hoa-ho.png', perk: 'deadlinePct', perkPerLevel: 2, lore: 'Cáo lửa băng qua khe hẹp, tới trước khi chuông điểm.' },
 
   // ------------------------------------------------- bảo phẩm - u minh giới
-  { id: 'cu-mang', name: 'Cự Mãng', rarity: 'bao', element: 'moc', image: '/art/beast/cu-mang.png', perk: 'xpPct', perkPerLevel: 5, lore: 'Trăn khổng lồ trong U Minh, siết một vòng là việc lớn cũng phải vỡ.' },
-  { id: 'huyet-lang', name: 'Huyết Lang', rarity: 'bao', element: 'hoa', image: '/art/beast/huyet-lang.png', perk: 'urgentPct', perkPerLevel: 5, lore: 'Sói máu săn theo mùi khẩn cấp, không bao giờ bỏ dấu.' },
-  { id: 'song-dau-khuyen', name: 'Song Đầu Khuyển', rarity: 'bao', element: 'tho', image: '/art/beast/song-dau-khuyen.png', perk: 'stonePct', perkPerLevel: 6, lore: 'Hai đầu canh hai hướng, của cải không lọt kẽ tay.' },
-  { id: 'u-minh-hac-bao', name: 'U Minh Hắc Báo', rarity: 'bao', element: 'kim', image: '/art/beast/u-minh-hac-bao.png', perk: 'deadlinePct', perkPerLevel: 5, lore: 'Bóng đen trong rừng lạnh, tới trước hạn kỳ mà không ai thấy.' },
+  { id: 'cu-mang', name: 'Cự Mãng', rarity: 'bao', element: 'moc', image: '/art/beast/cu-mang.png', perk: 'xpPct', perkPerLevel: 2, lore: 'Trăn khổng lồ trong U Minh, siết một vòng là việc lớn cũng phải vỡ.' },
+  { id: 'huyet-lang', name: 'Huyết Lang', rarity: 'bao', element: 'hoa', image: '/art/beast/huyet-lang.png', perk: 'urgentPct', perkPerLevel: 3, lore: 'Sói máu săn theo mùi khẩn cấp, không bao giờ bỏ dấu.' },
+  { id: 'song-dau-khuyen', name: 'Song Đầu Khuyển', rarity: 'bao', element: 'tho', image: '/art/beast/song-dau-khuyen.png', perk: 'stonePct', perkPerLevel: 3, lore: 'Hai đầu canh hai hướng, của cải không lọt kẽ tay.' },
+  { id: 'u-minh-hac-bao', name: 'U Minh Hắc Báo', rarity: 'bao', element: 'kim', image: '/art/beast/u-minh-hac-bao.png', perk: 'deadlinePct', perkPerLevel: 3, lore: 'Bóng đen trong rừng lạnh, tới trước hạn kỳ mà không ai thấy.' },
 
   // ---------------------------------------------------------- thánh phẩm
-  { id: 'bach-ho', name: 'Bạch Hổ', rarity: 'thanh', element: 'kim', image: '/art/beast/bach-ho.png', perk: 'urgentPct', perkPerLevel: 6, lore: 'Tứ Tượng phương Tây. Một vuốt trảm đứt việc khó nhất.' },
-  { id: 'thanh-long', name: 'Thanh Long', rarity: 'thanh', element: 'moc', image: '/art/beast/thanh-long.png', perk: 'xpPct', perkPerLevel: 6, lore: 'Tứ Tượng phương Đông. Rồng xanh cuộn mây, khí vận sinh sôi.' },
-  { id: 'ky-lan', name: 'Kỳ Lân', rarity: 'thanh', element: 'tho', image: '/art/beast/ky-lan.png', perk: 'xpPct', perkPerLevel: 6, lore: 'Đi qua chỗ nào, chỗ ấy điềm lành. Cổ thư chép: chỉ hiện với người có đạo tâm.' },
-  { id: 'bao-long', name: 'Bạo Long', rarity: 'thanh', element: 'hoa', image: '/art/beast/bao-long.png', perk: 'urgentPct', perkPerLevel: 7, lore: 'Rồng bạo trong U Minh, gầm một tiếng là tâm ma tan.' },
+  { id: 'bach-ho', name: 'Bạch Hổ', rarity: 'thanh', element: 'kim', image: '/art/beast/bach-ho.png', perk: 'urgentPct', perkPerLevel: 3, lore: 'Tứ Tượng phương Tây. Một vuốt trảm đứt việc khó nhất.' },
+  { id: 'thanh-long', name: 'Thanh Long', rarity: 'thanh', element: 'moc', image: '/art/beast/thanh-long.png', perk: 'xpPct', perkPerLevel: 2, lore: 'Tứ Tượng phương Đông. Rồng xanh cuộn mây, khí vận sinh sôi.' },
+  { id: 'ky-lan', name: 'Kỳ Lân', rarity: 'thanh', element: 'tho', image: '/art/beast/ky-lan.png', perk: 'xpPct', perkPerLevel: 2, lore: 'Đi qua chỗ nào, chỗ ấy điềm lành. Cổ thư chép: chỉ hiện với người có đạo tâm.' },
+  { id: 'bao-long', name: 'Bạo Long', rarity: 'thanh', element: 'hoa', image: '/art/beast/bao-long.png', perk: 'urgentPct', perkPerLevel: 3, lore: 'Rồng bạo trong U Minh, gầm một tiếng là tâm ma tan.' },
 
   // -------------------------------------------------------- thần thoại
-  { id: 'phuong-hoang', name: 'Phượng Hoàng', rarity: 'thoai', element: 'hoa', image: '/art/beast/phuong-hoang.png', perk: 'xpPct', perkPerLevel: 10, lore: 'Cháy rụi rồi sinh lại. Mỗi lần vấp là một lần lửa mới.' },
-  { id: 'huyen-vu', name: 'Huyền Vũ', rarity: 'thoai', element: 'thuy', image: '/art/beast/huyen-vu.png', perk: 'focusPct', perkPerLevel: 10, lore: 'Tứ Tượng phương Bắc. Rùa rắn hợp thể, tĩnh tới mức thời gian ngừng.' },
+  { id: 'phuong-hoang', name: 'Phượng Hoàng', rarity: 'thoai', element: 'hoa', image: '/art/beast/phuong-hoang.png', perk: 'xpPct', perkPerLevel: 3, lore: 'Cháy rụi rồi sinh lại. Mỗi lần vấp là một lần lửa mới.' },
+  { id: 'huyen-vu', name: 'Huyền Vũ', rarity: 'thoai', element: 'thuy', image: '/art/beast/huyen-vu.png', perk: 'focusPct', perkPerLevel: 3, lore: 'Tứ Tượng phương Bắc. Rùa rắn hợp thể, tĩnh tới mức thời gian ngừng.' },
 ];
 
 export const beastById = (id: string) => BEASTS.find((b) => b.id === id);

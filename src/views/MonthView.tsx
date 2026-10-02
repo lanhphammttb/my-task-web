@@ -132,7 +132,7 @@ export default function MonthView({
           </Button>
         </div>
         <p className="text-muted-foreground text-center text-xs sm:text-left">
-          {monthTasks.length} nhiệm vụ · xong {monthDone} · còn{" "}
+          {monthTasks.length} việc · xong {monthDone} · còn{" "}
           {formatDuration(monthLoad)}
         </p>
       </div>

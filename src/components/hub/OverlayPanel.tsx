@@ -10,7 +10,15 @@ import { cn } from "@/lib/utils";
 
 interface Props {
   title: string;
+  /**
+   * Tên đời thường của bảng (lấy từ `lib/thuatNgu.ts`). Hiện ở MỌI màn, ngay
+   * dưới tên tu tiên: "Bế Quan" thì hay, nhưng "Tập trung" mới nói bấm vào ra gì.
+   */
+  plain?: string;
+  /** Câu văn vẻ - chỉ màn rộng mới có chỗ. */
   subtitle?: string;
+  /** Bảng rộng hơn trên màn ≥1280px (Hành Sự Đường xếp hai cột). */
+  wide?: boolean;
   /** Ảnh nền riêng của bảng, hiện mờ ở dải đầu. */
   banner?: string;
   /** Ảnh lùi khi file riêng của bảng chưa có. */
@@ -28,7 +36,9 @@ interface Props {
  */
 export default function OverlayPanel({
   title,
+  plain,
   subtitle,
+  wide,
   banner,
   bannerFallback,
   onClose,
@@ -142,6 +152,7 @@ export default function OverlayPanel({
       className={cn(
         "panel-shell absolute inset-x-0 z-20 mx-auto flex min-h-0 w-full max-w-5xl flex-col",
         mb ? "mobile-panel px-0" : "px-2 sm:px-4",
+        !mb && wide && "xl:max-w-6xl",
       )}
     >
       <div
@@ -179,9 +190,11 @@ export default function OverlayPanel({
               >
                 {title}
               </h1>
-              {subtitle && (
-                <p className="panel-header-subtitle text-muted-foreground chi-man-rong truncate text-[11px]">
-                  {subtitle}
+              {(plain || subtitle) && (
+                <p className="panel-header-subtitle text-muted-foreground truncate text-[11px]">
+                  {plain && <span className="panel-header-plain">{plain}</span>}
+                  {plain && subtitle && <span className="chi-man-rong" aria-hidden="true"> · </span>}
+                  {subtitle && <span className="chi-man-rong">{subtitle}</span>}
                 </p>
               )}
             </div>

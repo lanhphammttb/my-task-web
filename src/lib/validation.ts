@@ -34,6 +34,48 @@ export const MAX_SESSION_MIN = 4 * 60;
 export const MIN_REWARD_SESSION_MIN = 5;
 export const rewardsSession = (minutes: number) => minutes >= MIN_REWARD_SESSION_MIN;
 
+/**
+ * Linh thạch bế quan tính theo KHỐI 25 phút chứ không theo phiên: mỗi 25 phút
+ * trọn vẹn trong một phiên được 2 viên (phiên 60 phút = 4 viên, phiên 20 phút
+ * = 0). Ngưỡng 5 phút ở trên vẫn giữ - nó còn chặn cả kỳ ngộ.
+ *
+ * Trả theo phiên thì chẻ một giờ ngồi thành mười hai phiên 5 phút là được 24
+ * viên thay vì 2, và người ngồi liền ba tiếng lại thiệt nhất. Theo khối thì
+ * chẻ nhỏ chỉ có thiệt: phần lẻ dưới 25 phút của mỗi phiên bị bỏ.
+ */
+export const STONE_BLOCK_MIN = 25;
+export const STONES_PER_BLOCK = 2;
+
+/**
+ * Mốc đổi luật linh thạch bế quan (và các luật kinh tế đi cùng đợt cân bằng
+ * lại). Phiên BẮT ĐẦU trước mốc giữ luật cũ - 2 viên mỗi phiên từ 5 phút.
+ *
+ * Vì sao phải có mốc: linh thạch bế quan không cất ở đâu cả mà tính lại từ
+ * toàn bộ lịch sử phiên mỗi lần đọc. Áp luật mới lên phiên cũ thì người từng
+ * ngồi nhiều phiên 10-20 phút bị TRỪ ngược số đá đã kiếm (và đã tiêu), có khi
+ * tụt số dư xuống dưới số đã tiêu. Giữ luật cũ cho quá khứ thì không ai mất
+ * một viên nào đã có.
+ *
+ * Phải triển khai TRƯỚC mốc này: phiên ghi sau mốc mà server còn chạy luật cũ
+ * thì vẫn được 2 viên/phiên lúc ấy, rồi bị tính lại theo luật mới sau khi
+ * triển khai. Lỡ hẹn thì dời mốc tới ngày triển khai, đừng để lùi về trước.
+ */
+export const KINH_TE_MOI_TU = '2026-10-10T00:00:00.000Z';
+const KINH_TE_MOI_MS = Date.parse(KINH_TE_MOI_TU);
+
+/** Phiên này bắt đầu sau mốc đổi luật chưa. Mốc hỏng thì coi như phiên cũ - không ai bị trừ. */
+export const theoLuatMoi = (startedAt: string) => {
+  const t = Date.parse(startedAt);
+  return !Number.isNaN(t) && t >= KINH_TE_MOI_MS;
+};
+
+/** Linh thạch của một phiên bế quan. */
+export function sessionStones(minutes: number, startedAt: string): number {
+  if (!rewardsSession(minutes)) return 0;
+  if (!theoLuatMoi(startedAt)) return STONES_PER_BLOCK;
+  return Math.floor(minutes / STONE_BLOCK_MIN) * STONES_PER_BLOCK;
+}
+
 /** Đồng hồ máy khách được chạy nhanh hơn máy chủ chừng này mà không bị coi là phiên ở tương lai. */
 export const SESSION_FUTURE_TOLERANCE_MS = 2 * 60_000;
 /**

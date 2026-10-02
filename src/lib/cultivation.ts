@@ -17,21 +17,53 @@ export interface Realm {
   note: string;
 }
 
+/*
+ * Từ Nguyên Anh trở đi mỗi tầng chỉ còn 400 → 660 tu vi (trước đây 500 → 6000),
+ * tổng đạo lộ 33 210 thay vì 139 770. Ba cảnh giới đầu giữ nguyên để nhập môn
+ * vẫn nhanh như cũ.
+ *
+ * Vì sao: sau đợt cân bằng lại, phần "trời cho" (hòm, linh thú, kỳ ngộ) không
+ * còn gánh tiến độ nữa - tu vi giờ chủ yếu là việc thật. Giữ ngưỡng cũ thì
+ * người làm đều ba việc mỗi ngày phải sáu năm mới phi thăng. Ngưỡng mới cho
+ * người ấy chừng hai năm chỉ bằng công việc; người làm nhiều hơn tới nhanh
+ * hơn nhưng bị giữ bởi số ngày tu luyện (`REALM_MIN_DAYS`).
+ *
+ * Hồ sơ cũ không mất gì: cảnh giới đã độ kiếp giữ nguyên (`gateRealm`), tu vi
+ * dư ra so với trần mới chỉ chuyển thành phần "bị giữ" chờ độ kiếp.
+ */
 export const REALMS: Realm[] = [
   { name: 'Luyện Khí', tiers: 9, perTier: 50, color: '#7fb7a8', icon: Wind, note: 'Dẫn khí nhập thể, đặt bước đầu lên đạo lộ.' },
   { name: 'Trúc Cơ', tiers: 9, perTier: 120, color: '#4f9d6b', icon: Mountain, note: 'Xây nền móng vững, thói quen thành tự nhiên.' },
   { name: 'Kim Đan', tiers: 9, perTier: 260, color: '#e0a83c', icon: Sun, note: 'Ngưng khí thành đan, kỷ luật đã kết tinh.' },
-  { name: 'Nguyên Anh', tiers: 9, perTier: 500, color: '#9b7fd4', icon: Sparkle, note: 'Nguyên thần hiện hình, làm chủ được nhịp của mình.' },
-  { name: 'Hóa Thần', tiers: 9, perTier: 900, color: '#c96fb0', icon: Eye, note: 'Thần thức bao trùm, nhìn thấu việc lớn việc nhỏ.' },
-  { name: 'Luyện Hư', tiers: 9, perTier: 1500, color: '#5aa9c9', icon: Cloudy, note: 'Luyện hư hợp đạo, làm nhiều mà không thấy nặng.' },
-  { name: 'Hợp Thể', tiers: 9, perTier: 2400, color: '#d4646f', icon: Combine, note: 'Thân đạo hợp nhất, việc và người là một.' },
-  { name: 'Đại Thừa', tiers: 9, perTier: 3800, color: '#e08a3c', icon: Crown, note: 'Đứng trên đỉnh nhân gian, chỉ còn một kiếp nạn.' },
-  { name: 'Độ Kiếp', tiers: 9, perTier: 6000, color: '#cf3f2f', icon: Zap, note: 'Thiên kiếp giáng lâm. Vượt qua là thành tiên.' },
+  { name: 'Nguyên Anh', tiers: 9, perTier: 400, color: '#9b7fd4', icon: Sparkle, note: 'Nguyên thần hiện hình, làm chủ được nhịp của mình.' },
+  { name: 'Hóa Thần', tiers: 9, perTier: 460, color: '#c96fb0', icon: Eye, note: 'Thần thức bao trùm, nhìn thấu việc lớn việc nhỏ.' },
+  { name: 'Luyện Hư', tiers: 9, perTier: 540, color: '#5aa9c9', icon: Cloudy, note: 'Luyện hư hợp đạo, làm nhiều mà không thấy nặng.' },
+  { name: 'Hợp Thể', tiers: 9, perTier: 580, color: '#d4646f', icon: Combine, note: 'Thân đạo hợp nhất, việc và người là một.' },
+  { name: 'Đại Thừa', tiers: 9, perTier: 620, color: '#e08a3c', icon: Crown, note: 'Đứng trên đỉnh nhân gian, chỉ còn một kiếp nạn.' },
+  { name: 'Độ Kiếp', tiers: 9, perTier: 660, color: '#cf3f2f', icon: Zap, note: 'Thiên kiếp giáng lâm. Vượt qua là thành tiên.' },
   { name: 'Phi Thăng', tiers: 1, perTier: 0, color: '#f4d03f', icon: Feather, note: 'Phá vỡ hư không, đạp mây mà đi. Đạo lộ viên mãn.' },
 ];
 
 /** Chỉ số cảnh giới cuối cùng - đích đến, không còn tu vi để tích. */
 export const ASCENSION_INDEX = REALMS.length - 1;
+
+/**
+ * Căn cơ: số NGÀY tu luyện thật (ngày có việc xong hoặc phiên bế quan được
+ * thưởng - xem `activeDays`) cần có, tính từ lúc nhập môn, để được độ kiếp
+ * vào cảnh giới thứ i. Đủ tu vi mà thiếu ngày thì tu vi cứ tích (bị giữ lại
+ * ngoài trần, không mất), chỉ là chưa được độ kiếp.
+ *
+ * Vì sao cần: tu vi tỷ lệ thẳng với công việc, mà người làm gấp sáu lần thì
+ * cũng tới đích nhanh gấp sáu. Muốn người làm đều đặn vừa phải phi thăng trong
+ * chừng hai năm thì người cày mười lăm việc mỗi ngày sẽ xong trong vài tháng -
+ * và chẳng còn gì để đi. Tu tiên vốn cần thời gian để căn cơ vững; đếm NGÀY chứ
+ * không đếm việc nên làm nhiều vẫn lên nhanh hơn, chỉ không thể dồn cả đạo lộ
+ * vào một mùa. Người làm đều đặn vừa phải không bao giờ chạm mốc này.
+ *
+ * Bốn cảnh giới đầu không có mốc - nhập môn phải nhanh và vui. Mốc cuối (270
+ * ngày, chừng chín tháng) là sớm nhất có thể phi thăng.
+ */
+export const REALM_MIN_DAYS: number[] = [0, 0, 0, 0, 45, 80, 120, 165, 215, 270];
 
 /** Tu vi tích luỹ cần có để bước vào cảnh giới thứ `index`. */
 export function realmStart(index: number): number {

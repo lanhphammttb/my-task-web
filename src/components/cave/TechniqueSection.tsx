@@ -102,7 +102,7 @@ function TechniqueCard({
       <p className="text-muted-foreground text-xs leading-relaxed">{t.note}</p>
 
       <div className="flex flex-wrap gap-1.5">
-        <Trait label="Nhiệm vụ" mul={t.taskMul} />
+        <Trait label="Việc" mul={t.taskMul} />
         <Trait label="Bế quan" mul={t.focusMul} />
         <Trait label="Linh thạch" mul={t.stoneMul} />
         {/* Hao tổn thì càng thấp càng tốt, nên đảo chiều tô màu. */}

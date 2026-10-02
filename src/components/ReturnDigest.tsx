@@ -96,7 +96,7 @@ export default function ReturnDigest() {
     if (overdue > 0) {
       out.push({
         icon: AlarmClock,
-        text: `${overdue} nhiệm vụ đã trễ hạn`,
+        text: `${overdue} việc đã trễ hạn`,
         urgent: true,
       });
     }

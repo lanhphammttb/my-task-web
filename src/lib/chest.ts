@@ -1,4 +1,4 @@
-import type { AppData, Task } from '../types';
+import type { AppData, Settings, Task } from '../types';
 import type { HerbId } from './field';
 import type { PillGrade } from './pills';
 import { completedDay } from './date';
@@ -49,7 +49,7 @@ export const CHEST_GRADES: Record<ChestGrade, ChestGradeMeta> = {
     name: 'Hòm Kim',
     tone: '#e0a83c',
     image: '/art/chest/kim.png',
-    note: 'Hòm bọc vàng, khắc phù văn cổ. Chỉ mở được vào ngày dọn sạch mọi việc đã lên kế hoạch.',
+    note: 'Hòm bọc vàng, khắc phù văn cổ. Chỉ mở được vào ngày dọn sạch nhật khoá và xong đủ chỉ tiêu ngày - ít nhất ba việc.',
   },
 };
 
@@ -71,6 +71,16 @@ export interface Loot {
  * Cố ý **không có kết cục tay trắng**: hòm phải làm việc mới có, mở ra mà trống
  * không thì lần sau chẳng ai buồn mở. Mức chênh lệch nằm ở chỗ được nhiều hay
  * ít, chứ không phải được hay không.
+ *
+ * Kỳ vọng linh thạch mỗi hòm: Gỗ ~8, Ngọc ~20, Kim ~40 (trước đây ~15 / ~38 /
+ * ~144). Mô phỏng một năm cho thấy riêng Hòm Kim đã là 73% số đá của người
+ * dọn sạch danh sách mỗi ngày - gấp mấy lần chính công việc - nên ai lên lịch
+ * ít việc cho chắc "viên mãn" lại giàu hơn người làm nhiều. Hòm giờ là phần
+ * thưởng vui kèm theo, không phải nguồn thu chính. Tu vi trong hòm cũng giảm
+ * theo cùng lý do.
+ *
+ * Hạ bảng này KHÔNG trừ ngược ai: đồ trong hòm cộng thẳng vào `stonesBonus` /
+ * `encounterXp` ngay lúc mở, và hòm đã mở thì không bao giờ bốc lại.
  */
 export const LOOT: Record<ChestGrade, Loot[]> = {
   go: [
@@ -78,7 +88,7 @@ export const LOOT: Record<ChestGrade, Loot[]> = {
       weight: 42,
       label: 'Túi đá vụn',
       text: 'Một túi vải cũ, bên trong là mấy mảnh linh thạch vỡ. Gom lại cũng thành món.',
-      stones: 18,
+      stones: 10,
     },
     {
       weight: 30,
@@ -90,14 +100,14 @@ export const LOOT: Record<ChestGrade, Loot[]> = {
       weight: 21,
       label: 'Mảnh ngọc bội',
       text: 'Nửa miếng ngọc bội sứt, đổi được ít tiền. Nửa còn lại không biết ở đâu.',
-      stones: 32,
+      stones: 16,
     },
     {
       weight: 7,
       label: 'Một tia linh khí',
       text: 'Nắp vừa hé thì một sợi khí trắng luồn thẳng vào đan điền. Ấm cả người.',
-      xp: 40,
-      stones: 10,
+      xp: 10,
+      stones: 5,
     },
   ],
 
@@ -106,7 +116,7 @@ export const LOOT: Record<ChestGrade, Loot[]> = {
       weight: 34,
       label: 'Đãy linh thạch',
       text: 'Đãy nhỏ mà nặng tay, đá bên trong còn nguyên khối chưa cắt.',
-      stones: 70,
+      stones: 40,
     },
     {
       weight: 26,
@@ -118,22 +128,22 @@ export const LOOT: Record<ChestGrade, Loot[]> = {
       weight: 20,
       label: 'Ngọc giản dở dang',
       text: 'Trong ngọc giản là nửa bài khẩu quyết. Đọc xong vẫn thấy sáng ra ít nhiều.',
-      xp: 130,
-      stones: 30,
+      xp: 25,
+      stones: 15,
     },
     {
       weight: 14,
       label: 'Lọ đan cũ',
       text: 'Lọ sứ bịt sáp, bên trong còn đúng một viên chưa hỏng.',
       pill: 'ha',
-      stones: 40,
+      stones: 15,
     },
     {
       weight: 6,
       label: 'Hạt Kim Tuỷ',
       text: 'Một hạt giống ánh kim nằm trong lớp bông. Loại này ngoài chợ không ai bán.',
       herbs: { kim_tuy: 1, huyet_tinh: 2 },
-      stones: 50,
+      stones: 20,
     },
   ],
 
@@ -142,35 +152,35 @@ export const LOOT: Record<ChestGrade, Loot[]> = {
       weight: 30,
       label: 'Rương linh thạch',
       text: 'Mở nắp ra là một lớp đá xếp đều tăm tắp, ánh sáng hắt lên tận mặt.',
-      stones: 230,
+      stones: 70,
     },
     {
       weight: 24,
       label: 'Hộp dược liệu quý',
       text: 'Hộp gỗ đàn chia ngăn, mỗi ngăn một loại. Người chuẩn bị rất kỹ lưỡng.',
       herbs: { kim_tuy: 2, huyet_tinh: 3 },
-      stones: 80,
+      stones: 20,
     },
     {
       weight: 20,
       label: 'Trung phẩm đan dược',
       text: 'Một viên đan tròn trịa, khí tức tinh thuần. Tự luyện thì mười mẻ chưa chắc ra.',
       pill: 'trung',
-      stones: 120,
+      stones: 30,
     },
     {
       weight: 16,
       label: 'Ngọc giản của tiền bối',
       text: 'Thần thức vừa chạm vào là cả bài công pháp tràn tới. Ngồi hồi lâu mới tiêu hoá hết.',
-      xp: 380,
-      stones: 100,
+      xp: 30,
+      stones: 25,
     },
     {
       weight: 10,
       label: 'Củ Tử Vân Sâm',
       text: 'Sâm tía nguyên rễ, hơi mây còn quấn quanh. Đây là thứ người ta tranh nhau đến chết.',
       herbs: { tu_van: 1, kim_tuy: 1 },
-      stones: 160,
+      stones: 40,
     },
   ],
 };
@@ -182,11 +192,29 @@ export interface ChestRule {
   label: string;
   /** Nói rõ phải làm gì, để người dùng biết đường mà nhắm */
   hint: string;
-  /** Đã đạt mốc chưa - chỉ đọc từ số liệu trong ngày */
-  reached: (done: number, focusMin: number, perfect: boolean) => boolean;
+  /**
+   * Đã đạt mốc chưa - chỉ đọc từ số liệu trong ngày. `need` là số việc Hòm
+   * Kim đòi (xem `goldNeed`); các mốc khác bỏ qua nó.
+   */
+  reached: (done: number, focusMin: number, perfect: boolean, need: number) => boolean;
   /** Tiến độ 0..1 để vẽ thanh */
-  ratio: (done: number, focusMin: number, perfect: boolean) => number;
+  ratio: (done: number, focusMin: number, perfect: boolean, need: number) => number;
 }
+
+/** Hòm Kim đòi ít nhất ngần này việc xong trong ngày, dù chỉ tiêu đặt thấp hơn. */
+export const GOLD_MIN_DONE = 3;
+
+/**
+ * Số việc phải xong trong ngày (theo ngày XONG) để Hòm Kim mở: chỉ tiêu ngày
+ * trong cài đặt, nhưng không dưới `GOLD_MIN_DONE`.
+ *
+ * Trước đây chỉ cần "dọn sạch nhật khoá" - mà danh sách một việc là dễ dọn
+ * sạch nhất. Lên lịch đúng một việc vặt mỗi ngày là ngày nào cũng có Hòm Kim,
+ * trong khi người lên tám việc thật mà sót một thì trắng tay. Giờ phải xong đủ
+ * chỉ tiêu mình tự đặt, và hạ chỉ tiêu xuống 1 cũng không lọt dưới 3.
+ */
+export const goldNeed = (dailyTarget?: number): number =>
+  Math.max(GOLD_MIN_DONE, typeof dailyTarget === 'number' && Number.isFinite(dailyTarget) ? Math.floor(dailyTarget) : 0);
 
 const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
 
@@ -219,9 +247,10 @@ export const CHEST_RULES: ChestRule[] = [
     id: 'perfect',
     grade: 'kim',
     label: 'Viên mãn',
-    hint: 'Dọn sạch nhật khoá hôm nay',
-    reached: (_d, _f, perfect) => perfect,
-    ratio: (_d, _f, perfect) => (perfect ? 1 : 0),
+    hint: 'Dọn sạch nhật khoá hôm nay và xong đủ chỉ tiêu ngày (ít nhất 3 việc)',
+    reached: (done, _f, perfect, need) => perfect && done >= need,
+    // Thanh chạy theo số việc đã xong; chưa dọn sạch thì dừng ở gần đầy.
+    ratio: (done, _f, perfect, need) => (perfect && done >= need ? 1 : clamp01(done / need) * 0.95),
   },
 ];
 
@@ -244,14 +273,16 @@ export function chestsForDay(
   focusMin: number,
   perfect: boolean,
   openedKeys: string[],
+  /** Số việc Hòm Kim đòi - xem `goldNeed` */
+  need: number = GOLD_MIN_DONE,
 ): ChestState[] {
   const opened = new Set(openedKeys);
   return CHEST_RULES.map((rule) => ({
     rule,
     meta: CHEST_GRADES[rule.grade],
-    earned: rule.reached(done, focusMin, perfect),
+    earned: rule.reached(done, focusMin, perfect, need),
     opened: opened.has(chestKey(dateKey, rule.id)),
-    ratio: rule.ratio(done, focusMin, perfect),
+    ratio: rule.ratio(done, focusMin, perfect, need),
   }));
 }
 
@@ -272,11 +303,20 @@ export const doneOnDay = (tasks: readonly Task[], key: string) =>
  * cùng một hàm này để hai bên không bao giờ lệch nhau về "đã có hòm chưa".
  */
 export function chestsOfDay(
-  data: Pick<AppData, 'tasks' | 'sessions' | 'chestsOpened'>,
+  data: Pick<AppData, 'tasks' | 'sessions' | 'chestsOpened'> & { settings?: Pick<Settings, 'dailyTarget'> },
   key: string,
 ): ChestState[] {
   const focusMin = data.sessions.filter((s) => s.date === key).reduce((sum, s) => sum + s.minutes, 0);
-  return chestsForDay(key, doneOnDay(data.tasks, key), focusMin, isPerfectDay(data.tasks, key), data.chestsOpened);
+  return chestsForDay(
+    key,
+    doneOnDay(data.tasks, key),
+    focusMin,
+    isPerfectDay(data.tasks, key),
+    data.chestsOpened,
+    // Chỗ chỉ vẽ hòm mà không truyền cài đặt thì lấy mức sàn. Lệnh mở hòm ở
+    // server (và ở web) luôn truyền cả hồ sơ, nên luôn đúng chỉ tiêu thật.
+    goldNeed(data.settings?.dailyTarget),
+  );
 }
 
 /** Số hòm đang chờ mở - dùng cho chấm báo trên icon. */

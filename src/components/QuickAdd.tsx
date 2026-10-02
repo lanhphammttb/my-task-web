@@ -66,7 +66,7 @@ export default function QuickAdd({ date }: { date: string }) {
         <span className="quick-add-sigil" aria-hidden="true"><ScrollText className="size-4" strokeWidth={2} /></span>
         <input
           id="quick-add-task"
-          aria-label="Tên nhiệm vụ cần ghi"
+          aria-label="Tên việc cần ghi"
           enterKeyHint="done"
           value={value}
           onChange={(e) => setValue(e.target.value)}
@@ -91,11 +91,11 @@ export default function QuickAdd({ date }: { date: string }) {
           onClick={submit}
           disabled={!value.trim()}
         >
-          Ghi việc <CornerDownLeft className="size-3.5" />
+          Thêm <CornerDownLeft className="size-3.5" />
         </Button>
       </div>
       {/* Xem trước những gì app hiểu được, ngay lúc gõ - gõ "mai" mà việc rơi
-          vào hôm nay thì phải thấy trước khi bấm Ghi việc. */}
+          vào hôm nay thì phải thấy trước khi bấm Thêm. */}
       {coXemTruoc && (
         <div
           className="quick-add-preview mt-2 flex flex-wrap items-center gap-1.5 pl-1 text-[11px]"

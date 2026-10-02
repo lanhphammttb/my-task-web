@@ -236,7 +236,7 @@ export default function GoalsView({ onEdit, onFocus, onAddTask }: Props) {
             </DropdownMenu>
           </div>
 
-          {!g.archived && <button className="btn-game vow-add-step px-3 py-2 text-xs" onClick={() => onAddTask(g.id)}><Plus className="size-3.5" /> {list.length ? "Thêm bước nhỏ cho đại nguyện" : "Thêm bước đầu tiên"}</button>}
+          {!g.archived && <button className="btn-game vow-add-step px-3 py-2 text-xs" onClick={() => onAddTask(g.id)}><Plus className="size-3.5" /> {list.length ? "Thêm việc cho mục tiêu" : "Thêm việc đầu tiên"}</button>}
 
           {/* Đạo lộ chỉ bắt đầu khi có ít nhất một bước; chưa lập gì thì không
               bày thanh 0%, "0/0" hay nút "Xem chặng" - chỉ một lời mời ở trên. */}
@@ -249,7 +249,7 @@ export default function GoalsView({ onEdit, onFocus, onAddTask }: Props) {
               aria-valuemin={list.length ? 0 : undefined}
               aria-valuemax={list.length ? list.length : undefined}
               aria-valuenow={list.length ? done : undefined}
-              aria-valuetext={list.length ? `${done} trên ${list.length} nhiệm vụ đã xong` : undefined}
+              aria-valuetext={list.length ? `${done} trên ${list.length} việc đã xong` : undefined}
             >
               <div
                 className="vow-progress-fill h-full rounded-full transition-[width] duration-700 ease-out"
@@ -272,7 +272,7 @@ export default function GoalsView({ onEdit, onFocus, onAddTask }: Props) {
                   : undefined
               }
             >
-              {done}/{list.length} nhiệm vụ
+              {done}/{list.length} việc
             </MetaChip>
             )}
             {daysLeft !== null && !complete && (
@@ -313,7 +313,7 @@ export default function GoalsView({ onEdit, onFocus, onAddTask }: Props) {
                 <EmptyState
                   icon={Target}
                   art="no-task"
-                  title="Chưa gắn nhiệm vụ nào cho mục tiêu này"
+                  title="Chưa gắn việc nào cho mục tiêu này"
                 />
               ) : (
                 <AnimatePresence initial={false}>
@@ -341,12 +341,12 @@ export default function GoalsView({ onEdit, onFocus, onAddTask }: Props) {
         <div>
           <h2 className="text-lg font-bold tracking-tight">Mục tiêu dài hạn</h2>
           <p className="text-muted-foreground max-w-lg text-xs">
-            Gắn nhiệm vụ hằng ngày vào mục tiêu lớn để thấy rõ mình đang tiến
+            Gắn việc hằng ngày vào mục tiêu lớn để thấy rõ mình đang tiến
             tới đâu.
           </p>
         </div>
         <Button className="gap-1.5" onClick={openCreate}>
-          <Plus className="size-4" /> Mục tiêu mới
+          <Plus className="size-4" /> Thêm mục tiêu
         </Button>
       </div>
 
@@ -355,7 +355,7 @@ export default function GoalsView({ onEdit, onFocus, onAddTask }: Props) {
           icon={Target}
           art="no-goal"
           title="Chưa có mục tiêu nào"
-          hint="Chọn một điều có ý nghĩa với bạn: khoẻ hơn, học một kỹ năng, hoàn thành một dự án. Sau đó thêm bước nhỏ để làm hôm nay."
+          hint="Chọn một điều có ý nghĩa với bạn: khoẻ hơn, học một kỹ năng, hoàn thành một dự án. Sau đó thêm việc nhỏ để làm hôm nay."
         />
       )}
 
@@ -375,7 +375,7 @@ export default function GoalsView({ onEdit, onFocus, onAddTask }: Props) {
       {unassigned.length > 0 && (
         <Section
           icon={ListChecks}
-          title={`Nhiệm vụ chưa gắn mục tiêu (${unassigned.length})`}
+          title={`Việc chưa gắn mục tiêu (${unassigned.length})`}
           subtitle="Gắn chúng vào một mục tiêu để không làm việc rời rạc"
         >
           <div className="space-y-2">
@@ -404,7 +404,7 @@ export default function GoalsView({ onEdit, onFocus, onAddTask }: Props) {
           <DialogHeader className="vow-editor-heading">
             <p className="vow-editor-eyebrow"><Target className="size-3.5" /> LẬP ĐẠI NGUYỆN</p>
             <DialogTitle>{editing ? "Hiệu chỉnh đại nguyện" : "Khởi lập đại nguyện"}</DialogTitle>
-            <DialogDescription>Chọn điều thật sự quan trọng, rồi gắn những bước nhỏ bạn có thể làm mỗi ngày.</DialogDescription>
+            <DialogDescription>Chọn điều thật sự quan trọng, rồi gắn những việc nhỏ bạn có thể làm mỗi ngày.</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
@@ -493,7 +493,7 @@ export default function GoalsView({ onEdit, onFocus, onAddTask }: Props) {
           <AlertDialogHeader>
             <AlertDialogTitle>Xoá mục tiêu?</AlertDialogTitle>
             <AlertDialogDescription>
-              “{pendingDelete?.title}” sẽ bị xoá. Các nhiệm vụ vẫn giữ nguyên
+              “{pendingDelete?.title}” sẽ bị xoá. Các việc vẫn giữ nguyên
               nhưng không còn gắn mục tiêu.
             </AlertDialogDescription>
           </AlertDialogHeader>

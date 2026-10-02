@@ -29,6 +29,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { useLaDienThoai } from "../lib/thietBi";
 import { useDialogVisualViewport } from "../hooks/useDialogVisualViewport";
+import { useCaiDatNhac } from "../hooks/useNhacViec";
 
 interface Props {
   open: boolean;
@@ -98,6 +99,7 @@ export default function TaskEditorDialog({
 }: Props) {
   const { addTask, updateTask, removeTask, data, notify } = useApp();
   const mobile = useLaDienThoai();
+  const nhac = useCaiDatNhac();
   const viewportStyle = useDialogVisualViewport(open, mobile);
   const [draft, setDraft] = useState<Draft>(blank(defaultDate ?? todayKey()));
   const [subInput, setSubInput] = useState("");
@@ -212,18 +214,21 @@ export default function TaskEditorDialog({
         (event.currentTarget as HTMLElement | null)?.focus({ preventScroll: true });
       }}>
         <DialogHeader className="task-editor-heading">
-          <p className="task-editor-eyebrow"><ScrollText className="size-3.5" /> {task ? "HIỆU CHỈNH NHIỆM VỤ" : "KHẮC LỆNH HÀNH SỰ"}</p>
-          <DialogTitle>{task ? "Sửa nhiệm vụ" : "Nhiệm vụ mới"}</DialogTitle>
+          <p className="task-editor-eyebrow"><ScrollText className="size-3.5" /> {task ? "HIỆU CHỈNH VIỆC" : "KHẮC LỆNH HÀNH SỰ"}</p>
+          <DialogTitle>{task ? "Sửa việc" : "Thêm việc"}</DialogTitle>
           <DialogDescription>
             Càng cụ thể càng dễ bắt tay vào làm. Hạn chót hiện thành nhãn đếm
             ngược trên thẻ việc để bạn thấy việc nào sắp tới hạn.
+            {nhac.bat
+              ? " Nhắc việc đang bật: máy sẽ báo đúng giờ bắt đầu và trước hạn chót."
+              : " Muốn được nhắc, bật Nhắc việc trong Cài đặt."}
           </DialogDescription>
         </DialogHeader>
 
         <div className="task-editor-scroll">
         <div className="grid gap-4 py-5 sm:grid-cols-2">
           <div className="grid gap-2 sm:col-span-2">
-            <Label htmlFor="task-title">Tên nhiệm vụ *</Label>
+            <Label htmlFor="task-title">Tên việc *</Label>
             <Input
               id="task-title"
               autoFocus={!mobile}
@@ -484,7 +489,7 @@ export default function TaskEditorDialog({
                 onOpenChange(false);
               }}
             >
-              <Trash2 className="size-4" /> Xoá nhiệm vụ
+              <Trash2 className="size-4" /> Xoá việc
             </Button>
           ) : (
             <span />
@@ -494,7 +499,7 @@ export default function TaskEditorDialog({
               Huỷ
             </Button>
             <Button className="task-editor-save" data-save-state={blockers.length > 0 ? "locked" : "ready"} onClick={submit} disabled={blockers.length > 0}>
-              {task ? "Lưu thay đổi" : "Thêm nhiệm vụ"}
+              {task ? "Lưu thay đổi" : "Thêm việc"}
             </Button>
           </div>
         </DialogFooter>

@@ -12,10 +12,10 @@ import { expeditionState } from './expedition';
 import type { ExpeditionState } from './expedition';
 import { FAIL_LOSS_RATIO } from './pills';
 import { questStones } from './quests';
-import { ASCENSION_INDEX, realmStart } from './cultivation';
+import { ASCENSION_INDEX, REALM_MIN_DAYS, realmStart } from './cultivation';
 import { verifiedTotals } from './integrity';
-import { xongTruocHan } from './date';
-import { rewardsSession } from './validation';
+import { completedDay, xongTruocHan } from './date';
+import { STONES_PER_BLOCK, rewardsSession, sessionStones, theoLuatMoi } from './validation';
 
 /**
  * Quy đổi công sức thành tu vi và linh thạch, có tính thiên phú linh căn và
@@ -41,8 +41,30 @@ export interface XpBreakdown {
   encounterXp: number;
   /** Hệ số nhân của phẩm cấp linh căn */
   multiplier: number;
+  /**
+   * Phần thiên phú bị trần cắt bớt (luôn ≥ 0). Công pháp + ngũ hành + linh
+   * thú + phẩm linh căn cộng lại không cho quá `TALENT_CAP` so với tu vi gốc -
+   * xem `TALENT_CAP`.
+   */
+  talentCut: number;
   total: number;
 }
+
+/**
+ * Trần của mọi thiên phú cộng lại: tối đa +40% so với tu vi gốc.
+ *
+ * Thiên phú là hệ số NHÂN lên công việc và áp ngược cho cả lịch sử - đó là chủ
+ * ý, đổi linh thú là thấy ngay con số. Nhưng nhân chồng lên nhau thì phình rất
+ * nhanh: mô phỏng một năm, Phượng Hoàng (+100%) cộng linh căn bốn hệ cộng Kim
+ * Cang cho tu vi gấp 2,5 lần phần việc thật, tức việc thật chỉ còn chừng một
+ * phần ba tu vi. App này tồn tại để việc thật dẫn đường, nên phần "trời cho"
+ * không được lấn phần làm ra. Có trần thì vẫn đáng săn linh thú và luyện linh
+ * căn - chỉ là tới một mức thì thôi, phần còn lại phải tự làm.
+ *
+ * Cơ duyên (kỳ ngộ, hòm, thám hiểm) KHÔNG nằm dưới trần này: nó cộng thẳng và
+ * đã được giảm ở chính chỗ phát ra.
+ */
+export const TALENT_CAP = 0.4;
 
 export function activeBeast(data: AppData): OwnedBeast | undefined {
   return data.beasts.find((b) => b.id === data.activeBeastId);
@@ -226,11 +248,12 @@ export function xpBreakdown(data: AppData, today?: string): XpBreakdown {
     (deadlineBase * beastPercent(data, 'deadlinePct')) / 100;
 
   const multiplier = data.root ? gradeOf(data.root).multiplier : 1;
+  const talented = (base + techniqueBonus + elementBonus + beastBonus) * multiplier;
+  // Trần thiên phú - xem `TALENT_CAP`. Công pháp có thể làm phần này ÂM (Thuỷ
+  // Vân cho người toàn làm việc vụn), khi ấy trần không đụng tới.
+  const talentCut = Math.max(0, talented - base * (1 + TALENT_CAP));
   // Cơ duyên là quà của trời, cộng thẳng chứ không nhân theo linh căn.
-  const total = Math.max(
-    0,
-    Math.floor((base + techniqueBonus + elementBonus + beastBonus) * multiplier) + data.encounterXp,
-  );
+  const total = Math.max(0, Math.floor(talented - talentCut) + data.encounterXp);
 
   return {
     base,
@@ -239,6 +262,7 @@ export function xpBreakdown(data: AppData, today?: string): XpBreakdown {
     beastBonus: Math.round(beastBonus),
     encounterXp: data.encounterXp,
     multiplier,
+    talentCut: Math.round(talentCut),
     total,
   };
 }
@@ -260,6 +284,24 @@ export interface Progress {
   readyForTribulation: boolean;
   /** Tu vi đang bị giữ lại ngoài trần */
   held: number;
+  /** Số ngày đã tu luyện thật (có việc xong hoặc phiên bế quan từ 5 phút) */
+  activeDays: number;
+  /** Số ngày tu luyện cần có để độ kiếp sang cảnh giới kế - xem `REALM_MIN_DAYS` */
+  daysNeeded: number;
+  /** Đã đủ ngày tu luyện cho lần độ kiếp kế chưa */
+  daysReady: boolean;
+}
+
+/**
+ * Số NGÀY khác nhau đã có công việc thật: xong ít nhất một việc (theo ngày
+ * xong) hoặc ngồi một phiên bế quan được thưởng. Dùng làm "căn cơ" cho độ kiếp
+ * - xem `REALM_MIN_DAYS`.
+ */
+export function activeDays(data: Pick<AppData, 'tasks' | 'sessions'>): number {
+  const days = new Set<string>();
+  for (const t of data.tasks) if (t.status === 'done') days.add(completedDay(t));
+  for (const s of data.sessions) if (rewardsSession(s.minutes)) days.add(s.date);
+  return days.size;
 }
 
 /**
@@ -275,7 +317,19 @@ export function progressOf(data: AppData, today?: string): Progress {
   const net = Math.max(0, raw - penalty);
   const gateRealm = Math.max(0, Math.min(ASCENSION_INDEX, data.gateRealm));
   const cap = gateRealm >= ASCENSION_INDEX ? Number.POSITIVE_INFINITY : realmStart(gateRealm + 1) - 1;
-  const xp = Math.min(net, cap);
+  /*
+   * Sàn: không bao giờ hiện dưới đầu cảnh giới đã mở.
+   *
+   * Thất bại độ kiếp chỉ trừ trong phạm vi cảnh giới nên tự nó không xuyên
+   * sàn. Nhưng thiên phú áp ngược cho cả lịch sử, nên lần hạ hệ số linh thú và
+   * đặt trần thiên phú (`TALENT_CAP`) làm tu vi gốc của hồ sơ cũ nhỏ đi - có
+   * người sẽ rơi xuống dưới cảnh giới mình đã độ kiếp đàng hoàng. Cảnh giới đã
+   * vượt thiên kiếp thì không ai lấy lại được; chỉ phần tích thêm trong cảnh
+   * giới là phải làm lại.
+   */
+  const xp = Math.max(Math.min(net, cap), Math.min(realmStart(gateRealm), cap));
+  const days = activeDays(data);
+  const daysNeeded = REALM_MIN_DAYS[Math.min(ASCENSION_INDEX, gateRealm + 1)] ?? 0;
 
   return {
     raw,
@@ -286,6 +340,9 @@ export function progressOf(data: AppData, today?: string): Progress {
     xp,
     readyForTribulation: net > cap,
     held: Math.max(0, net - xp),
+    activeDays: days,
+    daysNeeded,
+    daysReady: days >= daysNeeded,
   };
 }
 
@@ -293,15 +350,21 @@ export function progressOf(data: AppData, today?: string): Progress {
 export const effectiveXp = (data: AppData, today?: string) => progressOf(data, today).xp;
 
 /**
- * Tu vi sẽ mất nếu độ kiếp thất bại: một nửa phần đã tích trong cảnh giới này,
- * nhân thêm hệ số của công pháp. Hậu Thổ đỡ đòn giỏi, Phá Chấp thì mất rất đau
- * - đó chính là cái giá của tu vi tăng thêm mà nó cho.
+ * Tu vi sẽ mất nếu độ kiếp thất bại: `FAIL_LOSS_RATIO` (15%) phần đã tích
+ * trong cảnh giới này, nhân thêm hệ số của công pháp. Hậu Thổ đỡ đòn giỏi,
+ * Phá Chấp thì mất rất đau - đó chính là cái giá của tu vi tăng thêm mà nó cho.
+ *
+ * Chỉ tính tới TRẦN (`p.xp`), không tính phần đang bị giữ ngoài trần: trước
+ * đây ai để dồn lâu một chút mới độ kiếp là mất một nửa cả phần dồn ấy, tức bị
+ * phạt nặng hơn chỉ vì đã làm nhiều việc hơn. Tổn thất vẫn trừ vào một con số
+ * chung (`tuViPenalty`), nên nếu đang có phần bị giữ thì phần ấy đỡ trước - vị
+ * trí trong cảnh giới chỉ tụt khi phần giữ không đủ đỡ.
  */
 export function tribulationLoss(data: AppData, today?: string): number {
   const p = progressOf(data, today);
   const floor = realmStart(p.gateRealm);
   const lossMul = techniqueMuls(data.technique).lossMul;
-  return Math.floor(Math.max(0, p.net - floor) * FAIL_LOSS_RATIO * lossMul);
+  return Math.floor(Math.max(0, p.xp - floor) * FAIL_LOSS_RATIO * lossMul);
 }
 
 export interface StoneBreakdown {
@@ -320,15 +383,57 @@ export interface StoneBreakdown {
 }
 
 /**
- * Linh thạch: 1 viên mỗi nhiệm vụ, 2 mỗi phiên bế quan, 5 mỗi ngày viên mãn,
+ * Linh thạch từ bế quan, theo hai luật - xem `sessionStones` và `KINH_TE_MOI_TU`.
+ *
+ *  - Phiên bắt đầu trước mốc: luật cũ, kẹp y như cũ (2 viên mỗi phiên từ 5
+ *    phút, số phiên không vượt số phiên trong sổ) - để không hồ sơ nào bị trừ
+ *    ngược số đá đã có.
+ *  - Phiên từ mốc trở đi: 2 viên mỗi 25 phút trọn, và chỉ phiên có bản ghi
+ *    trong đoạn sổ đã xác thực mới được tính, số phút lấy theo sổ.
+ */
+function sessionStoneTotal(data: AppData, verifiedSessionCount: number): number {
+  // Số dư linh thạch được hỏi rất nhiều lần cho cùng một hồ sơ (mỗi lần chiêu
+  // thú, mua đan... đều soát số dư), mà phiên thì chỉ đổi khi ghi phiên mới.
+  // Hồ sơ luôn được dựng mảng mới khi đổi nên nhớ theo đúng mảng là đủ; vẫn
+  // soát độ dài và sổ ghi cho chắc.
+  const nho = daTinhDaPhien.get(data.sessions);
+  if (nho && nho.len === data.sessions.length && nho.ledger === data.ledger && nho.count === verifiedSessionCount) {
+    return nho.value;
+  }
+  const value = tinhDaPhien(data, verifiedSessionCount);
+  daTinhDaPhien.set(data.sessions, { len: data.sessions.length, ledger: data.ledger, count: verifiedSessionCount, value });
+  return value;
+}
+
+const daTinhDaPhien = new WeakMap<
+  readonly AppData['sessions'][number][],
+  { len: number; ledger: AppData['ledger']; count: number; value: number }
+>();
+
+function tinhDaPhien(data: AppData, verifiedSessionCount: number): number {
+  const oldCount = data.sessions.filter((s) => rewardsSession(s.minutes) && !theoLuatMoi(s.startedAt)).length;
+  const oldPart = Math.min(oldCount, verifiedSessionCount) * STONES_PER_BLOCK;
+  const fresh = data.sessions.filter((s) => theoLuatMoi(s.startedAt));
+  if (fresh.length === 0) return oldPart;
+  const inLedger = new Map<string, number>();
+  for (const e of verifiedEntries(data)) if (e.kind === 'session') inLedger.set(e.ref, e.value);
+  let newPart = 0;
+  for (const s of fresh) {
+    const minutes = inLedger.get(s.id);
+    if (minutes !== undefined) newPart += sessionStones(Math.min(s.minutes, minutes), s.startedAt);
+  }
+  return oldPart + newPart;
+}
+
+/**
+ * Linh thạch: 1 viên mỗi nhiệm vụ, 2 mỗi 25 phút bế quan, 5 mỗi ngày viên mãn,
  * cộng phần thưởng nhật khoá tông môn.
  */
 export function stoneBreakdown(data: AppData): StoneBreakdown {
   // Linh thạch cũng phải theo sổ ghi, kẻo nhồi nhiệm vụ giả vẫn kiếm được đá.
   const verified = verifiedTotals(data);
   const fromTasks = Math.min(data.tasks.filter((t) => t.status === 'done').length, verified.taskCount);
-  // Phiên quá ngắn không có đá "mỗi phiên" - xem `MIN_REWARD_SESSION_MIN`.
-  const fromSessions = Math.min(data.sessions.filter((s) => rewardsSession(s.minutes)).length, verified.sessionCount) * 2;
+  const fromSessions = sessionStoneTotal(data, verified.sessionCount);
   const fromPerfectDays = perfectDays(data.tasks).length * 5;
   const fromQuests = questStones(data);
   const pct = beastPercent(data, 'stonePct');

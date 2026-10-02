@@ -119,5 +119,17 @@ export function tribulationChance(grade: PillGrade, failStreak: number): number 
   return Math.min(0.95, PILLS[grade].chance + bonus);
 }
 
-/** Thất bại thì hao tổn một nửa tu vi đã tích trong cảnh giới hiện tại. */
-export const FAIL_LOSS_RATIO = 0.5;
+/**
+ * Thất bại thì hao tổn 15% tu vi đã tích trong cảnh giới hiện tại - chỉ tính
+ * tới trần cảnh giới, phần đang bị giữ ngoài trần không làm mức mất nặng thêm.
+ *
+ * Trước đây là MỘT NỬA, và tính luôn cả phần bị giữ. Mô phỏng một năm cho
+ * thấy người chơi đều đặn mất gần nửa số tu vi làm ra chỉ vì xui xúc xắc - nửa
+ * năm làm việc thật bị một con số ngẫu nhiên xoá đi. Độ kiếp vẫn phải có giá
+ * (mất đan, mất một phần tu vi, phải tích lại) nhưng cái giá không được lớn
+ * hơn chính công sức đã bỏ ra.
+ *
+ * Tổn thất đã trừ trước khi đổi vẫn giữ nguyên: nó nằm sẵn trong `tuViPenalty`
+ * (cộng dồn đúng lúc thất bại), không bao giờ tính lại từ lịch sử.
+ */
+export const FAIL_LOSS_RATIO = 0.15;

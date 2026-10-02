@@ -142,7 +142,9 @@ export default function HeaderHUD({ onSettings }: { onSettings: () => void }) {
             <span
               className={`breakthrough-state-chip glass-panel flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-bold ${progress.readyForTribulation ? "text-gold-bright" : "text-p-urgent"}`}
               data-game-state={progress.readyForTribulation ? "ready" : "held"}
-              title={`${progress.held} tu vi đang bị cảnh giới chặn lại. Độ kiếp thành công là mở khoá hết.`}
+              title={progress.readyForTribulation && !progress.daysReady
+                ? `${progress.held} tu vi đang được giữ. Cần căn cơ ${progress.daysNeeded} ngày làm việc (đang có ${progress.activeDays}) mới độ kiếp được.`
+                : `${progress.held} tu vi đang bị cảnh giới chặn lại. Độ kiếp thành công là mở khoá hết.`}
             >
               <Lock className="size-3" />
               {progress.held} bị chặn

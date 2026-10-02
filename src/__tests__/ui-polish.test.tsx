@@ -62,7 +62,7 @@ describe('Đợt mài giũa UI', () => {
   it('kết thúc phiên bế quan dưới 1 phút thì báo là không ghi nhận', async () => {
     render(<App />);
     openPanel('Bế Quan Động');
-    fireEvent.click(await screen.findByRole('button', { name: 'Bắt đầu' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Bắt đầu tập trung' }));
     const nut = screen.getByRole('button', { name: 'Tạm dừng' });
     // Nút chính đổi nhãn theo trạng thái, không dùng aria-pressed.
     expect(nut.getAttribute('aria-pressed')).toBeNull();

@@ -6,7 +6,7 @@ import { emptyData } from '../lib/storage';
 import { expeditionStateOf, missionStateOf, stoneBreakdown, xpBreakdown } from '../lib/economy';
 import { addDays, dateKey, nextOccurrence, todayKey } from '../lib/date';
 import { chestsOfDay, doneOnDay } from '../lib/chest';
-import { checkSessionTiming, rewardsSession } from '../lib/validation';
+import { checkSessionTiming, rewardsSession, sessionStones } from '../lib/validation';
 import { appendEntry, rebuildLedger } from '../lib/integrity';
 import { boDau, khopTimKiem, timNhiemVu } from '../lib/timKiem';
 import { ELEMENTS } from '../lib/spirit';
@@ -160,7 +160,7 @@ describe('phiên bế quan (lỗi 6, 8)', () => {
     expect(r.result.current.audit.findings.map((f) => f.code)).not.toContain('session-impossible');
   });
 
-  it('phiên dưới 5 phút không có đá "mỗi phiên" và không gieo kỳ ngộ', () => {
+  it('phiên dưới 5 phút không có đá, dưới 15 phút không gieo kỳ ngộ', () => {
     const spy = vi.spyOn(Math, 'random').mockReturnValue(0);
     try {
       seed();
@@ -169,8 +169,12 @@ describe('phiên bế quan (lỗi 6, 8)', () => {
       expect(r.result.current.encounter).toBeNull();
       expect(stoneBreakdown(r.result.current.data).fromSessions).toBe(0);
       act(() => { r.result.current.logSession(5); });
+      expect(r.result.current.encounter).toBeNull();
+      // Đá của phiên 5 phút tuỳ mốc đổi luật (`KINH_TE_MOI_TU`): trước mốc 2 viên, sau mốc 0.
+      const five = r.result.current.data.sessions.find((s) => s.minutes === 5)!;
+      expect(stoneBreakdown(r.result.current.data).fromSessions).toBe(sessionStones(5, five.startedAt));
+      act(() => { r.result.current.logSession(15); });
       expect(r.result.current.encounter).not.toBeNull();
-      expect(stoneBreakdown(r.result.current.data).fromSessions).toBe(2);
     } finally {
       spy.mockRestore();
     }

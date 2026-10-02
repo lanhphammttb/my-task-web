@@ -193,8 +193,24 @@ export const ENCOUNTERS: Encounter[] = [
   },
 ];
 
-/** Xác suất gặp kỳ ngộ sau một phiên bế quan hoàn tất. */
+/** Xác suất gặp kỳ ngộ tối đa sau một phiên bế quan - đạt được từ phiên 25 phút. */
 export const ENCOUNTER_CHANCE = 0.35;
+
+/** Phiên ngắn hơn ngần này không gieo kỳ ngộ. */
+export const ENCOUNTER_MIN_SESSION_MIN = 15;
+
+/**
+ * Xác suất gặp kỳ ngộ sau một phiên `minutes` phút.
+ *
+ * Trước đây phiên nào từ 5 phút trở lên cũng được một lần gieo 35% - nên năm
+ * phiên 5 phút cho gần gấp năm lần kỳ ngộ của một phiên 25 phút thật, dù cùng
+ * số phút. Giờ cơ hội tăng theo số phút (25 phút mới đủ 35%) và phải ngồi ít
+ * nhất 15 phút mới được gieo: chia nhỏ phiên không còn lời hơn ngồi liền.
+ */
+export function encounterChance(minutes: number): number {
+  if (minutes < ENCOUNTER_MIN_SESSION_MIN) return 0;
+  return Math.min(ENCOUNTER_CHANCE, (minutes / 25) * ENCOUNTER_CHANCE);
+}
 
 /**
  * Kỳ ngộ đang chờ quyết định, do server bốc lúc ghi phiên bế quan.

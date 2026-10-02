@@ -82,7 +82,7 @@ export default function ExpeditionSection() {
       >
         Kỳ ngộ là chuyện trời cho, tự đến chứ không tìm được. Thám hiểm là mặt
         còn lại — mình chọn nơi đến và chọn mức liều. Đoàn về sau{" "}
-        <strong>số nhiệm vụ</strong> bạn hoàn thành, không phải sau mấy tiếng
+        <strong>số việc</strong> bạn hoàn thành, không phải sau mấy tiếng
         đồng hồ.
       </SectionArt>
 
@@ -119,7 +119,7 @@ export default function ExpeditionSection() {
             <p className="text-muted-foreground text-[11px]">
               {state.ready
                 ? "Đoàn đã về tới cửa động. Mở tay nải ra xem được gì."
-                : `Xong ${state.done}/${state.need} nhiệm vụ · còn ${state.remain} việc nữa đoàn mới về`}
+                : `Xong ${state.done}/${state.need} việc · còn ${state.remain} việc nữa đoàn mới về`}
             </p>
 
             <Meter value={state.ratio} />
@@ -170,7 +170,7 @@ export default function ExpeditionSection() {
                 </p>
 
                 <div className="flex flex-wrap gap-1.5">
-                  <MetaChip>{site.needTasks} nhiệm vụ</MetaChip>
+                  <MetaChip>{site.needTasks} việc</MetaChip>
                   <MetaChip
                     className={cn(!afford && "border-warning/35 text-warning")}
                   >
@@ -211,7 +211,7 @@ export default function ExpeditionSection() {
             <AlertDialogTitle>Lên đường tới {confirm?.name}?</AlertDialogTitle>
             <AlertDialogDescription>
               Tốn {confirm?.cost} linh thạch. Đoàn về sau khi bạn hoàn thành{" "}
-              <strong>{confirm?.needTasks} nhiệm vụ</strong> nữa. Mỗi lúc chỉ đi
+              <strong>{confirm?.needTasks} việc</strong> nữa. Mỗi lúc chỉ đi
               được một nơi, và nơi càng liều thì thu hoạch càng lệch — được thì
               được đậm, mất cũng mất đau.
             </AlertDialogDescription>

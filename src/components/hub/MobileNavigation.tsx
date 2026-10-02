@@ -31,7 +31,7 @@ export default function MobileNavigation({ view, searching, query, onQuery, onSe
   >
     {(search || searching) && <div className="mobile-search">
       <Search size={18} aria-hidden="true" />
-      <input id="search-input" autoFocus aria-label="Tra cứu nhiệm vụ" placeholder="Tìm tên việc, ghi chú, nhãn…" value={query} onChange={e => onQuery(e.target.value)} />
+      <input id="search-input" autoFocus aria-label="Tìm việc" placeholder="Tìm tên việc, ghi chú, nhãn…" value={query} onChange={e => onQuery(e.target.value)} />
       <button type="button" aria-label="Đóng tra cứu" onClick={() => { setSearch(false); onQuery(''); }}><X size={20} /></button>
     </div>}
     <div className="mobile-world">
@@ -53,8 +53,8 @@ export default function MobileNavigation({ view, searching, query, onQuery, onSe
         <span aria-hidden="true">{t.label}</span>
       </button>;
       })}
-      <button type="button" aria-label="Tra cứu nhiệm vụ" aria-expanded={search || searching}
-        title="Tra cứu nhiệm vụ"
+      <button type="button" aria-label="Tìm việc" aria-expanded={search || searching}
+        title="Tìm việc"
         onClick={() => { if (search || searching) { setSearch(false); onQuery(''); } else setSearch(true); }}>
         <span className="mobile-world-medallion"><Search size={24} aria-hidden="true" /></span>
         <span aria-hidden="true">Tra Cứu</span>

@@ -96,8 +96,8 @@ export default function ChestRow({ date }: { date: string }) {
 
   // Cùng hàm với lệnh mở hòm ở máy và ở server: việc tính theo ngày XONG.
   const list = useMemo(
-    () => chestsOfDay({ tasks: data.tasks, sessions: data.sessions, chestsOpened: data.chestsOpened }, date),
-    [data.tasks, data.sessions, data.chestsOpened, date],
+    () => chestsOfDay({ tasks: data.tasks, sessions: data.sessions, chestsOpened: data.chestsOpened, settings: data.settings }, date),
+    [data.tasks, data.sessions, data.chestsOpened, data.settings, date],
   );
 
   const ready = list.filter((c) => c.earned && !c.opened).length;

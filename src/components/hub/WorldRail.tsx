@@ -79,7 +79,7 @@ export default function WorldRail({
       {
         view: "today",
         ten: "Hành Sự Đường",
-        phuDe: "Nơi cày nhiệm vụ mỗi ngày",
+        phuDe: "Việc hằng ngày",
         icon: "nhat-khoa",
         // Gộp cả hòm đang chờ: hòm nằm trong khu này chứ không phải nơi riêng.
         so: conLai + tre + hom_,
@@ -88,13 +88,13 @@ export default function WorldRail({
       {
         view: "focus",
         ten: "Bế Quan Động",
-        phuDe: "Ngồi thiền, tính giờ tập trung",
+        phuDe: "Tập trung, tính giờ",
         icon: "be-quan",
       },
       {
         view: "cave",
         ten: "Động Phủ",
-        phuDe: "Linh căn, công pháp, lò đan, linh thú",
+        phuDe: "Nhà & vật phẩm",
         icon: "dong-phu",
         so: chin,
         goi: !data.root || duTien || chin > 0,
@@ -102,21 +102,21 @@ export default function WorldRail({
       {
         view: "awards",
         ten: "Tiên Lộ",
-        phuDe: "Cảnh giới, thành tựu, bí cảnh",
+        phuDe: "Thành tựu, cấp độ",
         icon: "tien-lo",
         goi: !!mission?.met || !!trip?.ready,
       },
       {
         view: "goals",
         ten: "Đại Nguyện",
-        phuDe: "Mục tiêu dài hạn của đời tu",
+        phuDe: "Mục tiêu dài hạn",
         icon: "dai-nguyen",
         so: nguyen,
       },
       {
         view: "stats",
         ten: "Tu Hành Lục",
-        phuDe: `Sổ chép đường tu · chuỗi ${currentStreak(data.tasks)} ngày`,
+        phuDe: `Thống kê · chuỗi ${currentStreak(data.tasks)} ngày`,
         icon: "thong-ke",
       },
     ];

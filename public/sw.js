@@ -274,3 +274,26 @@ self.addEventListener('fetch', (e) => {
   // icon, font rời): mạng trước cho chắc là mới.
   e.respondWith(mangTruoc(request, VO));
 });
+
+/*
+ * Bấm vào thông báo nhắc việc.
+ *
+ * App đang mở ở đâu đó thì kéo nó lên và bảo nó mở đúng việc ấy (qua
+ * `postMessage`, không tải lại trang - đang gõ dở gì vẫn còn). Chưa mở thì mở
+ * mới, kèm `?viec=` để app tự tìm tới việc khi khởi động.
+ */
+self.addEventListener('notificationclick', (e) => {
+  e.notification.close();
+  const taskId = e.notification.data?.taskId;
+  const url = e.notification.data?.url || '/';
+  e.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(async (ds) => {
+      const cua = ds.find((c) => new URL(c.url).origin === self.location.origin);
+      if (cua) {
+        if (taskId) cua.postMessage({ kieu: 'mo-viec', taskId });
+        return cua.focus();
+      }
+      return self.clients.openWindow(url);
+    }),
+  );
+});

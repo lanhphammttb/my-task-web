@@ -107,7 +107,7 @@ export default function WeekView({
       </div>
 
       <p className="text-muted-foreground hidden items-center gap-1.5 text-xs lg:flex">
-        <GripVertical className="size-3.5" /> Kéo thả thẻ để dời nhiệm vụ sang
+        <GripVertical className="size-3.5" /> Kéo thả thẻ để dời việc sang
         ngày khác · nhấp đúp để sửa
       </p>
 
@@ -242,7 +242,7 @@ export default function WeekView({
                         setComposing(null);
                       }
                     }}
-                    placeholder="Tên nhiệm vụ..."
+                    placeholder="Tên việc..."
                     className="h-8 text-xs"
                   />
                 ) : (

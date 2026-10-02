@@ -71,13 +71,13 @@ describe('Ứng dụng web', () => {
     expect(await screen.findByRole('heading', { name: 'Bế quan tu luyện' })).toBeDefined();
     openPanel('Sơn Môn');
     // Sảnh vẫn có lối vào bế quan: mỗi dòng việc hôm nay là một lối.
-    expect((await screen.findAllByRole('button', { name: /^Tập trung việc này/ })).length).toBeGreaterThan(0);
+    expect((await screen.findAllByRole('button', { name: /^Tập trung vào việc này/ })).length).toBeGreaterThan(0);
   });
 
   it('phím / mở ô tìm kiếm và đóng tra cứu xoá bộ lọc', async () => {
     render(<App />);
     fireEvent.keyDown(document.body, { key: '/' });
-    const input = screen.getByRole('searchbox', { name: 'Tìm nhiệm vụ hoặc nhãn' });
+    const input = screen.getByRole('searchbox', { name: 'Tìm việc hoặc nhãn' });
     expect(document.activeElement).toBe(input);
     expect(screen.getByRole('button', { name: 'Đóng tra cứu' }).getAttribute('aria-expanded')).toBe('true');
     fireEvent.change(input, { target: { value: 'chạy bộ' } });
@@ -93,7 +93,7 @@ describe('Ứng dụng web', () => {
     render(<App />);
     openPanel('Hành Sự Đường');
     await screen.findByRole('heading', { name: 'Hành Sự Đường' });
-    openPanel('Nhiệm vụ mới');
+    openPanel('Thêm việc mới');
     expect(document.querySelector('[data-slot="dialog-content"]')).not.toBeNull();
     fireEvent.keyDown(document.body, { key: '5' });
     // Hộp thoại đang mở thì phím số không được đổi bảng phía sau.
@@ -123,14 +123,14 @@ describe('Ứng dụng web', () => {
   it('giữ phiên tập trung khi rời bảng và trở lại đúng trạng thái tạm dừng', async () => {
     render(<App />);
     openPanel('Bế Quan Động');
-    fireEvent.click(await screen.findByRole('button', { name: 'Bắt đầu' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Bắt đầu tập trung' }));
     fireEvent.click(screen.getByRole('button', { name: 'Tạm dừng' }));
     openPanel('Sơn Môn');
-    fireEvent.click(await screen.findByRole('button', { name: 'Về phiên bế quan' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Về phiên tập trung' }));
     expect(await screen.findByRole('button', { name: 'Tiếp tục' })).toBeDefined();
     expect((screen.getByRole('combobox') as HTMLButtonElement).disabled).toBe(true);
     fireEvent.click(screen.getByRole('button', { name: 'Kết thúc & ghi nhận' }));
-    expect(screen.getByRole('button', { name: 'Bắt đầu' })).toBeDefined();
+    expect(screen.getByRole('button', { name: 'Bắt đầu tập trung' })).toBeDefined();
   });
 
   it('thêm nhiệm vụ qua ô thêm nhanh và lưu vào localStorage', async () => {
@@ -303,8 +303,8 @@ describe('Ứng dụng web', () => {
 
   it('tìm kiếm mở bảng tra cứu và lọc đúng nhiệm vụ theo tên', async () => {
     render(<App />);
-    openPanel('Tra cứu nhiệm vụ');
-    fireEvent.change(screen.getByPlaceholderText(/Tìm nhiệm vụ/), { target: { value: 'chạy bộ' } });
+    openPanel('Tìm việc');
+    fireEvent.change(screen.getByPlaceholderText(/Tìm việc/), { target: { value: 'chạy bộ' } });
 
     const bang = (await screen.findByRole('heading', { name: 'Kết quả tìm kiếm' })).closest('section')!;
     expect(within(bang).getAllByText('Chạy bộ 5km').length).toBeGreaterThan(0);

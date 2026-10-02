@@ -350,7 +350,7 @@ export default function AccountPanel() {
       {che === "moi" && coMay && (
         <p className="text-muted-foreground flex items-start gap-2 text-xs">
           <Upload className="mt-0.5 size-3.5 shrink-0" />
-          Hồ sơ đang có trên máy ({data.tasks.length} nhiệm vụ) sẽ được đưa lên
+          Hồ sơ đang có trên máy ({data.tasks.length} việc) sẽ được đưa lên
           ngay sau khi tạo tài khoản.
         </p>
       )}
@@ -362,7 +362,7 @@ export default function AccountPanel() {
           <AlertDialogHeader>
             <AlertDialogTitle>Thay hồ sơ trên máy bằng hồ sơ của tài khoản?</AlertDialogTitle>
             <AlertDialogDescription>
-              Máy này đang có {data.tasks.length} nhiệm vụ và {data.sessions.length} phiên
+              Máy này đang có {data.tasks.length} việc và {data.sessions.length} phiên
               bế quan chưa thuộc tài khoản {email.trim()}. Đăng nhập sẽ thay chúng bằng
               hồ sơ trên máy chủ. Một bản sao lưu được giữ lại trên máy, khôi phục hoặc
               tải về ở mục "Bản sao lưu trên máy" bên dưới. Muốn đưa hồ sơ này lên máy
@@ -457,7 +457,7 @@ function SaoLuu() {
           <li key={b.key} className="border-border flex flex-wrap items-center gap-2 rounded-lg border p-2 text-xs">
             <div className="min-w-40 flex-1">
               <p className="font-medium">
-                {b.luc ? new Date(b.luc).toLocaleString("vi-VN") : "Không rõ lúc"} · {b.soNhiemVu} nhiệm vụ, {b.soPhien} phiên
+                {b.luc ? new Date(b.luc).toLocaleString("vi-VN") : "Không rõ lúc"} · {b.soNhiemVu} việc, {b.soPhien} phiên
               </p>
               {b.lyDo && <p className="text-muted-foreground">{b.lyDo}</p>}
             </div>

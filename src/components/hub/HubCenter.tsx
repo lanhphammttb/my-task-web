@@ -2,7 +2,7 @@ import TodayList from "./TodayList";
 import type { Task, ViewKey } from "../../types";
 import { useState } from "react";
 import { useCountUp } from "../../lib/useCountUp";
-import { Quote, Sparkles, Timer, Zap } from "lucide-react";
+import { Hourglass, Quote, Sparkles, Timer, Zap } from "lucide-react";
 import { useApp } from "../../store/AppStore";
 import { useFocusTimer } from "../../store/FocusTimer";
 import { ASCENSION_INDEX, REALMS, cultivationOf } from "../../lib/cultivation";
@@ -14,6 +14,7 @@ import ProgressRing from "../ProgressRing";
 import RealmSeal from "../RealmSeal";
 import { cn } from "@/lib/utils";
 import HubSignal from "./HubSignal";
+import { daXongViecDau } from "../../hooks/useNhapMon";
 
 interface Props {
   onTribulation: () => void;
@@ -55,7 +56,12 @@ export default function HubCenter({
 
   // Độ kiếp là để bước sang cảnh giới KẾ TIẾP, không phải cảnh giới đang đứng.
   const nextRealm = REALMS[Math.min(ASCENSION_INDEX, progress.gateRealm + 1)];
-  const ready = progress.readyForTribulation;
+  // Đủ tu vi mà chưa đủ ngày căn cơ thì chưa độ kiếp được - nút đột phá chỉ
+  // hiện khi server cũng sẽ nhận (xem REALM_MIN_DAYS trong lib/economy).
+  const ready = progress.readyForTribulation && progress.daysReady;
+  const choCanCo = progress.readyForTribulation && !progress.daysReady;
+  // Khai quang mở ra sau việc đầu tiên - trước đó nút chính là "Thêm việc".
+  const moKhaiQuang = !data.root && daXongViecDau(data);
 
   return (
     <main
@@ -89,7 +95,7 @@ export default function HubCenter({
           className="border-gold/45 bg-background/70 text-gold-bright pointer-events-auto flex min-h-11 w-full max-w-[540px] items-center gap-2 rounded-xl border px-3 text-left text-[12px] font-semibold backdrop-blur"
         >
           <Timer className="size-4 shrink-0" />
-          <span className="shrink-0">Về phiên bế quan</span>
+          <span className="shrink-0">Về phiên tập trung</span>
           {vietDangLam && (
             <span className="text-muted-foreground min-w-0 truncate text-[11px] font-normal">
               {vietDangLam.title}
@@ -229,7 +235,12 @@ export default function HubCenter({
             <Zap className="size-4" />
             Độ kiếp lên {nextRealm.name}
           </button>
-        ) : !data.root ? (
+        ) : choCanCo ? (
+          <p className="hub-can-co" role="status">
+            <Hourglass className="size-4" />
+            Căn cơ {progress.activeDays}/{progress.daysNeeded} ngày làm việc - đủ ngày mới độ kiếp
+          </p>
+        ) : moKhaiQuang ? (
           <button
             type="button"
             onClick={onAwaken}
@@ -243,7 +254,7 @@ export default function HubCenter({
         ) : null}
 
         {/* Việc phụ vẫn nhắc, nhưng không tranh chỗ với nút chính */}
-        {ready && !data.root && (
+        {ready && moKhaiQuang && (
           <button
             type="button"
             onClick={onAwaken}

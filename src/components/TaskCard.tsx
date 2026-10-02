@@ -31,6 +31,7 @@ import { PRIORITY_UI, RECURRENCE_ICON, RECURRENCE_UI } from "../lib/ui";
 import { burstAt, soundComplete } from "../lib/celebrate";
 import { useApp } from "../store/AppStore";
 import { MetaChip } from "./primitives";
+import { NHAN } from "../lib/thuatNgu";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -149,13 +150,19 @@ export default function TaskCard({ task, onEdit, onFocus, showDate }: Props) {
         </div>
 
         <div className="min-w-0 flex-1">
-          <div className="flex items-start gap-2">
+          {/*
+            Hàng tiêu đề gọn: tên việc (chạm là sửa), nút tập trung dạng biểu
+            tượng, nút mở chi tiết. Trước đây mỗi thẻ mang thêm một nút to
+            "Bế quan làm việc này" - mười thẻ là mười nút giống hệt nhau, thẻ
+            cao gấp rưỡi mà danh sách thì ngắn đi.
+          */}
+          <div className="flex items-start gap-1">
             <button
-              onClick={() => setOpen((v) => !v)}
-              aria-expanded={open}
-              aria-controls={`task-details-${task.id}`}
+              type="button"
+              onClick={() => onEdit(task)}
+              aria-label={`${NHAN.suaViec}: ${task.title}`}
               className={cn(
-                "min-w-0 flex-1 text-left text-sm leading-snug font-semibold transition-colors",
+                "min-w-0 flex-1 pt-0.5 text-left text-sm leading-snug font-semibold transition-colors",
                 "hover:text-primary focus-visible:ring-ring rounded focus-visible:ring-2 focus-visible:outline-none",
                 done && "text-muted-foreground line-through",
               )}
@@ -163,32 +170,59 @@ export default function TaskCard({ task, onEdit, onFocus, showDate }: Props) {
               {task.title}
             </button>
             {task.status === "doing" && (
-              <span className="bg-primary text-primary-foreground rounded-full px-2 py-0.5 text-[10px] font-bold tracking-wide uppercase">
+              <span className="bg-primary text-primary-foreground mt-0.5 shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold tracking-wide uppercase">
                 Đang làm
               </span>
             )}
-            <ChevronDown
-              aria-hidden="true"
-              className={cn(
-                "text-muted-foreground mt-0.5 size-4 shrink-0 transition-transform",
-                open && "rotate-180",
-              )}
-            />
+            {onFocus && !done && (
+              <button
+                type="button"
+                className="task-card-nut text-gold hover:text-gold-bright hover:bg-gold/10"
+                aria-label={`${NHAN.tapTrungViecNay}: ${task.title}`}
+                title={NHAN.tapTrungViecNay}
+                onClick={() => onFocus(task)}
+              >
+                <Crosshair className="size-4" />
+              </button>
+            )}
+            <button
+              type="button"
+              className="task-card-nut text-muted-foreground hover:text-foreground"
+              onClick={() => setOpen((v) => !v)}
+              aria-expanded={open}
+              aria-controls={`task-details-${task.id}`}
+              aria-label={`${open ? "Thu gọn" : "Thêm thao tác"}: ${task.title}`}
+              title={open ? "Thu gọn" : "Thêm thao tác"}
+            >
+              <ChevronDown
+                aria-hidden="true"
+                className={cn("size-4 transition-transform", open && "rotate-180")}
+              />
+            </button>
           </div>
 
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            <MetaChip icon={p.icon} className={p.soft}>
-              {p.label}
-            </MetaChip>
+          {/* Chạm vào phần thân thẻ cũng là mở sửa (nút tên việc ở trên là lối
+              cho bàn phím và trình đọc màn hình). Mức ưu tiên đã có vạch màu
+              bên trái nên chỉ còn biểu tượng; giờ bắt đầu và thời lượng gộp
+              chung một nhãn, các nhãn # gộp một nhãn - đủ vừa một dòng. */}
+          <div
+            className="task-card-meta mt-1.5 flex cursor-pointer flex-wrap gap-1.5"
+            onClick={() => onEdit(task)}
+          >
+            {/* Ưu tiên cao/khẩn mới cần nhãn; thấp và vừa đã có vạch màu bên trái. */}
+            {task.priority === "urgent" || task.priority === "high" ? (
+              <MetaChip icon={p.icon} className={p.soft}>
+                {p.label}
+              </MetaChip>
+            ) : (
+              <span className="sr-only">Ưu tiên {p.label.toLowerCase()}</span>
+            )}
             {showDate && (
               <MetaChip icon={CalendarDays}>{relativeDay(task.date)}</MetaChip>
             )}
-            {task.startTime && (
-              <MetaChip icon={Clock}>{task.startTime}</MetaChip>
-            )}
-            {task.estimateMin > 0 && (
-              <MetaChip icon={Timer}>
-                {formatDuration(task.estimateMin)}
+            {(task.startTime || task.estimateMin > 0) && (
+              <MetaChip icon={task.startTime ? Clock : Timer}>
+                {[task.startTime, task.estimateMin > 0 ? formatDuration(task.estimateMin) : ""].filter(Boolean).join(" · ")}
               </MetaChip>
             )}
             {task.focusMin > 0 && (
@@ -207,13 +241,14 @@ export default function TaskCard({ task, onEdit, onFocus, showDate }: Props) {
             {goal && (
               <MetaChip
                 icon={Target}
+                className="max-w-[11rem]"
                 style={{
                   color: goal.color,
                   borderColor: `${goal.color}59`,
                   backgroundColor: `${goal.color}1f`,
                 }}
               >
-                {goal.title}
+                <span className="truncate">{goal.title}</span>
               </MetaChip>
             )}
             {task.subtasks.length > 0 && (
@@ -231,17 +266,12 @@ export default function TaskCard({ task, onEdit, onFocus, showDate }: Props) {
                 {RECURRENCE_UI[task.recurrence]}
               </MetaChip>
             )}
-            {task.tags.map((tag) => (
-              <MetaChip
-                key={tag}
-                className="border-primary/30 bg-primary/12 text-primary"
-              >
-                #{tag}
+            {task.tags.length > 0 && (
+              <MetaChip className="border-primary/30 bg-primary/12 text-primary max-w-[11rem]">
+                <span className="truncate">{task.tags.map((tag) => `#${tag}`).join(" ")}</span>
               </MetaChip>
-            ))}
+            )}
           </div>
-
-          {onFocus && !done && <button className="btn-game mt-3 px-3 py-1.5 text-[11px]" aria-label={`Bế quan: ${task.title}`} onClick={() => onFocus(task)}><Crosshair className="size-3.5" /> Bế quan làm việc này</button>}
 
           <AnimatePresence initial={false}>
             {open && (

@@ -150,7 +150,7 @@ export default function TribulationDialog({
               <DialogDescription>
                 Bạn đã tích đủ tu vi ở đỉnh cảnh giới. Nuốt đan dược rồi đón
                 thiên kiếp — vượt qua thì bước sang cảnh giới mới, thất bại thì
-                hao tổn khí tức.
+                mất viên đan và 15% tu vi đã tích trong cảnh giới này.
               </DialogDescription>
             )}
           </DialogHeader>
@@ -268,18 +268,27 @@ export default function TribulationDialog({
                 </dl>
 
                 <p className="text-muted-foreground mt-3 text-[11px] leading-relaxed">
-                  Thất bại không bao giờ đẩy bạn tụt xuống cảnh giới cũ, và mỗi
-                  lần vấp lại cộng thêm 10% cơ hội cho lần sau. Hồ sơ công việc
-                  đã làm không bị xoá, nhưng phần hao tổn ở trên bị trừ thẳng
-                  vào tu vi dùng để xét cảnh giới.
+                  Thất bại mất viên đan đã dùng và 15% tu vi tích trong cảnh
+                  giới này, chỉ tính tới trần — tu vi đang bị giữ không làm mức
+                  mất nặng thêm, mà còn đỡ phần mất trước. Thất bại không bao
+                  giờ đẩy bạn tụt xuống cảnh giới cũ, và mỗi lần vấp lại cộng
+                  thêm 10% cơ hội cho lần sau (tối đa +40%). Hồ sơ công việc đã
+                  làm không bị xoá.
                 </p>
+                {!p.daysReady && (
+                  <p className="text-warning mt-2 text-[11px] leading-relaxed font-semibold">
+                    Căn cơ chưa vững: cần {p.daysNeeded} ngày tu luyện mới được
+                    độ kiếp lên {nextRealm.name}, bạn đang có {p.activeDays} ngày.
+                    Tu vi vẫn tích tiếp, không mất đi đâu.
+                  </p>
+                )}
               </div>
 
               <Button
                 size="lg"
                 className="mt-5 w-full gap-2"
                 onClick={start}
-                disabled={!grade || striking}
+                disabled={!grade || striking || !p.daysReady}
               >
                 {striking ? (
                   <>Đang chống kiếp…</>

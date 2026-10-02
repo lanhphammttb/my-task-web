@@ -229,10 +229,10 @@ describe('form nhiệm vụ', () => {
     const { result } = renderHook(() => useApp(), {
       wrapper: ({ children }) => <AppProvider><MoForm />{children}</AppProvider>,
     });
-    fireEvent.change(screen.getByLabelText('Tên nhiệm vụ *'), { target: { value: 'Nộp báo cáo' } });
+    fireEvent.change(screen.getByLabelText('Tên việc *'), { target: { value: 'Nộp báo cáo' } });
     const local = `${todayKey()}T23:30`;
     fireEvent.change(screen.getByLabelText('Hạn chót'), { target: { value: local } });
-    fireEvent.click(screen.getByRole('button', { name: 'Thêm nhiệm vụ' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Thêm việc' }));
     const t = result.current.data.tasks[0]!;
     expect(t.deadline).toBe(new Date(local).toISOString());
     expect(t.deadline!.endsWith('Z')).toBe(true);
@@ -240,8 +240,8 @@ describe('form nhiệm vụ', () => {
 
   it('tên quá 200 ký tự thì báo ngay và khoá nút lưu', () => {
     render(<AppProvider><MoForm /></AppProvider>);
-    fireEvent.change(screen.getByLabelText('Tên nhiệm vụ *'), { target: { value: 'a'.repeat(201) } });
+    fireEvent.change(screen.getByLabelText('Tên việc *'), { target: { value: 'a'.repeat(201) } });
     expect(screen.getByRole('alert').textContent).toContain('201/200');
-    expect((screen.getByRole('button', { name: 'Thêm nhiệm vụ' }) as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByRole('button', { name: 'Thêm việc' }) as HTMLButtonElement).disabled).toBe(true);
   });
 });

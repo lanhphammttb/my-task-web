@@ -21,7 +21,7 @@ export default function WorkSanctuary({ view, onSelect, children }: {
   const done = data.tasks.filter(t => t.status === 'done' && completedDay(t) === todayKey()).length;
   const minutes = data.sessions.filter(s => s.date === todayKey()).reduce((sum, s) => sum + s.minutes, 0);
   const goalCount = data.goals.filter(g => !g.archived).length;
-  return <div className="sanctuary">
+  return <div className="sanctuary" data-khu={work ? 'viec' : 'nguyen'}>
     <section className="sanctuary-scene" aria-label={work ? 'Góc hành sự trong tiên môn' : 'Nơi gửi đại nguyện'}>
       <ArtImage src={work ? '/art/world/sect-study-v1.webp' : '/art/world/daily-pavilion-v1.webp'} alt="" className="sanctuary-scene-art" />
       <div className="sanctuary-scene-shade" />
@@ -31,7 +31,7 @@ export default function WorkSanctuary({ view, onSelect, children }: {
         <p>{work ? 'Đọc sách, vận động, chăm sóc bản thân hay làm việc — mỗi việc thật là một bước tu hành.' : 'Gửi một mong muốn cho tương lai. Chia thành việc nhỏ, rồi mang về Hành Sự Đường để thực hiện.'}</p>
         <div className="sanctuary-record" aria-live="polite">
           <ScrollText className="size-3.5" />
-          {work ? `${done} việc đã làm · ${minutes} phút nhập định hôm nay` : `${goalCount} đại nguyện đang theo đuổi`}
+          {work ? `${done} việc đã làm · ${minutes} phút tập trung hôm nay` : `${goalCount} đại nguyện đang theo đuổi`}
         </div>
       </div>
       {work && <div className="sanctuary-seals" aria-label={`${done} việc hoàn thành hôm nay`}>

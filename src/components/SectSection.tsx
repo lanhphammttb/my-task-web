@@ -160,7 +160,7 @@ export default function SectSection() {
 
           <div className="mt-2 flex flex-wrap gap-1.5">
             <Target
-              label="Nhiệm vụ"
+              label="Việc"
               done={state.doneTasks}
               need={state.mission.tasks}
             />
@@ -219,7 +219,7 @@ export default function SectSection() {
                 </p>
 
                 <div className="mt-2 flex flex-wrap gap-1.5">
-                  {m.tasks > 0 && <MetaChip>{m.tasks} nhiệm vụ</MetaChip>}
+                  {m.tasks > 0 && <MetaChip>{m.tasks} việc</MetaChip>}
                   {m.focus > 0 && (
                     <MetaChip>{formatDuration(m.focus)} bế quan</MetaChip>
                   )}
@@ -268,7 +268,7 @@ export default function SectSection() {
               Đặt cọc <strong>{confirm?.stake} linh thạch</strong>. Trong{" "}
               {confirm?.days} ngày phải
               {confirm && confirm.tasks > 0
-                ? ` xong ${confirm.tasks} nhiệm vụ`
+                ? ` xong ${confirm.tasks} việc`
                 : ""}
               {confirm && confirm.tasks > 0 && confirm.focus > 0 ? " và" : ""}
               {confirm && confirm.focus > 0

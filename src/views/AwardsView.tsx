@@ -124,7 +124,15 @@ export default function AwardsView({ onTribulation }: { onTribulation: () => voi
 
             <p className="text-sm leading-relaxed italic">“{c.realm.note}”</p>
 
-            {progress.readyForTribulation && (
+            {progress.readyForTribulation && !progress.daysReady && (
+              <p className="border-gold/35 bg-gold/5 rounded-lg border p-3 text-xs leading-snug">
+                <strong className="text-gold-bright">Đủ tu vi, chưa đủ căn cơ.</strong> Cảnh giới kế tiếp cần{' '}
+                <span className="tabular">{progress.daysNeeded}</span> ngày có làm việc thật - đạo hữu đã có{' '}
+                <span className="tabular">{progress.activeDays}</span>. Tu vi dư vẫn được giữ, không mất.
+              </p>
+            )}
+
+            {progress.readyForTribulation && progress.daysReady && (
               <div className="border-warning/45 bg-warning/10 flex flex-wrap items-center gap-3 rounded-lg border p-3">
                 <Zap className="text-warning size-5 shrink-0" />
                 <p className="min-w-40 flex-1 text-xs leading-snug">
@@ -164,6 +172,7 @@ export default function AwardsView({ onTribulation }: { onTribulation: () => voi
                 {xpParts.elementBonus > 0 && <> · ngũ hành <b className="text-success tabular">+{xpParts.elementBonus}</b></>}
                 {xpParts.beastBonus > 0 && <> · linh thú <b className="text-success tabular">+{xpParts.beastBonus}</b></>}
                 {xpParts.multiplier !== 1 && <> · linh căn <b className="text-gold tabular">×{xpParts.multiplier}</b></>}
+                {xpParts.talentCut > 0 && <> · trần thiên phú <b className="text-muted-foreground tabular">−{Math.round(xpParts.talentCut)}</b></>}
               </p>
             )}
 
@@ -261,7 +270,7 @@ export default function AwardsView({ onTribulation }: { onTribulation: () => voi
         {unlocked.length === 0 ? (
           <div className="achievement-empty-state">
             <span className="achievement-empty-icon" aria-hidden="true"><Trophy className="size-5" /></span>
-            <div><strong>Chưa lập chiến công đầu tiên</strong><p>Hoàn thành nhiệm vụ đầu tiên để khai mở ấn Nhập Đạo.</p></div>
+            <div><strong>Chưa lập chiến công đầu tiên</strong><p>Hoàn thành việc đầu tiên để khai mở ấn Nhập Đạo.</p></div>
           </div>
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

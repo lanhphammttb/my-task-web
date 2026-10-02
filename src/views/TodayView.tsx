@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { AnimatePresence } from 'motion/react';
-import { CalendarCheck2, ChevronLeft, ChevronRight, Check, CircleDashed, Gem, ListChecks, Quote, ScrollText, Sparkles } from 'lucide-react';
+import { CalendarCheck2, ChevronLeft, ChevronRight, Check, CircleDashed, Crosshair, Gem, ListChecks, Quote, ScrollText, Sparkles } from 'lucide-react';
 import type { Task } from '../types';
 import { addDays, dateKey, formatDuration, longDate, parseKey, relativeDay, todayKey } from '../lib/date';
 import { dayStats, sortTasks, tasksOn } from '../lib/stats';
 import { questStates } from '../lib/quests';
 import { aphorismOfDay, elderPortrait } from '../lib/elders';
+import { NHAN, THUAT_NGU } from '../lib/thuatNgu';
 import { useApp } from '../store/AppStore';
 import QuickAdd from '../components/QuickAdd';
 import ChestRow from '../components/ChestRow';
@@ -16,6 +17,17 @@ import { Button } from '@/components/ui/button';
 
 interface Props { date: string; onDateChange: (d: string) => void; onEdit: (t: Task) => void; onFocus: (t: Task) => void; }
 
+/** Cùng mốc với `.journal-today` hai cột trong ui-polish.css. */
+const HAI_COT = '(min-width: 1280px)';
+
+/*
+ * Bố cục: hai khối `.journal-cot-chinh` (việc) và `.journal-cot-phu` (tiến độ,
+ * hòm, thử thách, gợi ý tập trung).
+ *
+ * Màn ≥1280px: hai cột thật, cột phụ đứng yên (sticky) khi cuộn danh sách việc.
+ * Còn lại (điện thoại, màn vừa): hai khối là `display: contents`, các mục xếp
+ * lại đúng thứ tự cũ bằng `order` - giao diện điện thoại không đổi một chỗ nào.
+ */
 export default function TodayView({ date, onDateChange, onEdit, onFocus }: Props) {
   const { data, pushOverdueToToday } = useApp();
   const isToday = date === todayKey();
@@ -32,19 +44,43 @@ export default function TodayView({ date, onDateChange, onEdit, onFocus }: Props
   // chẳng có mặt ai.
   const [portraitOk, setPortraitOk] = useState(true);
   const showPortrait = !!portrait && portraitOk;
+  // Màn hai cột có chỗ: mở sẵn thử thách trong ngày ở cột phụ.
+  const [haiCot] = useState(() => typeof window !== 'undefined' && !!window.matchMedia?.(HAI_COT).matches);
+  // Gợi ý tập trung: việc đầu tiên còn dở của ngày đang xem (đã xếp theo ưu tiên).
+  const goiY = isToday ? pending[0] ?? overdue[0] : undefined;
 
   return <div className="journal-today mx-auto flex w-full max-w-5xl flex-col gap-4">
+    <div className="journal-cot-chinh">
     <div className="journal-date-ribbon">
       <Button className="journal-date-seal" variant="outline" size="icon" aria-label="Ngày trước" title="Ngày trước" onClick={() => onDateChange(dateKey(addDays(parseKey(date), -1)))}><ChevronLeft className="size-4" /></Button>
-      <div className="journal-date-copy"><h2 className="font-title chi-man-rong text-lg font-bold">{isToday ? 'Sổ hành sự hôm nay' : relativeDay(date)}</h2><p className="text-muted-foreground text-xs">{longDate(parseKey(date))}</p></div>
+      <div className="journal-date-copy"><h2 className="font-title chi-man-rong text-lg font-bold">{isToday ? 'Việc hôm nay' : relativeDay(date)}</h2><p className="text-muted-foreground text-xs">{longDate(parseKey(date))}</p></div>
       {!isToday && <Button className="journal-today-return" variant="outline" size="sm" onClick={() => onDateChange(todayKey())}><CalendarCheck2 className="size-3.5" /> Hôm nay</Button>}
       <Button className="journal-date-seal" variant="outline" size="icon" aria-label="Ngày sau" title="Ngày sau" onClick={() => onDateChange(dateKey(addDays(parseKey(date), 1)))}><ChevronRight className="size-4" /></Button>
     </div>
-    <div className="journal-day-summary">
-      <span><strong>{stats.done}/{stats.total}</strong> việc đã hoàn thành</span>
-      <span><strong>{formatDuration(stats.focusMin)}</strong> nhập định</span>
-      <span className="chi-man-rong">{pending.length ? `${formatDuration(remainMin)} dự kiến còn lại` : done.length ? 'Đã làm xong. Nghỉ ngơi cũng là tu luyện.' : 'Chọn một việc vừa sức để bắt đầu.'}</span>
+
+    <div className="journal-write"><label htmlFor="quick-add-task" className="chi-man-rong mb-2 block text-xs font-medium">Ghi một việc bạn muốn làm</label><QuickAdd date={date} /></div>
+    <Section className="journal-viec" icon={ListChecks} title="Việc của bạn" subtitle="Bấm vào việc để sửa, biểu tượng tâm ngắm để tập trung. Chỉ đánh dấu xong khi đã làm xong ngoài đời." subtitleClassName="chi-man-rong">
+      {list.length === 0 ? <div className="journal-empty"><ScrollText className="size-7 text-gold" /><div><h3 className="font-title font-semibold">Chưa có việc nào</h3><p className="chi-man-rong">Đọc 10 trang sách, đi bộ 20 phút, hay hoàn thành một phần công việc. Viết điều bạn thực sự muốn làm vào ô phía trên.</p></div></div> : <div className="space-y-2.5">
+        <AnimatePresence initial={false}>{pending.map(t => <TaskCard key={t.id} task={t} onEdit={onEdit} onFocus={onFocus} />)}</AnimatePresence>
+        {done.length > 0 && <div className="space-y-2"><h3 className="journal-completed"><Check className="size-4" /> Đã xong · {done.length} việc</h3><AnimatePresence initial={false}>{done.map(t => <TaskCard key={t.id} task={t} onEdit={onEdit} />)}</AnimatePresence></div>}
+      </div>}
+    </Section>
+    {isToday && overdue.length > 0 && <Section className="journal-do-dang" icon={ScrollText} title={`Việc còn dang dở (${overdue.length})`} subtitle="Sắp xếp lại cho vừa sức, không cần làm tất cả cùng lúc." action={<Button variant="outline" size="sm" onClick={pushOverdueToToday}>Dời tất cả sang hôm nay</Button>}><div className="space-y-2">{overdue.map(t => <TaskCard key={t.id} task={t} onEdit={onEdit} onFocus={onFocus} showDate />)}</div></Section>}
+    {isToday && <div className="journal-digest"><ReturnDigest /></div>}
     </div>
+
+    <aside className="journal-cot-phu" aria-label="Tiến độ trong ngày">
+    <div className="journal-day-summary">
+      <span><strong>{stats.done}/{stats.total}</strong> việc đã xong</span>
+      <span><strong>{formatDuration(stats.focusMin)}</strong> {THUAT_NGU.nhapDinh.ro}</span>
+      <span className="chi-man-rong">{pending.length ? `${formatDuration(remainMin)} dự kiến còn lại` : done.length ? 'Đã làm xong. Nghỉ ngơi cũng là tu luyện.' : 'Chọn một việc vừa sức để bắt đầu.'}</span>
+      <span className="journal-day-meter" aria-hidden="true"><Meter value={stats.total ? stats.done / stats.total : 0} height={5} /></span>
+    </div>
+    {goiY && <div className="journal-goi-y">
+      <p className="sanctuary-eyebrow"><Crosshair className="size-3" /> GỢI Ý TẬP TRUNG</p>
+      <p className="journal-goi-y-ten">{goiY.title}</p>
+      <button type="button" className="btn-game journal-goi-y-nut" onClick={() => onFocus(goiY)}><Crosshair className="size-3.5" /> {NHAN.batDauTapTrung}</button>
+    </div>}
     {/* Lời tiền bối kèm chân dung.
 
         Bộ `art/elder/` có 13 tấm, nhưng sau một lần sắp xếp lại thì màn này -
@@ -70,18 +106,9 @@ export default function TodayView({ date, onDateChange, onEdit, onFocus }: Props
         </cite>
       </div>
     </blockquote>
-
-    <div className="journal-write"><label htmlFor="quick-add-task" className="chi-man-rong mb-2 block text-xs font-medium">Ghi một việc đời thường vào sổ tu hành</label><QuickAdd date={date} /></div>
-    <Section icon={ListChecks} title="Việc của bạn" subtitle="Chọn Bế Quan để tập trung. Chỉ đóng dấu hoàn thành khi đã làm xong ngoài đời." subtitleClassName="chi-man-rong">
-      {list.length === 0 ? <div className="journal-empty"><ScrollText className="size-7 text-gold" /><div><h3 className="font-title font-semibold">Trang sổ còn để ngỏ</h3><p className="chi-man-rong">Đọc 10 trang sách, đi bộ 20 phút, hay hoàn thành một phần công việc. Viết điều bạn thực sự muốn làm vào ô phía trên.</p></div></div> : <div className="space-y-4">
-        <AnimatePresence initial={false}>{pending.map(t => <TaskCard key={t.id} task={t} onEdit={onEdit} onFocus={onFocus} />)}</AnimatePresence>
-        {done.length > 0 && <div className="space-y-2"><h3 className="journal-completed"><Check className="size-4" /> Đã hành công · {done.length} việc hoàn thành</h3><AnimatePresence initial={false}>{done.map(t => <TaskCard key={t.id} task={t} onEdit={onEdit} />)}</AnimatePresence></div>}
-      </div>}
-    </Section>
-    {isToday && overdue.length > 0 && <Section icon={ScrollText} title={`Việc còn dang dở (${overdue.length})`} subtitle="Sắp xếp lại cho vừa sức, không cần làm tất cả cùng lúc." action={<Button variant="outline" size="sm" onClick={pushOverdueToToday}>Dời tất cả sang hôm nay</Button>}><div className="space-y-2">{overdue.map(t => <TaskCard key={t.id} task={t} onEdit={onEdit} onFocus={onFocus} showDate />)}</div></Section>}
-    <div className="journal-rewards"><div className="mb-3"><p className="sanctuary-eyebrow"><Gem className="size-3" /> SAU MỖI BƯỚC TU HÀNH</p><h2 className="font-title mt-1 text-lg font-semibold">Công sức kết thành cơ duyên</h2><p className="text-muted-foreground chi-man-rong mt-1 text-xs">Hòm và tông khoá ghi nhận việc đã làm. Bạn không cần nhận thêm thử thách để hoàn thành việc của mình.</p></div><ChestRow date={date} /></div>
-    <Section id="quests" icon={ScrollText} title="Nhật khoá tông môn" subtitle="Thử thách thêm nếu phù hợp với ngày của bạn" action={<span className="text-muted-foreground text-xs">{quests.filter(q => q.done).length}/{quests.length} hoàn thành</span>} collapsible defaultOpen={false}>
-      <ul className="grid gap-2 sm:grid-cols-3">{quests.map(q => {
+    <div className="journal-rewards"><div className="mb-3"><p className="sanctuary-eyebrow"><Gem className="size-3" /> SAU MỖI VIỆC XONG</p><h2 className="font-title mt-1 text-lg font-semibold">Hòm thưởng trong ngày</h2><p className="text-muted-foreground chi-man-rong mt-1 text-xs">Hòm và thử thách ghi nhận việc đã làm. Bạn không cần nhận thêm thử thách để hoàn thành việc của mình.</p></div><ChestRow date={date} /></div>
+    <Section id="quests" className="journal-thu-thach" icon={ScrollText} title={THUAT_NGU.nhatKhoaTongMon.ten} subtitle={`${THUAT_NGU.nhatKhoaTongMon.ro} - làm thêm nếu hợp với ngày của bạn`} action={<span className="text-muted-foreground text-xs">{quests.filter(q => q.done).length}/{quests.length} xong</span>} collapsible defaultOpen={haiCot}>
+      <ul className="journal-quest-list grid gap-2 sm:grid-cols-3">{quests.map(q => {
         const state = q.done ? 'complete' : q.current > 0 ? 'advancing' : 'dormant';
         return <li key={q.id} data-quest-state={state} className="journal-quest-card">
           <div className="journal-quest-seal" aria-hidden="true">
@@ -90,12 +117,12 @@ export default function TodayView({ date, onDateChange, onEdit, onFocus }: Props
           <div className="min-w-0 flex-1">
             <p className="journal-quest-name">{q.label}</p>
             <p className="journal-quest-state">{q.done ? 'Ấn tông môn đã sáng' : q.current > 0 ? 'Đang tích lũy công đức' : 'Chưa khởi hành'}</p>
-            <p className="journal-quest-reward">{q.current}/{q.target} · thưởng {q.reward} linh thạch</p>
+            <p className="journal-quest-reward">{q.current}/{q.target} · thưởng {q.reward} {THUAT_NGU.linhThach.ten}</p>
           </div>
           {q.done ? <span className="journal-quest-done">Hoàn thành</span> : <div className="journal-quest-progress" role="progressbar" aria-label={q.label} aria-valuemin={0} aria-valuemax={q.target} aria-valuenow={Math.min(q.current, q.target)}><Meter value={q.ratio} height={5} /></div>}
         </li>;
       })}</ul>
     </Section>
-    {isToday && <ReturnDigest />}
+    </aside>
   </div>;
 }

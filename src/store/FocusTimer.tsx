@@ -155,7 +155,7 @@ function useTimer() {
     reset: finish,
     pickTask: (taskId?: string) => {
       if (current.current.started) {
-        notify("Kết thúc phiên hiện tại trước khi đổi nhiệm vụ.", "warn");
+        notify("Kết thúc phiên hiện tại trước khi đổi việc.", "warn");
         return;
       }
       commit({ ...current.current, taskId });

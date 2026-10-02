@@ -72,7 +72,7 @@ describe("sảnh trên điện thoại", () => {
       name: /^Đánh dấu hoàn thành: /,
     });
     const than = within(sanh).getAllByRole("button", {
-      name: /^Tập trung việc này: /,
+      name: /^Tập trung vào việc này: /,
     });
     expect(tick.length).toBeGreaterThan(0);
     // Đúng một cặp cho mỗi dòng - không phải một nút gánh cả hai việc.
@@ -112,8 +112,8 @@ describe("sảnh trên điện thoại", () => {
   it("không tự bật bàn phím khi mở form thêm việc hoặc đại nguyện", async () => {
     render(<App />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Ghi việc" }));
-    const taskTitle = await screen.findByRole("textbox", { name: /Tên nhiệm vụ/ });
+    fireEvent.click(screen.getByRole("button", { name: "Thêm việc" }));
+    const taskTitle = await screen.findByRole("textbox", { name: /Tên việc/ });
     expect(document.activeElement).not.toBe(taskTitle);
     const taskDialog = document.querySelector<HTMLElement>('[data-slot="dialog-content"].task-editor-mobile');
     expect(taskDialog?.style.getPropertyValue("--dialog-left-inset")).toBe("0px");
@@ -123,7 +123,7 @@ describe("sảnh trên điện thoại", () => {
     const nav = screen.getByRole("navigation", { name: "Thanh điều hướng chính" });
     fireEvent.click(within(nav).getByRole("button", { name: "Đại Nguyện" }));
     const vows = await screen.findByRole("dialog", { name: "Đại Nguyện" });
-    fireEvent.click(await within(vows).findByRole("button", { name: "Mục tiêu mới" }));
+    fireEvent.click(await within(vows).findByRole("button", { name: "Thêm mục tiêu" }));
     const goalTitle = await screen.findByRole("textbox", { name: /Tên mục tiêu/ });
     expect(document.activeElement).not.toBe(goalTitle);
     const goalDialog = document.querySelector<HTMLElement>('[data-slot="dialog-content"].task-editor-mobile');

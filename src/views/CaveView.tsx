@@ -115,7 +115,7 @@ export default function CaveView({ onMeditate, initialTab }: { onMeditate: () =>
             </div>
           </div>
           <div className="text-muted-foreground flex flex-wrap gap-1.5 text-[11px]">
-            <MetaChip>+{stones.fromTasks} nhiệm vụ</MetaChip>
+            <MetaChip>+{stones.fromTasks} việc</MetaChip>
             <MetaChip>+{stones.fromSessions} bế quan</MetaChip>
             <MetaChip>+{stones.fromPerfectDays} ngày viên mãn</MetaChip>
             <MetaChip>+{stones.fromQuests} nhật khoá</MetaChip>
@@ -260,6 +260,7 @@ export default function CaveView({ onMeditate, initialTab }: { onMeditate: () =>
                 <span>Gốc: <b className="text-foreground tabular">{xp.base}</b></span>
                 <span>Ngũ hành: <b className="text-success tabular">+{xp.elementBonus}</b></span>
                 <span>Linh thú: <b className="text-success tabular">+{xp.beastBonus}</b></span>
+                {xp.talentCut > 0 && <span title="Thiên phú cộng lại không vượt 40% tu vi gốc">Trần thiên phú: <b className="text-muted-foreground tabular">−{Math.round(xp.talentCut)}</b></span>}
                 <span>Tổng: <b className="text-gold tabular">{xp.total}</b> (×{xp.multiplier})</span>
               </div>
             </div>

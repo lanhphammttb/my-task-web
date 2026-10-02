@@ -74,7 +74,7 @@ export default function FooterMenu({
         <button
           type="button"
           className="navigation-tool"
-          aria-label={expanded ? "Đóng tra cứu" : "Tra cứu nhiệm vụ"}
+          aria-label={expanded ? "Đóng tra cứu" : "Tìm việc"}
           aria-expanded={expanded}
           aria-controls="task-search"
           onClick={() => {
@@ -130,8 +130,8 @@ export default function FooterMenu({
       <button
         type="button"
         className="btn-game navigation-add"
-        aria-label="Nhiệm vụ mới"
-        title="Nhiệm vụ mới (N)"
+        aria-label="Thêm việc mới"
+        title="Thêm việc mới (N)"
         onClick={onNew}
       >
         <Plus className="size-5" />
@@ -142,8 +142,8 @@ export default function FooterMenu({
         <input
           id="search-input"
           type="search"
-          aria-label="Tìm nhiệm vụ hoặc nhãn"
-          placeholder="Tìm nhiệm vụ, nhãn... (/)"
+          aria-label="Tìm việc hoặc nhãn"
+          placeholder="Tìm việc, nhãn... (/)"
           value={query}
           onChange={(event) => onQuery(event.target.value)}
         />

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import {
+  Bell,
   Brush,
   ChevronDown,
   Database,
@@ -22,6 +23,14 @@ import { exportFile, readFile } from "../lib/storage";
 import { useApp } from "../store/AppStore";
 import AccountPanel from "./AccountPanel";
 import ConfirmReplaceDialog from "./ConfirmReplaceDialog";
+import { useCaiDatNhac } from "../hooks/useNhacViec";
+import {
+  MOC_TRUOC_HAN,
+  ghiCaiDatNhac,
+  hoTroThongBao,
+  laIOS,
+  type MocTruocHan,
+} from "../lib/nhacViec";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -59,7 +68,7 @@ const TAB_CLS =
   "min-h-11 flex-col gap-1 px-1 py-1.5 text-xs sm:flex-row sm:gap-2 sm:text-sm";
 
 const SHORTCUTS: [string, string][] = [
-  ["N", "Nhiệm vụ mới"],
+  ["N", "Thêm việc"],
   ["1 – 8", "Chuyển màn hình"],
   ["/", "Tìm kiếm"],
   ["T", "Về hôm nay"],
@@ -175,7 +184,7 @@ export default function SettingsDialog({
             <Separator />
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="grid gap-2">
-                <Label htmlFor="s-daily">Nhật khoá: nhiệm vụ / ngày</Label>
+                <Label htmlFor="s-daily">Số việc mỗi ngày</Label>
                 <Input
                   id="s-daily"
                   type="number"
@@ -188,7 +197,7 @@ export default function SettingsDialog({
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="s-focus-target">Phút nhập định / ngày</Label>
+                <Label htmlFor="s-focus-target">Phút tập trung / ngày</Label>
                 <Input
                   id="s-focus-target"
                   type="number"
@@ -205,12 +214,12 @@ export default function SettingsDialog({
             </div>
             <Separator />
             <p className="text-muted-foreground flex items-center gap-2 text-xs font-medium">
-              <Timer className="size-3.5" /> Đồng hồ bế quan
+              <Timer className="size-3.5" /> Đồng hồ tập trung (bế quan)
             </p>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="grid gap-2">
                 <Label htmlFor="s-focus-len">
-                  Độ dài phiên nhập định (phút)
+                  Độ dài một phiên tập trung (phút)
                 </Label>
                 <Input
                   id="s-focus-len"
@@ -225,7 +234,7 @@ export default function SettingsDialog({
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="s-break-len">Độ dài điều tức (phút)</Label>
+                <Label htmlFor="s-break-len">Nghỉ giữa phiên (phút)</Label>
                 <Input
                   id="s-break-len"
                   type="number"
@@ -238,6 +247,8 @@ export default function SettingsDialog({
                 />
               </div>
             </div>
+            <Separator />
+            <NhacViecCaiDat notify={notify} />
           </TabsContent>
 
           <TabsContent value="look" className="space-y-4 pt-5">
@@ -381,8 +392,8 @@ export default function SettingsDialog({
                   <ChevronDown className="size-3.5 transition-transform group-open:rotate-180" />
                 </summary>
                 <p className="text-muted-foreground mt-1">
-                  Đã kiểm {audit.verified}/{data.ledger.length} bản ghi. Mỗi nhiệm
-                  vụ hoàn thành và mỗi phiên bế quan đều được móc vào một chuỗi
+                  Đã kiểm {audit.verified}/{data.ledger.length} bản ghi. Mỗi việc
+                  hoàn thành và mỗi phiên bế quan đều được móc vào một chuỗi
                   băm; sửa tay ở bất kỳ đâu sẽ làm đứt chuỗi.
                 </p>
                 {audit.findings.length > 0 && (
@@ -455,7 +466,7 @@ export default function SettingsDialog({
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>Xoá lịch sử nhiệm vụ đã xong?</AlertDialogTitle>
+                    <AlertDialogTitle>Xoá lịch sử việc đã xong?</AlertDialogTitle>
                     <AlertDialogDescription>
                       Thao tác này xoá các việc đã hoàn thành trước hôm nay, không phải cất chúng vào kho.
                       Tu vi, linh thạch, chuỗi ngày và tiến độ liên quan sẽ được tính lại và có thể giảm.
@@ -496,10 +507,10 @@ export default function SettingsDialog({
               title={hoi?.loai === "xoa" ? "Xoá toàn bộ dữ liệu?" : undefined}
               description={
                 hoi?.loai === "xoa"
-                  ? "Mọi nhiệm vụ, mục tiêu và lịch sử tập trung sẽ bị xoá vĩnh viễn. Chuỗi ngày và huy hiệu cũng mất theo. Hành động này không thể hoàn tác."
+                  ? "Mọi việc, mục tiêu và lịch sử tập trung sẽ bị xoá vĩnh viễn. Chuỗi ngày và huy hiệu cũng mất theo. Hành động này không thể hoàn tác."
                   : hoi?.loai === "tep"
-                    ? `Hồ sơ trên máy này sẽ được thay bằng nội dung tệp "${hoi.ten}". Nhiệm vụ, mục tiêu và tu vi hiện có sẽ mất nếu bạn chưa sao lưu.`
-                    : "Hồ sơ trên máy này sẽ được thay bằng dữ liệu mẫu. Nhiệm vụ, mục tiêu và tu vi hiện có sẽ mất nếu bạn chưa sao lưu."
+                    ? `Hồ sơ trên máy này sẽ được thay bằng nội dung tệp "${hoi.ten}". Việc, mục tiêu và tu vi hiện có sẽ mất nếu bạn chưa sao lưu.`
+                    : "Hồ sơ trên máy này sẽ được thay bằng dữ liệu mẫu. Việc, mục tiêu và tu vi hiện có sẽ mất nếu bạn chưa sao lưu."
               }
               actionLabel={
                 hoi?.loai === "xoa" ? "Xoá hết" : hoi?.loai === "tep" ? "Thay bằng tệp này" : "Thay bằng dữ liệu mẫu"
@@ -511,6 +522,105 @@ export default function SettingsDialog({
         </Tabs>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/**
+ * Bật/tắt nhắc việc trên máy này.
+ *
+ * Bật lên là xin quyền thông báo ngay trong cú bấm (trình duyệt chỉ cho xin
+ * quyền khi người dùng vừa bấm). Bị từ chối thì để công tắc tắt và nói rõ phải
+ * mở lại ở đâu - công tắc bật mà không bao giờ báo thì tệ hơn không có.
+ */
+function NhacViecCaiDat({ notify }: { notify: (msg: string, tone?: "warn") => void }) {
+  const cai = useCaiDatNhac();
+  const coTB = hoTroThongBao();
+  const ios = laIOS();
+  const [quyen, setQuyen] = useState<NotificationPermission | "khong-co">(
+    coTB ? Notification.permission : "khong-co",
+  );
+  const bat = cai.bat && quyen === "granted";
+
+  const doi = async (v: boolean) => {
+    if (!v) {
+      ghiCaiDatNhac({ ...cai, bat: false });
+      return;
+    }
+    if (!coTB) {
+      notify(
+        ios
+          ? "Thêm app vào Màn hình chính rồi mở từ đó để bật nhắc việc."
+          : "Trình duyệt này không hỗ trợ thông báo.",
+        "warn",
+      );
+      return;
+    }
+    let q = Notification.permission;
+    if (q === "default") {
+      try {
+        q = await Notification.requestPermission();
+      } catch {
+        q = Notification.permission;
+      }
+    }
+    setQuyen(q);
+    if (q !== "granted") {
+      notify("Chưa được phép gửi thông báo - mở lại trong cài đặt trình duyệt.", "warn");
+      return;
+    }
+    ghiCaiDatNhac({ ...cai, bat: true });
+    notify("Đã bật nhắc việc");
+  };
+
+  return (
+    <div className="space-y-3">
+      <label className="border-border hover:bg-muted/50 flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-colors">
+        <Bell className="text-muted-foreground size-4 shrink-0" />
+        <span className="min-w-0 flex-1">
+          <span className="block text-sm font-medium">Nhắc việc</span>
+          <span className="text-muted-foreground text-xs">
+            Báo đúng giờ bắt đầu và trước hạn chót của việc chưa xong (hôm nay và ngày mai)
+          </span>
+        </span>
+        <Switch aria-label="Nhắc việc" checked={bat} onCheckedChange={(v) => void doi(v)} />
+      </label>
+      {bat && (
+        <div className="grid gap-2 sm:grid-cols-2 sm:items-center">
+          <Label htmlFor="s-nhac-truoc">Nhắc trước hạn chót</Label>
+          <Select
+            value={String(cai.truocHan)}
+            onValueChange={(v) => ghiCaiDatNhac({ ...cai, truocHan: Number(v) as MocTruocHan })}
+          >
+            <SelectTrigger id="s-nhac-truoc">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {MOC_TRUOC_HAN.map((m) => (
+                <SelectItem key={m} value={String(m)}>
+                  {m === 60 ? "1 giờ" : `${m} phút`}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+      {quyen === "denied" && (
+        <p role="note" className="border-warning/40 bg-warning/10 text-warning rounded-lg border px-3 py-2 text-xs leading-relaxed">
+          Trình duyệt đang chặn thông báo của app. Mở lại quyền thông báo trong cài đặt trình duyệt rồi bật lại ở đây.
+        </p>
+      )}
+      <p className="text-muted-foreground text-xs leading-relaxed">
+        Nhắc chạy ngay trên máy, không qua máy chủ: chỉ báo được khi app đang mở
+        hoặc vừa chạy nền. Mở lại app thì những lời nhắc lỡ trong 10 phút gần nhất
+        được báo bù một lần.
+        {ios || !coTB ? " " : ""}
+        {(ios || !coTB) && (
+          <strong className="text-foreground font-medium">
+            iPhone/iPad: cần iOS 16.4 trở lên và thêm app vào Màn hình chính (Chia sẻ → Thêm vào MH chính), rồi mở app từ biểu tượng đó.
+          </strong>
+        )}
+      </p>
+    </div>
   );
 }
 

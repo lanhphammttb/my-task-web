@@ -47,6 +47,12 @@ export interface Site {
   outcomes: SiteOutcome[];
 }
 
+/*
+ * Tu vi trong bí cảnh đã hạ còn chừng 40% mức cũ (linh thạch giữ nguyên). Thám
+ * hiểm tuy đo bằng việc đã xong, nhưng cộng thẳng vào tu vi cơ duyên - mô
+ * phỏng một năm cho thấy nó cùng với hòm kỳ ngộ đẩy phần "trời cho" lên ngang
+ * phần làm thật. Đây là cộng dồn lúc đoàn về nên hạ bảng không trừ ngược ai.
+ */
 export const SITES: Record<SiteId, Site> = {
   linh_thao_coc: {
     id: 'linh_thao_coc',
@@ -85,7 +91,7 @@ export const SITES: Record<SiteId, Site> = {
         label: 'Vấp phải mạch linh khí',
         text: 'Chân giẫm trúng một khe đá đang toả hơi trắng. Ngồi xuống hít một hồi, đan điền ấm hẳn.',
         tone: 'good',
-        xp: 40,
+        xp: 20,
         herbs: { thanh_diep: 2 },
       },
     ],
@@ -123,14 +129,14 @@ export const SITES: Record<SiteId, Site> = {
         label: 'Bị cấm chế hất ra',
         text: 'Vừa chạm vào bậc thang thứ chín thì cả người bị đẩy văng xuống chân tháp.',
         tone: 'bad',
-        xp: -30,
+        xp: -15,
       },
       {
         weight: 15,
         label: 'Lên tới đỉnh tháp',
         text: 'Trên cùng là một gian trống, giữa gian có bệ đá khắc kín chữ cổ. Đọc xong thì thần thức sáng ra.',
         tone: 'good',
-        xp: 160,
+        xp: 60,
         stones: 60,
       },
     ],
@@ -152,7 +158,7 @@ export const SITES: Record<SiteId, Site> = {
         label: 'Đào được Kim Tuỷ Chi',
         text: 'Trong khe đá có mạch kim, nấm mọc thành cụm. Loại này ngoài chợ không ai bán.',
         tone: 'good',
-        xp: 60,
+        xp: 15,
         herbs: { kim_tuy: 2, huyet_tinh: 2 },
       },
       {
@@ -160,7 +166,7 @@ export const SITES: Record<SiteId, Site> = {
         label: 'Cướp được của người đi trước',
         text: 'Một bộ hài cốt còn ôm túi càn khôn. Người này chết chưa lâu.',
         tone: 'good',
-        xp: 140,
+        xp: 40,
         stones: 260,
         pill: 'trung',
       },
@@ -169,7 +175,7 @@ export const SITES: Record<SiteId, Site> = {
         label: 'Lạc trong âm khí',
         text: 'Đi ba ngày mà vẫn thấy đúng gốc cây ấy. Thoát ra được thì đạo tâm đã lung lay.',
         tone: 'bad',
-        xp: -90,
+        xp: -30,
         stones: -40,
       },
       {
@@ -177,7 +183,7 @@ export const SITES: Record<SiteId, Site> = {
         label: 'Gặp cổ mộ chưa ai động',
         text: 'Cửa mộ còn nguyên phong ấn. Bên trong là một gian đầy ngọc và một cây sâm tía.',
         tone: 'good',
-        xp: 380,
+        xp: 100,
         herbs: { tu_van: 1, kim_tuy: 1 },
         stones: 180,
       },
@@ -200,7 +206,7 @@ export const SITES: Record<SiteId, Site> = {
         label: 'Moi được từ đống xương',
         text: 'Bới suốt hai ngày trong gò xương, cuối cùng cũng có thứ đáng giá.',
         tone: 'good',
-        xp: 150,
+        xp: 60,
         stones: 420,
         herbs: { tu_van: 1 },
       },
@@ -210,7 +216,7 @@ export const SITES: Record<SiteId, Site> = {
         text: 'Sau vách đá là một động phủ kín, chủ nhân đã hoá tro nhưng đan dược còn nguyên trong lò.',
         tone: 'good',
         pill: 'thuong',
-        xp: 400,
+        xp: 160,
         stones: 200,
       },
       {
@@ -218,7 +224,7 @@ export const SITES: Record<SiteId, Site> = {
         label: 'Suýt bỏ mạng',
         text: 'Thứ gì đó trong gò xương động đậy. Chạy được ra tới ngoài thì kinh mạch đã tổn.',
         tone: 'bad',
-        xp: -300,
+        xp: -120,
         stones: -120,
       },
       {
@@ -226,7 +232,7 @@ export const SITES: Record<SiteId, Site> = {
         label: 'Nhặt được một mảnh đạo vận',
         text: 'Giữa tuyệt địa lại có một đoá sen trắng mọc trên hộp sọ. Hái xuống, cả người nhẹ bẫng.',
         tone: 'good',
-        xp: 900,
+        xp: 360,
         herbs: { tu_van: 2, kim_tuy: 2 },
       },
     ],

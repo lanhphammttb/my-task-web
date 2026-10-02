@@ -215,7 +215,7 @@ export default function StatsView({ onOpenDay, onOpenGoals }: StatsViewProps) {
               className="stats-compact-tile"
               label="Đạo tâm"
               value={`${Math.round(rate * 100)}%`}
-              hint={`${done}/${inRange.length} nhiệm vụ`}
+              hint={`${done}/${inRange.length} việc`}
               icon={TrendingUp}
             />
             <StatTile

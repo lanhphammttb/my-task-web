@@ -113,7 +113,7 @@ function moTa(c: Celebration): MoTa {
       m.icon = PartyPopper;
       m.eyebrow = "Nhật khoá viên mãn";
       m.title = "Dọn sạch danh sách!";
-      m.body = `${c.count} nhiệm vụ hôm nay đều đã xong. Hôm nay bạn thắng.`;
+      m.body = `${c.count} việc hôm nay đều đã xong. Hôm nay bạn thắng.`;
       break;
     case "achievement":
       m.icon = ACHIEVEMENTS.find((a) => a.id === c.id)?.icon ?? Trophy;

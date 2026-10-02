@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import { Check, Plus, ScrollText, Sparkles, Timer, Zap } from "lucide-react";
+import { Check, Hourglass, Plus, ScrollText, Sparkles, Timer, Zap } from "lucide-react";
 import type { Task, ViewKey } from "../../types";
 import { useApp } from "../../store/AppStore";
 import { useFocusTimer } from "../../store/FocusTimer";
@@ -12,6 +12,9 @@ import { PRIORITY_META } from "../../types";
 import ArtImage from "../ArtImage";
 import HubSignal from "./HubSignal";
 import { aphorismOfDay, elderPortrait } from "../../lib/elders";
+import { NHAN } from "../../lib/thuatNgu";
+import { daXongViecDau, useNhapMon } from "../../hooks/useNhapMon";
+import NhapMonCard from "./NhapMonCard";
 
 /**
  * Sảnh trên điện thoại - dựng riêng, không phải bản co lại của màn rộng.
@@ -62,11 +65,17 @@ export default function HubMobile({
 
   const progress = progressOf(data);
   const c = cultivationOf(progress.xp);
-  const ready = progress.readyForTribulation;
+  // Đủ tu vi mà chưa đủ ngày căn cơ thì chưa độ kiếp được - nút đột phá chỉ
+  // hiện khi server cũng sẽ nhận (xem REALM_MIN_DAYS trong lib/economy).
+  const ready = progress.readyForTribulation && progress.daysReady;
+  const choCanCo = progress.readyForTribulation && !progress.daysReady;
   const nextRealm = REALMS[Math.min(ASCENSION_INDEX, progress.gateRealm + 1)];
 
   const dangBeQuan = timer.inSession || timer.mode === "break";
   const the = theDaoNhan(data);
+  const nhapMon = useNhapMon(data);
+  // Khai quang là phần thưởng của việc đầu tiên, không phải bước đầu tiên.
+  const moKhaiQuang = !data.root && daXongViecDau(data);
   const aphorism = aphorismOfDay();
   const portrait = elderPortrait(aphorism.elder);
 
@@ -108,6 +117,9 @@ export default function HubMobile({
       </aside>
 
       {/* --------------------------------------------------------- bảng việc */}
+      {nhapMon.hien ? (
+        <NhapMonCard className="hub-mb-nhap-mon" onNew={onNew} onDismiss={nhapMon.dong} />
+      ) : (
       <section
         className="hub-mb-bang"
         aria-label="Việc hôm nay"
@@ -128,13 +140,13 @@ export default function HubMobile({
             onClick={() => onExplore("focus")}
           >
             <Timer className="size-4 shrink-0" />
-            Về phiên bế quan
+            Về phiên tập trung
           </button>
         )}
 
         {!dangBeQuan && hien[0] && (
           <button type="button" className="hub-mb-quay" onClick={() => onFocusTask(hien[0])}>
-            <Timer className="size-4 shrink-0" /> Bế quan với việc tiếp theo
+            <Timer className="size-4 shrink-0" /> {NHAN.batDauTapTrung}
           </button>
         )}
 
@@ -163,7 +175,7 @@ export default function HubMobile({
                     type="button"
                     className="hub-mb-than"
                     onClick={() => onFocusTask(t)}
-                    aria-label={`Tập trung việc này: ${t.title}`}
+                    aria-label={`${NHAN.tapTrungViecNay}: ${t.title}`}
                   >
                     <span className="hub-mb-tieu">{t.title}</span>
                     <span className="hub-mb-xp" style={{ "--xp": meta.color } as CSSProperties}>
@@ -181,13 +193,19 @@ export default function HubMobile({
             </span>
             {tatCa.length > 0
               ? "Xong sạch. Nghỉ cũng là tu."
-              : "Ghi một việc vào sổ tu hành."}
+              : "Chưa có việc nào hôm nay."}
           </div>
         )}
 
         <div className="hub-mb-nut">
-          <button type="button" className="hub-mb-them" onClick={onNew}>
-            <Plus className="size-4" /> Ghi việc
+          <button
+            type="button"
+            className="hub-mb-them"
+            // Chưa xong việc nào thì đây là nút chính của cả sảnh.
+            data-primary={moKhaiQuang || data.root ? undefined : ""}
+            onClick={onNew}
+          >
+            <Plus className="size-4" /> {NHAN.themViec}
           </button>
           {tatCa.length > 0 && (
             <button
@@ -200,18 +218,25 @@ export default function HubMobile({
           )}
         </div>
       </section>
+      )}
 
       <HubSignal onExplore={onExplore} />
 
       {/* ------------------------------------------------------ việc gấp nhất */}
-      {/* Chỉ hiện khi thật sự có: độ kiếp, hoặc chưa khai quang linh căn. Không
+      {/* Chỉ hiện khi thật sự có: độ kiếp, hoặc đã xong việc đầu mà chưa khai
+          quang linh căn (trước đó nút chính là "Thêm việc"). Không
           có thì chỗ này trả lại cho cảnh chứ không để một nút xám nằm đó. */}
       {ready ? (
         <button type="button" className="hub-mb-chinh" data-game-state="available" data-game-action="breakthrough" onClick={onTribulation}>
           <Zap className="size-4" />
           Độ kiếp lên {nextRealm.name}
         </button>
-      ) : !data.root ? (
+      ) : choCanCo ? (
+        <p className="hub-can-co" role="status">
+          <Hourglass className="size-4" />
+          Căn cơ {progress.activeDays}/{progress.daysNeeded} ngày làm việc - đủ ngày mới độ kiếp
+        </p>
+      ) : moKhaiQuang ? (
         <button type="button" className="hub-mb-chinh" data-game-state="available" data-game-action="awaken" onClick={onAwaken}>
           <Sparkles className="size-4" />
           Khai quang linh căn

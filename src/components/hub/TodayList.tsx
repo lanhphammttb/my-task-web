@@ -5,6 +5,9 @@ import { useApp } from "../../store/AppStore";
 import { todayKey } from "../../lib/date";
 import { isOverdue, sortTasks, tasksOn } from "../../lib/stats";
 import { PRIORITY_META } from "../../types";
+import { NHAN } from "../../lib/thuatNgu";
+import { useNhapMon } from "../../hooks/useNhapMon";
+import NhapMonCard from "./NhapMonCard";
 
 /**
  * Việc hôm nay, ngay trên màn mặc định.
@@ -41,6 +44,10 @@ export default function TodayList({
   const hien = chuaXong.slice(0, TOI_DA);
   const conLai = chuaXong.length - hien.length;
   const xong = tatCa.length - chuaXong.length;
+  const nhapMon = useNhapMon(data);
+  if (nhapMon.hien) {
+    return <NhapMonCard className="today-list-nhap-mon pointer-events-auto" onNew={onNew} onDismiss={nhapMon.dong} />;
+  }
 
   /*
    * `pointer-events-auto` là bắt buộc: sảnh đặt `pointer-events-none` để bấm
@@ -69,13 +76,13 @@ export default function TodayList({
         <p className="today-list-trong">
           {tatCa.length > 0
             ? "Xong sạch rồi. Nghỉ ngơi cũng là tu luyện."
-            : "Ghi một việc đời thường vào sổ tu hành."}
+            : "Chưa có việc nào hôm nay."}
         </p>
       )}
 
       <div className="today-list-nut">
         <button type="button" className="today-list-them" onClick={onNew}>
-          <Plus className="size-3.5" /> Thêm việc
+          <Plus className="size-3.5" /> {NHAN.themViec}
         </button>
         {(conLai > 0 || tatCa.length > 0) && (
           <button type="button" className="today-list-xem" onClick={onOpenAll}>
@@ -122,7 +129,7 @@ function Dong({
         className="today-dong-than"
         data-task-state={task.status === "doing" ? "active" : isOverdue(task) ? "overdue" : "ready"}
         onClick={onFocus}
-        aria-label={`Tập trung việc này: ${task.title}`}
+        aria-label={`${NHAN.tapTrungViecNay}: ${task.title}`}
       >
         <span className="today-dong-ten">{task.title}</span>
         {(task.status === "doing" || isOverdue(task)) && (
