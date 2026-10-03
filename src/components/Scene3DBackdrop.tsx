@@ -379,7 +379,7 @@ export default function Scene3DBackdrop({
       opacity: 0,
     });
     const dragon = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), dragonMaterial);
-    dragon.scale.set(small ? 6.5 : 9.2, small ? 4.35 : 6.15, 1);
+    dragon.scale.set(small ? 3.25 : 4.8, small ? 2.1 : 3.1, 1);
     dragon.position.set(-10, 8, -18);
     dragon.renderOrder = 3;
     scene.add(dragon);
@@ -419,7 +419,7 @@ export default function Scene3DBackdrop({
       orbGlow.position.copy(orb.position);
       orbGlow.position.z -= 0.35;
 
-      dragon.scale.set(small ? 5.35 : 6.8, small ? 3.55 : 4.55, 1);
+      dragon.scale.set(small ? 3.25 : 4.8, small ? 2.1 : 3.1, 1);
       qi.material.uniforms.uScale.value = (height * renderer.getPixelRatio()) / 950;
     };
     resize();
@@ -488,21 +488,25 @@ export default function Scene3DBackdrop({
     let lastFrame = 0;
     let raf = 0;
     const animateDragon = (time: number) => {
-      const duration = 7.6;
-      const period = 22;
-      // Let the first pass begin at once, then keep it as a periodic world event.
+      const duration = 10.5;
+      const period = 48;
+      // Leave long quiet intervals so the dragon reads as a rare distant omen.
       const phase = (time % period + period) % period;
-      const u = clamp01(phase / duration);
-      const active = phase >= 0 && phase <= duration;
-      const sweep = small ? Math.max(4.8, skyAspect * 8.6) : Math.max(10, skyAspect * 8.2);
+      const active = phase <= duration;
+      const u = active ? clamp01(phase / duration) : 0;
+      const sweep = small ? Math.max(5.8, skyAspect * 9.5) : Math.max(12, skyAspect * 9.6);
       const x = -sweep + sweep * 2 * u;
-      const y = (small ? 5.7 : 6.9) + Math.sin(u * Math.PI) * 0.8;
-      const z = -17.8 + Math.sin(u * Math.PI * 2) * 1.15;
-      const fade = active ? smooth(0, 0.1, u) * (1 - smooth(0.83, 1, u)) : 0;
+      // A shallow rising arc, kept high above the disciple and interaction HUD.
+      const y = (small ? 7.1 : 8.8) + Math.sin(u * Math.PI) * 1.05;
+      // The far plane softens the cutout against the painted mountains.
+      const z = -25.5 + Math.sin(u * Math.PI) * 0.45;
+      const fade = active
+        ? smooth(0, 0.15, u) * (1 - smooth(0.78, 1, u))
+        : 0;
 
       dragon.position.set(x, y, z);
-      dragon.rotation.z = Math.cos(u * Math.PI) * 0.075;
-      dragonMaterial.opacity = fade * 0.76 * dim;
+      dragon.rotation.z = -0.035 + Math.sin(u * Math.PI * 2) * 0.018;
+      dragonMaterial.opacity = fade * 0.48 * dim;
     };
 
     const render = (now: number) => {
